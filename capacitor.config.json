@@ -1,0 +1,9 @@
+{
+  "appId": "com.nplmanager.app",
+  "appName": "NPL Manager",
+  "webDir": "dist",
+  "android": {
+    "backgroundColor": "#0A0F16",
+    "allowMixedContent": false
+  }
+}

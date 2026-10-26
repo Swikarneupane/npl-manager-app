@@ -1,0 +1,29 @@
+/* small additions on top of the design's npl.css */
+html,body{margin:0;background:#0A0F16}
+.npl{min-height:100vh}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:#15171C;color:#fff;padding:10px 16px;border-radius:8px;font:14px/1.4 "IBM Plex Sans",system-ui,sans-serif;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;max-width:min(560px,90vw)}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.npl .nav a{cursor:pointer}
+.tbl td.name a:hover{text-decoration:underline!important}
+@media (max-width:760px){ .board .big{font-size:52px} .board .mid{font-size:22px} .t-display{font-size:34px} }
+@media (prefers-reduced-motion:reduce){ .toast{transition:none} }
+.msplit{grid-template-columns:minmax(0,1.55fr) minmax(0,1fr)}
+.asplit{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}
+@media (max-width:980px){ .msplit,.asplit{grid-template-columns:minmax(0,1fr)} }
+@media (max-width:560px){ .wprow{grid-template-columns:1fr 1fr!important} .wprow .wp{grid-column:1/-1;order:3} .wprow span:last-child{text-align:right} }
+
+/* phones and installed apps: keep clear of the status bar, notch and gesture bar */
+.npl .top{padding-top:max(12px,env(safe-area-inset-top,0px))}
+.npl{-webkit-tap-highlight-color:transparent}
+@media (max-width:760px){
+  .npl .top{padding-top:max(10px,env(safe-area-inset-top,0px))}
+  .npl .nav{padding-bottom:max(6px,env(safe-area-inset-bottom,0px))}
+}
+
+/* phone: the main match action rides in a sticky bar above the bottom nav */
+.mact{display:none}
+@media (max-width:760px){
+  .mact{display:block;position:sticky;bottom:calc(58px + env(safe-area-inset-bottom,0px));z-index:4;margin:16px -16px 0;padding:10px 16px;background:var(--surface);border-top:1px solid var(--rule);max-height:50vh;overflow-y:auto}
+  .mctl .mainact{display:none}
+}
+@media (max-width:760px){ .toast{bottom:calc(132px + env(safe-area-inset-bottom,0px))} }

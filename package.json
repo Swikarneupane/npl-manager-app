@@ -1,0 +1,77 @@
+{
+  "name": "npl-manager",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "simulate": "node scripts/simulate-seasons.js",
+    "test:api": "node scripts/test-api.js",
+    "desktop": "vite build && electron .",
+    "desktop:dev": "electron .",
+    "dist:linux": "vite build && electron-builder --linux AppImage deb",
+    "android:sync": "vite build && cap sync android",
+    "android:apk": "vite build && cap sync android && cd android && ./gradlew assembleDebug",
+    "test:resume": "node scripts/test-resume.js"
+  },
+  "devDependencies": {
+    "@capacitor/android": "8.5.0",
+    "@capacitor/cli": "8.5.0",
+    "@capacitor/core": "8.5.0",
+    "@capacitor/filesystem": "8.1.2",
+    "@fontsource-variable/anek-devanagari": "5.3.0",
+    "@fontsource-variable/anek-latin": "5.3.0",
+    "@fontsource/ibm-plex-sans": "5.3.0",
+    "@fontsource/ibm-plex-sans-devanagari": "5.3.0",
+    "@vitejs/plugin-react": "4.3.1",
+    "electron": "42.8.0",
+    "electron-builder": "26.15.7",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-router-dom": "6.26.2",
+    "vite": "5.4.8"
+  },
+  "description": "NPL Manager: a text-based Nepal Premier League franchise game",
+  "author": {
+    "name": "NPL Manager"
+  },
+  "homepage": "https://github.com/",
+  "main": "electron/main.cjs",
+  "build": {
+    "appId": "com.nplmanager.app",
+    "productName": "NPL Manager",
+    "executableName": "npl-manager",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "asar": true,
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Game",
+      "icon": "build/icon.png",
+      "synopsis": "Nepal Premier League franchise manager",
+      "maintainer": "NPL Manager <npl-manager@example.com>",
+      "artifactName": "NPL-Manager-${version}-${arch}.${ext}",
+      "syncDesktopName": true
+    },
+    "deb": {
+      "packageCategory": "games"
+    }
+  },
+  "dependencies": {},
+  "desktopName": "npl-manager.desktop"
+}

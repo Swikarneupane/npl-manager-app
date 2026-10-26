@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NPL Manager</string>
+    <string name="title_activity_main">NPL Manager</string>
+    <string name="package_name">com.nplmanager.app</string>
+    <string name="custom_url_scheme">com.nplmanager.app</string>
+</resources>

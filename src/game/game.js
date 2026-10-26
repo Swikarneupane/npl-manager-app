@@ -1,0 +1,525 @@
+import {NE_TEAM,TEAMS,SQUADS,FREE_NEP,FREE_OS,HISTORY,FIX2026,PLAYOFF_DATES2026,NEP_NAMES,PROV_BIAS,OS_NAMES,COUNTRY_NAMES,PROVINCES} from './data.js';
+import {R,ri,rf,pick,clamp,shuffle,isSpin,isPace,fmtL,ovr,calcValue,mkPlayer,Match,setPID,getPID} from './engine.js';
+// ===== Game state & league logic =====
+const SLABS={NEP:[12,9,6],OS:[30,22,15]};
+const OS_CAP=150, DOM_CAP=90, MAX_OS=8, MIN_OS=6, MAX_SQUAD=22, MIN_SQUAD=18;
+const PERSONAS=['Big spender','Balanced','Bargain hunter','Youth builder','Loyalist','Balanced','Big spender','Bargain hunter'];
+class Game{
+  constructor(s){ this.s=s; if(s&&s.pid) setPID(s.pid); }
+  get players(){return this.s.players;} get teams(){return this.s.teams;} get user(){return this.s.user;} get year(){return this.s.year;}
+  P(id){return this.s.players[id];}
+  static create(userTeam,opts){
+    setPID(1);
+    const s={v:1,year:2026,phase:'preseason',user:userTeam,lang:opts.lang||'en',manager:{name:opts.manager||'Manager',rep:40,career:[]},
+      settings:{mode:opts.mode||'key',speed:2,megaEvery:3,nextMega:2027,retain:3,autoXI:false,theme:'auto',nepNum:false,pauseDRS:true,animate:true,autosave:true},
+      teams:{},players:{},fixtures:[],table:{},history:JSON.parse(JSON.stringify(HISTORY)),records:{},inbox:[],retiredList:[],hof:[],news:[],seasonDone:false};
+    const personas=shuffle(PERSONAS.slice());
+    TEAMS.forEach((t,i)=>{ s.teams[t.id]={...t,squad:[],purse:DOM_CAP,osPurse:OS_CAP,balance:200,fans:55+ri(0,20),ticket:500,board:60,objective:null,
+      xi:null,order:null,captainId:null,training:'Normal',persona:personas[i],rtm:0,results:[]}; });
+    const G=new Game(s);
+    for(const tid in SQUADS){ for(const a of SQUADS[tid]){ const p=mkPlayer(a,tid,2026); p.prov=p.nat==='NEP'? (s.teams[tid].province):null; p.hist.push({year:2026,team:tid}); s.players[p.id]=p; s.teams[tid].squad.push(p.id); if(p.name===s.teams[tid].captain) s.teams[tid].captainId=p.id; } }
+    for(const a of FREE_NEP){ const p=mkPlayer(a,null,2026); p.prov=pick(PROVINCES); s.players[p.id]=p; }
+    for(const a of FREE_OS){ const p=mkPlayer(a,null,2026); s.players[p.id]=p; }
+    // fictional uncapped domestic pool
+    for(let i=0;i<16;i++){ const p=G.genNepali(ri(18,22)); s.players[p.id]=p; }
+    // salaries
+    for(const tid in s.teams){ G.initSalaries(tid); }
+    s.pid=getPID();
+    G.setObjectives(); G.makeFixtures2026();
+    G.news(`Welcome to ${s.teams[userTeam].name}. The 2026 season (NPL Season 3) starts on October 26 at Kirtipur.`,'board');
+    G.news(`The ICC has sanctioned the NPL. Squads may now carry 6 to 8 overseas players, with exactly 4 in the playing XI.`,'league');
+    return G;
+  }
+  initSalaries(tid){
+    const t=this.teams[tid]; const dom=t.squad.map(id=>this.P(id)).filter(p=>p.nat==='NEP'&&!p.marquee);
+    let tot=dom.reduce((a,p)=>a+p.value,0); const scale=tot>84?84/tot:1;
+    dom.forEach(p=>{p.salary=Math.max(2,Math.round(p.value*scale*2)/2);});
+    t.squad.map(id=>this.P(id)).forEach(p=>{ if(p.marquee) p.salary=calcValue(p); if(p.nat!=='NEP') p.salary=p.value; p.contractTo=this.s.settings.nextMega-1; });
+    this.recalcPurse(tid);
+  }
+  recalcPurse(tid){
+    const t=this.teams[tid]; let d=0,o=0;
+    for(const id of t.squad){const p=this.P(id); if(p.nat==='NEP'){ if(!p.marquee) d+=p.salary; } else o+=p.salary;}
+    t.purse=Math.round((DOM_CAP-d)*10)/10; t.osPurse=Math.round((OS_CAP-o)*10)/10;
+  }
+  news(text,kind,extra){ this.s.inbox.unshift({id:'n'+Date.now()+ri(0,9999),y:this.year,text,kind:kind||'info',read:false,...(extra||{})}); if(this.s.inbox.length>120) this.s.inbox.length=120; }
+  genNepali(age,prov){
+    prov=prov||pick(PROVINCES); const np=NEP_NAMES[prov]; const bias=PROV_BIAS[prov];
+    let name; do{ name=pick(np.f)+' '+pick(np.l);}while(Object.values(this.s.players).some(p=>p.name===name)&&R()<0.9);
+    const r=R(); let role= r<0.32?'BAT': r<0.68?'BOWL': r<0.88?'AR':'WK';
+    let type='';
+    if(role==='BOWL'||role==='AR'){ const sp=(bias.spin+3)/(bias.spin+bias.pace+6); type= R()<sp? pick(['OB','LB','SLA','SLA','OB']) : pick(['RFM','RM','RFM','LFM','RF']); }
+    const base=ri(40,52);
+    const bat= role==='BOWL'?ri(20,35): base+bias.bat+ri(-2,4);
+    const bowl= role==='BAT'?0: role==='WK'?0: base+(isSpin(type)?bias.spin:bias.pace)+ri(-2,4);
+    const p=mkPlayer([name,'NEP',age,role,clamp(bat,15,70),clamp(bowl,0,70),type,R()<0.25?'L':'R'],null,this.s?this.year:2026);
+    p.prov=prov; p.real=false; p.pot=clamp(ovr(p)+ri(8,32),ovr(p)+5,92); p.value=calcValue(p); p.uncapped=true;
+    return p;
+  }
+  genOverseas(){
+    const nat=pick(Object.keys(OS_NAMES)); const pool=OS_NAMES[nat]; const name=pick(pool.f)+' '+pick(pool.l);
+    const age=ri(22,29); const r=R(); const role=r<0.35?'BAT':r<0.7?'BOWL':r<0.87?'AR':'WK';
+    const type= role==='BOWL'||role==='AR'? pick(['RF','RFM','LFM','OB','LB','SLA','RF','LF']):'';
+    const lvl=ri(56,76); const ar=role==='AR'?8:0;
+    const p=mkPlayer([name,nat,age,role, role==='BOWL'?ri(20,40):lvl-ar+ri(-3,3), role==='BAT'||role==='WK'?0:lvl-ar+ri(-3,3), type, R()<0.3?'L':'R'],null,this.year);
+    p.real=false; p.pot=clamp(ovr(p)+ri(0,12),ovr(p),92); p.value=calcValue(p); return p;
+  }
+  osCount(tid){return this.teams[tid].squad.filter(id=>this.P(id).nat!=='NEP').length;}
+  // ===== Lineups =====
+  autoXI(tid){
+    const t=this.teams[tid]; const av=t.squad.map(id=>this.P(id)).filter(p=>!p.inj && !p.rest);
+    const os=av.filter(p=>p.nat!=='NEP'), nep=av.filter(p=>p.nat==='NEP');
+    const osMax=Math.min(4,os.length), nepMax=11-osMax;
+    const xi=[]; let osN=0,nepN=0;
+    const score=p=>ovr(p)+p.form*0.6-(100-p.fit)*0.1;
+    const add=p=>{xi.push(p); if(p.nat==='NEP') nepN++; else osN++;};
+    const can=p=>!xi.includes(p) && (p.nat==='NEP'? nepN<nepMax : osN<osMax);
+    const wks=av.filter(p=>p.role==='WK').sort((a,b)=>score(b)-score(a));
+    if(wks.length) add(wks[0]);
+    while(xi.length<11){
+      const bowlers=xi.filter(p=>p.bowl>=50).length, batters=xi.filter(p=>p.bat>=55).length;
+      let best=null,bs=-1e9;
+      for(const p of av){ if(!can(p)) continue; let sc=score(p);
+        if(bowlers<5&&p.bowl>=50) sc+=14; if(bowlers>=6&&p.role==='BOWL') sc-=12; if(batters<6&&p.bat>=55) sc+=9; if(p.role==='WK'&&xi.some(x=>x.role==='WK')) sc-=4;
+        if(sc>bs){bs=sc;best=p;} }
+      if(!best) break; add(best);
+    }
+    return xi.map(p=>p.id);
+  }
+  autoOrder(xi){
+    const ps=xi.map(id=>this.P(id));
+    const top=ps.filter(p=>p.role!=='BOWL'||p.bat>=50).sort((a,b)=>b.bat-a.bat);
+    const tail=ps.filter(p=>!top.includes(p)).sort((a,b)=>b.bat-a.bat);
+    // openers: two best among top that are BAT/WK; then rest by bat
+    return top.concat(tail).map(p=>p.id);
+  }
+  validXI(tid,xi){
+    const t=this.teams[tid]; if(!xi||xi.length!==11) return false;
+    const os=xi.filter(id=>this.P(id).nat!=='NEP').length; const osAvail=t.squad.filter(id=>this.P(id).nat!=='NEP'&&!this.P(id).inj).length;
+    if(os>4) return false; if(os<Math.min(4,osAvail)) return false;
+    return xi.every(id=>t.squad.includes(id)&&!this.P(id).inj);
+  }
+  lineup(tid){
+    const t=this.teams[tid]; let xi, order;
+    if(tid===this.user && !this.s.settings.autoXI && this.validXI(tid,t.xi)){ xi=t.xi.slice(); order=(t.order&&t.order.length===11&&t.order.every(id=>xi.includes(id)))?t.order.slice():this.autoOrder(xi); }
+    else { xi=this.autoXI(tid); order=this.autoOrder(xi); if(tid===this.user){ t.xi=xi.slice(); t.order=order.slice(); } }
+    const ps=xi.map(id=>this.P(id));
+    let keeper=(ps.filter(p=>p.role==='WK').sort((a,b)=>b.bat-a.bat)[0]||ps.slice().sort((a,b)=>b.field-a.field)[0]).id;
+    if(tid===this.user && t.keeperId && xi.includes(t.keeperId)) keeper=t.keeperId;
+    let cap=t.captainId&&xi.includes(t.captainId)?t.captainId:ps.slice().sort((a,b)=>ovr(b)-ovr(a))[0].id;
+    return {xi,order,keeper,captain:cap};
+  }
+  // ===== Fixtures =====
+  makeFixtures2026(){
+    this.s.fixtures=FIX2026.map((f,i)=>({n:i+1,home:f[0],away:f[1],date:f[2],stage:'L',res:null,night:i%2===1||[0,2,3,5,8].includes(i)}));
+    this.s.fixtures.forEach(f=>f.night = /Oct 26|Oct 28|Nov 1/.test(f.date)? true : f.night);
+    this.resetTable();
+  }
+  makeFixtures(){
+    const ids=Object.keys(this.teams); const rounds=[]; const arr=shuffle(ids.slice());
+    // circle method
+    const n=arr.length; for(let r=0;r<n-1;r++){ const pairs=[]; for(let i=0;i<n/2;i++){ const a=arr[i],b=arr[n-1-i]; pairs.push(R()<0.5?[a,b]:[b,a]); } rounds.push(pairs); arr.splice(1,0,arr.pop()); }
+    const list=[]; rounds.forEach(r=>shuffle(r).forEach(p=>list.push(p)));
+    const start=new Date(this.year,9,24+ri(0,6)); let day=0;
+    this.s.fixtures=list.map((p,i)=>{ if(i>0 && i%2===0) day+= (R()<0.3?2:1); const d=new Date(start.getTime()+day*86400000);
+      return {n:i+1,home:p[0],away:p[1],date:d.toLocaleString('en-US',{month:'short',day:'numeric'}),stage:'L',res:null,night:i%2===1}; });
+    this.resetTable();
+  }
+  resetTable(){ this.s.table={}; for(const id in this.teams) this.s.table[id]={p:0,w:0,l:0,nr:0,pts:0,rf:0,bf:0,ra:0,ba:0}; }
+  standings(){
+    const T=this.s.table; return Object.keys(T).map(id=>({id,...T[id],nrr: (T[id].bf?T[id].rf/(T[id].bf/6):0)-(T[id].ba?T[id].ra/(T[id].ba/6):0)}))
+      .sort((a,b)=>b.pts-a.pts||b.nrr-a.nrr);
+  }
+  nextFixture(){ return this.s.fixtures.find(f=>!f.res); }
+  // ===== Playing matches =====
+  newMatch(f){ return new Match(this,f.home,f.away,{lang:this.s.lang,night:f.night,stage:f.stage}); }
+  async playFixture(f,hooks){
+    const m=this.newMatch(f); await m.run(hooks); this.recordMatch(m,f); return m;
+  }
+  recordMatch(m,f){
+    const y=this.year; const res=m.result; const [i1,i2]=m.inns;
+    f.res={winner:res.winner||null,nr:!!res.nr,tie:!!res.tie,text:res.text,mom:res.mom||null,
+      sc:m.inns.map(i=>({t:i.bat,r:i.runs,w:i.wkts,b:i.balls})),overs:m.overs};
+    f.card=this.compactCard(m);
+    const played=new Set();
+    for(const inn of m.inns){
+      for(const id in inn.bs){ const s=inn.bs[id]; const p=this.P(id); const st=this.st(p,y); played.add(id);
+        if(s.batted||s.in||s.b>0||s.out){ st.inn++; st.r+=s.r; st.b+=s.b; st.f+=s.f; st.s+=s.s; if(!s.out) st.no++; if(s.r>st.hs||(s.r===st.hs&&!s.out)){st.hs=s.r; st.hsNo=!s.out;} if(s.r>=100) st.h++; else if(s.r>=50) st.ff++;
+          p.form=clamp(p.form*0.7+(s.r-18)/9+(s.b>8?(s.r/s.b-1.25)*3:0),-10,10);
+          this.recBat(p,s,f);
+        }
+      }
+      for(const id in inn.bw){ const s=inn.bw[id]; const p=this.P(id); const st=this.st(p,y);
+        st.bb+=s.balls; st.rc+=s.r; st.w+=s.w; if(s.w>st.bw||(s.w===st.bw&&s.r<st.br)){st.bw=s.w;st.br=s.r;}
+        if(s.balls>0){ const eco=s.r/(s.balls/6); p.form=clamp(p.form*0.8+s.w*1.6-(eco-8)*0.5,-10,10); }
+        this.recBowl(p,s,f);
+      }
+    }
+    for(const side of [m.home,m.away]) for(const id of m.lineups[side].xi){ const p=this.P(id); played.add(id); this.st(p,y).m++; p.fit=clamp(p.fit-ri(2,6)-(this.teams[side].training==='Intense'?2:0),40,100); p.played=(p.played||0)+1; p.lastPlayed=f.n; }
+    if(m.catches) for(const id in m.catches) this.st(this.P(id),y).ct+=m.catches[id];
+    if(res.mom){ this.st(this.P(res.mom),y).mom++; }
+    // non-playing squad members recover + injuries tick
+    for(const side of [m.home,m.away]){
+      const t=this.teams[side];
+      for(const id of t.squad){ const p=this.P(id); if(!m.lineups[side].xi.includes(id)){ p.fit=clamp(p.fit+(t.training==='Light'?10:7),0,100); if(p.inj>0 && !p.injNew) p.inj--; p.rest=false; } p.form*=0.97; p.injNew=false; }
+      // training injury risk
+      if(t.training==='Intense' && R()<0.05){ const p=this.P(pick(t.squad)); if(!p.inj){p.inj=ri(1,2); if(side===this.user) this.news(`${p.name} picked up a knock in an intense training session and will miss ${p.inj} match${p.inj>1?'es':''}.`,'injury');} }
+    }
+    for(const side of [m.home,m.away]) for(const id of m.lineups[side].xi){ const p=this.P(id); if(p.inj>0 && !p.injCounted){ p.injCounted=true; if(side===this.user) this.news(`${p.name} is injured and will miss ${p.inj} match${p.inj>1?'es':''}.`,'injury',{ne:`${p.name} चोटका कारण ${p.inj} खेल बाहिर`}); } }
+    for(const id in this.players){ this.players[id].injCounted=false; }
+    // table
+    if(f.stage==='L'){
+      const T=this.s.table;
+      for(const side of [m.home,m.away]) T[side].p++;
+      if(res.nr||res.tie){ for(const side of [m.home,m.away]){T[side].nr++; T[side].pts++;} }
+      else { T[res.winner].w++; T[res.winner].pts+=2; T[res.loser].l++; }
+      if(!res.nr){
+        const q=m.maxBalls;
+        for(let k=0;k<2;k++){ const inn=m.inns[k]; const opp=m.inns[1-k]; const bf=(inn.wkts>=10?q:inn.balls); const t=T[inn.bat]; t.rf+=inn.runs; t.bf+=bf||1; T[inn.bowl].ra+=inn.runs; T[inn.bowl].ba+=bf||1; }
+      }
+    }
+    // team records
+    for(const inn of m.inns){ if(inn.wkts>=10||inn.balls>=m.maxBalls||inn.target&&inn.runs>=inn.target) this.recTeam(inn,f); }
+    if(m.hattricks) for(const id of m.hattricks) this.news(`HAT-TRICK! ${this.P(id).name} (${this.P(id).team}) took a hat-trick in match ${f.n}.`,'league');
+    // fans & finance
+    if(res.winner){ this.teams[res.winner].fans=clamp(this.teams[res.winner].fans+1.5,0,100); this.teams[res.loser].fans=clamp(this.teams[res.loser].fans-0.8,0,100); }
+    const home=this.teams[f.home]; const demand=6000+home.fans*110; const att=Math.min(15000,Math.round(demand*Math.pow(500/home.ticket,0.85)));
+    f.att=att; const gate=att*home.ticket/1e5*0.3; home.balance+=gate; if(home.ledger) home.ledger.gate+=gate;
+    home.fans=clamp(home.fans+ (home.ticket<400?0.4: home.ticket>900?-0.6:0),0,100);
+    // user news
+    if(f.home===this.user||f.away===this.user){ const t=this.teams[this.user]; if(res.winner===this.user) t.board=clamp(t.board+2,0,100); else if(res.winner) t.board=clamp(t.board-2,0,100); t.formStr=(t.formStr||''); this.matchNews(m,f); }
+    for(const side of [m.home,m.away]){ const t=this.teams[side]; t.form=(t.form||[]).concat([res.winner===side?'W':res.winner?'L':'–']).slice(-5); }
+    this.s.pid=getPID();
+  }
+  st(p,y){ p.stats[y]=p.stats[y]||{m:0,inn:0,r:0,b:0,no:0,f:0,s:0,hs:0,hsNo:false,ff:0,h:0,bb:0,rc:0,w:0,bw:0,br:999,ct:0,mom:0,team:p.team}; if(p.team) p.stats[y].team=p.team; return p.stats[y]; }
+  recBat(p,s,f){ const R=this.s.records; if(!R.hs||s.r>R.hs.v||(s.r===R.hs.v&&!s.out)) R.hs={v:s.r,no:!s.out,b:s.b,who:p.name,team:p.team,y:this.year}; }
+  recBowl(p,s,f){ const R=this.s.records; if(!R.bb||s.w>R.bb.w||(s.w===R.bb.w&&s.r<R.bb.r)) R.bb={w:s.w,r:s.r,who:p.name,team:p.team,y:this.year}; }
+  recTeam(inn,f){ const R=this.s.records; if(!R.ht||inn.runs>R.ht.v) R.ht={v:inn.runs,w:inn.wkts,team:inn.bat,opp:inn.bowl,y:this.year}; if(inn.wkts>=10&&(!R.lt||inn.runs<R.lt.v)) R.lt={v:inn.runs,team:inn.bat,opp:inn.bowl,y:this.year}; }
+  compactCard(m){
+    return m.inns.map(inn=>({t:inn.bat,r:inn.runs,w:inn.wkts,b:inn.balls,ex:inn.extras,
+      bat:inn.order.filter(id=>inn.bs[id].batted||inn.bs[id].in||inn.bs[id].b>0||inn.bs[id].out).map(id=>[this.P(id).name,inn.bs[id].r,inn.bs[id].b,inn.bs[id].f,inn.bs[id].s,inn.bs[id].out?inn.bs[id].how:'not out']),
+      bowl:Object.keys(inn.bw).map(id=>[this.P(id).name,inn.bw[id].balls,inn.bw[id].r,inn.bw[id].w,inn.bw[id].wd+inn.bw[id].nb]),fow:inn.fow.slice()}));
+  }
+  matchNews(m,f){
+    const u=this.user, T=this.teams; const res=m.result; const opp=f.home===u?f.away:f.home;
+    let head;
+    if(res.nr) head=`Rain ruins ${T[u].name} v ${T[opp].name} at Kirtipur`;
+    else if(res.winner===u) head=pick([`${T[u].name} beat ${T[opp].name}`,`Win for ${T[u].name} as ${T[opp].name} fall short`,`${T[u].name} get the job done against ${T[opp].name}`]);
+    else head=pick([`${T[opp].name} too strong for ${T[u].name}`,`Defeat for ${T[u].name} against ${T[opp].name}`,`${T[u].name} left to regroup after loss to ${T[opp].name}`]);
+    const mom=res.mom?` Player of the match: ${this.P(res.mom).name}.`:'';
+    const ne= res.winner? `${NE_TEAM[res.winner]}ले ${NE_TEAM[res.loser]}लाई हरायो` : 'वर्षाका कारण खेलको नतिजा निस्केन';
+    this.news(head,'match',{detail:`${res.text}.${mom}`,ne,fix:f.n});
+    if(R()<0.33) this.makeEvent(m,f);
+  }
+  makeEvent(m,f){
+    const u=this.user, t=this.teams[u]; const xi=m.lineups[u].xi;
+    const benched=t.squad.map(id=>this.P(id)).filter(p=>!xi.includes(p.id)&&!p.inj&&ovr(p)>=60);
+    const stars=xi.map(id=>this.P(id)).sort((a,b)=>ovr(b)-ovr(a));
+    const tired=xi.map(id=>this.P(id)).filter(p=>p.fit<70);
+    const opts=[];
+    if(benched.length) { const p=pick(benched); opts.push({text:`${p.name} has asked to see you. He feels he deserves a place in the XI.`,choices:[{l:'Promise him a chance',fx:{pid:p.id,morale:12,promise:true}},{l:'Tell him to keep working',fx:{pid:p.id,morale:-10}}]}); }
+    if(stars.length) { const p=stars[0]; opts.push({text:`A sponsor wants ${p.name} for an advert shoot on the rest day. They will pay Rs 3 lakh.`,choices:[{l:'Agree',fx:{balance:3,pid:p.id,fit:-8}},{l:'Decline, he needs rest',fx:{board:-2}}]}); }
+    if(m.result.loser===u) opts.push({text:'The press conference after the defeat is tense. A reporter asks if the team is good enough.',choices:[{l:'Back the players publicly',fx:{team:6}},{l:'Demand more from the senior players',fx:{team:-4,board:3,form:1}}]});
+    if(tired.length){ const p=pick(tired); opts.push({text:`The physio warns that ${p.name} is fatigued (fitness ${Math.round(p.fit)}%).`,choices:[{l:'Rest him next match',fx:{pid:p.id,rest:true}},{l:'He plays',fx:{}}]}); }
+    opts.push({text:`Fans from ${t.city} are asking for more chances for local youngsters.`,choices:[{l:'Promise to give youth a chance',fx:{fans:3}},{l:'Winning comes first',fx:{fans:-2,board:2}}]});
+    const ev=pick(opts); this.news(ev.text,'event',{choices:ev.choices,done:false});
+  }
+  applyEvent(n,ci){
+    const c=n.choices[ci]; const fx=c.fx||{}; const t=this.teams[this.user];
+    if(fx.pid){ const p=this.P(fx.pid); if(fx.morale) p.morale=clamp(p.morale+fx.morale,0,100); if(fx.fit) p.fit=clamp(p.fit+fx.fit,30,100); if(fx.rest) p.rest=true; }
+    if(fx.balance) t.balance+=fx.balance; if(fx.board) t.board=clamp(t.board+fx.board,0,100); if(fx.fans) t.fans=clamp(t.fans+fx.fans,0,100);
+    if(fx.team) t.squad.forEach(id=>{const p=this.P(id); p.morale=clamp(p.morale+fx.team,0,100);});
+    if(fx.form) t.squad.forEach(id=>{const p=this.P(id); if(ovr(p)>65) p.form=clamp(p.form+fx.form,-10,10);});
+    n.done=true; n.picked=c.l;
+  }
+  // ===== Season flow =====
+  setObjectives(){
+    const str=Object.keys(this.teams).map(id=>({id,v:this.strength(id)})).sort((a,b)=>b.v-a.v);
+    str.forEach((x,i)=>{ const t=this.teams[x.id]; t.expRank=i+1; t.objective= i<2?{txt:'Win the title or reach the final',rank:2}: i<5?{txt:'Reach the playoffs (top 4)',rank:4}:{txt:'Finish in the top 6',rank:6}; });
+  }
+  strength(tid){ const xi=this.autoXI(tid); return xi.reduce((a,id)=>a+ovr(this.P(id)),0)/11; }
+  leagueDone(){ return this.s.fixtures.filter(f=>f.stage==='L').every(f=>f.res); }
+  setupPlayoffs(){
+    const st=this.standings(); const d=this.year===2026?PLAYOFF_DATES2026:{Q1:'Playoffs',EL:'Playoffs',Q2:'Playoffs',F:'Final'};
+    const n=this.s.fixtures.length;
+    this.s.fixtures.push({n:n+1,stage:'Q1',home:st[0].id,away:st[1].id,date:d.Q1,res:null,night:true});
+    this.s.fixtures.push({n:n+2,stage:'EL',home:st[2].id,away:st[3].id,date:d.EL,res:null,night:true});
+    this.s.phase='playoffs';
+    this.news(`League stage complete. Qualifier 1: ${this.teams[st[0].id].name} v ${this.teams[st[1].id].name}. Eliminator: ${this.teams[st[2].id].name} v ${this.teams[st[3].id].name}.`,'league');
+  }
+  advancePlayoffs(){
+    const F=this.s.fixtures; const q1=F.find(f=>f.stage==='Q1'), el=F.find(f=>f.stage==='EL'), q2=F.find(f=>f.stage==='Q2'), fin=F.find(f=>f.stage==='F');
+    const d=this.year===2026?PLAYOFF_DATES2026:{Q2:'Playoffs',F:'Final'};
+    const st=this.standings(); const rank=id=>st.findIndex(x=>x.id===id);
+    const w=f=>f.res.winner|| (rank(f.home)<rank(f.away)?f.home:f.away); // NR -> higher seed
+    const l=f=>w(f)===f.home?f.away:f.home;
+    if(q1.res&&el.res&&!q2){ F.push({n:F.length+1,stage:'Q2',home:l(q1),away:w(el),date:d.Q2,res:null,night:true}); }
+    const q2b=F.find(f=>f.stage==='Q2');
+    if(q2b&&q2b.res&&!fin){ F.push({n:F.length+1,stage:'F',home:w(q1),away:w(q2b),date:d.F,res:null,night:true}); this.news(`FINAL: ${this.teams[w(q1)].name} v ${this.teams[w(q2b)].name}.`,'league'); }
+    const finb=F.find(f=>f.stage==='F');
+    if(finb&&finb.res){ return w(finb); }
+    return null;
+  }
+  seasonAwards(champ){
+    const y=this.year; const ps=Object.values(this.players).filter(p=>p.stats[y]);
+    const by=(f)=>ps.slice().sort((a,b)=>f(b)-f(a));
+    const runs=by(p=>p.stats[y].r).slice(0,5), wk=by(p=>p.stats[y].w*1000-p.stats[y].rc).slice(0,5);
+    const pot=by(p=>{const s=p.stats[y]; return s.r+s.w*22+s.ct*6+s.mom*10;})[0];
+    const emerging=by(p=>{const s=p.stats[y]; return p.age<=22? s.r+s.w*22: -1;})[0];
+    const nepBest=by(p=>{const s=p.stats[y]; return p.nat==='NEP'? s.r+s.w*22: -1;})[0];
+    const final=this.s.fixtures.find(f=>f.stage==='F');
+    const runner= final.res.winner? (final.res.winner===final.home?final.away:final.home) : (champ===final.home?final.away:final.home);
+    const st=this.standings();
+    const h={year:y,champion:champ,runner,final:final.res.text,pot:`${pot.name} (${pot.team})`,emerging:emerging?`${emerging.name} (${emerging.team})`:'',bestNep:nepBest?`${nepBest.name} (${nepBest.team})`:'',
+      table:st.map(x=>[x.id,x.p,x.w,x.l,x.pts,Math.round(x.nrr*1000)/1000]),
+      runs:runs.map(p=>[p.name,p.stats[y].team,p.stats[y].r]),wkts:wk.map(p=>[p.name,p.stats[y].team,p.stats[y].w]),notes:[]};
+    this.s.history.push(h);
+    // prize money
+    this.teams[champ].balance+=100; this.teams[runner].balance+=50; if(this.teams[champ].ledger) this.teams[champ].ledger.prize+=100; if(this.teams[runner].ledger) this.teams[runner].ledger.prize+=50;
+    this.news(`${this.teams[champ].name} are the ${y} NPL champions!`,'league',{detail:`${final.res.text}. Player of the tournament: ${h.pot}. Platinum Cap: ${h.runs[0][0]} (${h.runs[0][2]} runs). Golden Cap: ${h.wkts[0][0]} (${h.wkts[0][2]} wickets).`,ne:`${NE_TEAM[champ]} ${y} को एनपीएल च्याम्पियन!`});
+    this.boardReview(champ,runner,st);
+    this.s.phase='seasonEnd';
+    return h;
+  }
+  boardReview(champ,runner,st){
+    const u=this.user,t=this.teams[u]; const pos=st.findIndex(x=>x.id===u)+1;
+    const madeFinal= champ===u||runner===u; const madePO=pos<=4;
+    let delta=0; const obj=t.objective;
+    const effRank= champ===u?1: runner===u?2: pos;
+    if(effRank<=obj.rank) delta+=14; else delta-= 6*(effRank-obj.rank);
+    if(champ===u) delta+=18;
+    if(t.balance<0) delta-=6;
+    t.board=clamp(t.board+delta,0,100);
+    const M=this.s.manager; M.rep=clamp(M.rep+(champ===u?15:madeFinal?8:madePO?4:-3),0,100);
+    M.career.push({year:this.year,team:u,pos,champ:champ===u,runner:runner===u});
+    this.news(`Board review: you finished ${ordinal(pos)}${champ===u?' and won the title':runner===u?' and reached the final':''}. Objective was "${obj.txt}". Board confidence is now ${t.board}%.`,'board');
+    if(t.board<30){ this.s.sacked=true; this.s.offers=this.jobOffers(true); this.news('The board has decided to relieve you of your duties. Other franchises have been in touch.','board'); }
+    else if(M.rep>=60 && R()<0.5){ this.s.offers=this.jobOffers(false); if(this.s.offers.length) this.news(`Your reputation is growing. ${this.s.offers.map(id=>this.teams[id].name).join(' and ')} would like to talk about their head-coach role.`,'board'); }
+  }
+  jobOffers(sacked){
+    const st=this.standings(); const ids=st.map(x=>x.id).filter(id=>id!==this.user);
+    const pool= sacked? ids.slice(-4) : ids.slice(0,5);
+    return shuffle(pool).slice(0,sacked?3:2);
+  }
+  takeJob(tid){ const old=this.user; this.s.user=tid; this.teams[tid].board=55; this.teams[tid].xi=null; this.teams[tid].order=null; this.s.sacked=false; this.s.offers=null; this.news(`You are the new head coach of ${this.teams[tid].name}. Good luck!`,'board'); this.setObjectives(); }
+  // ===== Off-season =====
+  startOffseason(){
+    const y=this.year; const retired=[]; const nep=[], os=[];
+    for(const p of Object.values(this.players)){
+      if(p.retired) continue;
+      // retirement check (on current age, before birthday)
+      let chance=0;
+      if(p.age>=40) chance=1; else if(p.age>=39) chance=0.75; else if(p.age>=38) chance=0.55; else if(p.age>=37) chance=0.38; else if(p.age>=36) chance=0.24; else if(p.age>=35) chance=0.12;
+      if(chance>0&&chance<1){ if(ovr(p)>=75) chance*=0.6; if(p.form>4) chance*=0.8; if(!p.team) chance=Math.min(1,chance*1.5); }
+      if(R()<chance){ p.retired=true; retired.push(p); continue; }
+    }
+    for(const p of retired){ if(p.team){ const t=this.teams[p.team]; t.squad=t.squad.filter(x=>x!==p.id); if(t.captainId===p.id) t.captainId=null; } p.prevTeam=p.team; p.team=null; p.retiredYear=y;
+      const c=careerOf(p); const big=c.r>=1200||c.w>=60||(p.real&&ovr(p)>=78);
+      this.s.retiredList.push({id:p.id,name:p.name,nat:p.nat,age:p.age,y,r:c.r,w:c.w,m:c.m});
+      if(big) this.s.hof.push({name:p.name,nat:p.nat,y,r:c.r,w:c.w,m:c.m});
+      (p.nat==='NEP'?nep:os).push(p);
+    }
+    const userRet=retired.filter(p=>p.prevTeam===this.user);
+    if(retired.length) this.news(`${retired.length} players have retired`,'league',{ne:`${retired.length} खेलाडीले संन्यास लिए`,detail:`${retired.slice(0,14).map(p=>`${p.name} (${p.age})`).join(', ')}${retired.length>14?` and ${retired.length-14} more`:''}.`});
+    if(userRet.length) this.news(`From your squad, ${userRet.map(p=>p.name).join(', ')} ${userRet.length>1?'have':'has'} retired. Thank you for everything.`,'board');
+    // ageing & development
+    for(const p of Object.values(this.players)){ if(p.retired) continue; p.prevOvr=ovr(p); p.refusedBy=null; p.mood=null; this.develop(p); p.age++; p.form=p.form*0.3; p.fit=100; p.inj=0; p.morale=clamp(p.morale*0.7+21,0,100); p.value=calcValue(p); p.uncapped=p.uncapped&&!Object.keys(p.stats).length; }
+    // new players
+    const nNep=Math.max(14,nep.length+10), nOs=Math.max(6,os.length+4);
+    const newNames=[];
+    for(let i=0;i<nNep;i++){ const p=this.genNepali(ri(17,21)); this.players[p.id]=p; newNames.push(p); }
+    for(let i=0;i<nOs;i++){ const p=this.genOverseas(); this.players[p.id]=p; }
+    const gems=newNames.filter(p=>p.pot>=80);
+    this.news(`${nNep} young Nepali players and ${nOs} new overseas players have entered the player pool.${gems.length?` Scouts are excited about ${gems.length} high-potential youngster${gems.length>1?'s':''}.`:''}`,'league');
+    this.s.year++; this.s.pid=getPID();
+    this.s.mega = this.year===this.s.settings.nextMega;
+    this.s.newPlayers=newNames.map(p=>p.id); this.s.lastRetired=retired.map(p=>p.id);
+    this.s.phase='offseason';
+  }
+  develop(p){
+    const o=ovr(p); let d;
+    if(p.age<=20) d=ri(2,6); else if(p.age<=23) d=ri(1,5); else if(p.age<=26) d=ri(0,3); else if(p.age<=30) d=ri(-1,2); else if(p.age<=33) d=ri(-3,0); else d=ri(-5,-1);
+    if(isPace(p.type)&&p.age>=31) d-=1;
+    if(o+d>p.pot && d>0) d=Math.max(0,p.pot-o);
+    const t=p.team?this.teams[p.team]:null; if(t&&t.training==='Intense'&&d>0) d+=R()<0.5?1:0;
+    const fBat=p.focus==='Batting'?1.4:p.focus==='Bowling'?0.6:1, fBowl=p.focus==='Bowling'?1.4:p.focus==='Batting'?0.6:1;
+    if(p.role==='BAT'||p.role==='WK') p.bat=clamp(Math.round(p.bat+d*(p.focus==='Bowling'?0.8:1)),10,96);
+    else if(p.role==='BOWL') p.bowl=clamp(Math.round(p.bowl+d*(p.focus==='Batting'?0.8:1)),10,96);
+    else { p.bat=clamp(Math.round(p.bat+d*fBat*0.8+rf(-0.5,0.5)),10,96); p.bowl=clamp(Math.round(p.bowl+d*fBowl*0.8+rf(-0.5,0.5)),10,96); }
+    if(p.focus==='Fitness') p.field=clamp(p.field+1,30,95);
+    p.lastDev=d;
+  }
+  // AI trades are skipped; user trade proposals:
+  tradeEval(myPid,theirPid){
+    const a=this.P(myPid), b=this.P(theirPid); const them=this.teams[b.team];
+    if(a.nat!==b.nat && ((a.nat!=='NEP'&&this.osCount(b.team)>=MAX_OS) || (b.nat!=='NEP'&&this.osCount(this.user)>=MAX_OS))) return {ok:false,why:'Overseas limits would be broken.'};
+    let va=a.value*(a.age<=24?1.15:a.age>=33?0.8:1), vb=b.value*(b.age<=24?1.15:b.age>=33?0.8:1);
+    const need=this.needFor(b.team,a); va*=need;
+    const ok= va>=vb*1.08; return {ok, why: ok?`${them.name} accept the trade.`:`${them.name} say ${a.name} is not enough for ${b.name}.`};
+  }
+  doTrade(myPid,theirPid){
+    const a=this.P(myPid), b=this.P(theirPid); const ta=a.team, tb=b.team;
+    this.teams[ta].squad=this.teams[ta].squad.filter(x=>x!==a.id).concat([b.id]); this.teams[tb].squad=this.teams[tb].squad.filter(x=>x!==b.id).concat([a.id]);
+    a.team=tb; b.team=ta; a.hist.push({year:this.year,team:tb}); b.hist.push({year:this.year,team:ta});
+    [ta,tb].forEach(t=>{this.recalcPurse(t); const T=this.teams[t]; if(T.xi) T.xi=null;});
+    this.news(`TRADE: ${a.name} joins ${this.teams[tb].name}; ${b.name} joins ${this.teams[ta].name}.`,'league');
+  }
+  needFor(tid,p){
+    const sq=this.teams[tid].squad.map(id=>this.P(id));
+    const goodBowl=sq.filter(x=>x.bowl>=60).length, goodBat=sq.filter(x=>x.bat>=60).length, wk=sq.filter(x=>x.role==='WK').length;
+    let m=1;
+    if(p.bowl>=55&&goodBowl<6) m+=0.25; if(p.bat>=58&&goodBat<6) m+=0.25; if(p.role==='WK'&&wk<2) m+=0.3;
+    if(p.role==='WK'&&wk>=3) m-=0.3;
+    return m;
+  }
+  // ===== Retention =====
+  beginRetention(){
+    this.s.phase='retention';
+    const mega=this.s.mega;
+    for(const tid in this.teams){ const t=this.teams[tid]; t.retainSel=[]; t.releaseSel=[]; if(tid!==this.user) this.aiRetention(tid); }
+    this.news(mega?`MEGA AUCTION year! Every franchise may retain up to ${this.s.settings.retain} players. Unused retention slots become Right to Match (RTM) cards.`:`Mini auction year. Release the players you do not want; everyone else stays on their contract.`,'league');
+  }
+  aiRetention(tid){
+    const t=this.teams[tid]; const sq=t.squad.map(id=>this.P(id));
+    const keep=p=>ovr(p)+(p.age<=24?(p.pot-ovr(p))*0.4:0)-(p.age>=34?(p.age-33)*3:0);
+    if(this.s.mega){ const sorted=sq.sort((a,b)=>keep(b)-keep(a)); const sel=[]; let os=0; for(const p of sorted){ if(sel.length>=this.s.settings.retain) break; if(keep(p)<64) continue; if(p.nat!=='NEP'){ if(os>=1) continue; os++; } sel.push(p.id);} t.retainSel=sel; }
+    else { const rel=sq.filter(p=>{ const k=keep(p); return k<52 || (p.salary>p.value*1.6 && p.salary>=4) || (p.age>=35&&ovr(p)<66) || (t.persona==='Youth builder'&&p.age>=33); });
+      t.releaseSel=rel.sort((a,b)=>keep(a)-keep(b)).slice(0,6).map(p=>p.id); }
+  }
+  applyRetention(){
+    const mega=this.s.mega; const costs=SLABS;
+    for(const tid in this.teams){
+      const t=this.teams[tid];
+      if(mega){
+        const keep=t.retainSel.slice(0,this.s.settings.retain);
+        for(const id of t.squad){ const p=this.P(id); if(!keep.includes(id)){ p.prevTeam=tid; p.team=null; p.marquee=false; } else { const i=keep.indexOf(id); p.marquee=false; p.salary= p.nat==='NEP'? costs.NEP[i]: costs.OS[i]; p.contractTo=this.year+this.s.settings.megaEvery-1; } }
+        t.squad=keep.slice(); t.rtm=this.s.settings.retain-keep.length; t.xi=null; t.order=null;
+        if(t.captainId&&!keep.includes(t.captainId)) t.captainId=null;
+      } else {
+        for(const id of t.releaseSel){ const p=this.P(id); p.prevTeam=tid; p.team=null; if(p.marquee) p.marquee=false; }
+        t.squad=t.squad.filter(id=>!t.releaseSel.includes(id)); t.rtm=0;
+        if(t.captainId&&!t.squad.includes(t.captainId)) t.captainId=null; if(t.xi) t.xi=t.xi.filter(id=>t.squad.includes(id));
+      }
+      this.recalcPurse(tid);
+    }
+    if(mega) this.s.settings.nextMega=this.year+this.s.settings.megaEvery;
+  }
+  // ===== Auction =====
+  basePrice(p){ const o=ovr(p); if(p.nat==='NEP') return o>=68?10:o>=60?5:o>=54?3:2; return o>=80?30:o>=74?20:o>=66?10:o>=60?5:3; }
+  category(p){ const o=ovr(p); if(p.nat==='NEP') return p.uncapped?'Uncapped':o>=68?'Category A':o>=60?'Category B':'Category C'; return o>=78?'Overseas marquee':'Overseas'; }
+  incr(p,bid){ if(p.nat==='NEP') return bid<10?0.5:bid<20?1:2; return bid<20?1:bid<50?2:5; }
+  setupAuction(){
+    const pool=Object.values(this.players).filter(p=>!p.team&&!p.retired);
+    const top=pool.filter(p=>ovr(p)>=72).sort((a,b)=>ovr(b)-ovr(a)).slice(0,10);
+    const rest=pool.filter(p=>!top.includes(p));
+    const sets=[['Marquee set',top]];
+    const os=rest.filter(p=>p.nat!=='NEP').sort((a,b)=>ovr(b)-ovr(a));
+    const nep=rest.filter(p=>p.nat==='NEP'&&!p.uncapped).sort((a,b)=>ovr(b)-ovr(a));
+    const unc=rest.filter(p=>p.nat==='NEP'&&p.uncapped).sort((a,b)=>ovr(b)-ovr(a));
+    sets.push(['Overseas set 1',os.slice(0,12)],['Nepali category A',nep.filter(p=>ovr(p)>=68)],['Overseas set 2',os.slice(12,this.s.mega?40:26)],['Nepali category B',nep.filter(p=>ovr(p)>=60&&ovr(p)<68)],['Nepali category C',nep.filter(p=>ovr(p)<60).slice(0,this.s.mega?60:30)],['Uncapped youngsters',unc.slice(0,this.s.mega?30:20)]);
+    const lots=[]; for(const [name,arr] of sets) for(const p of arr) lots.push({pid:p.id,set:name});
+    this.s.auction={kind:this.s.mega?'mega':'mini',lots,i:0,cur:null,sold:[],unsold:[],accel:false,log:[],shortlist:(this.s.auction&&this.s.auction.shortlist)||[]};
+    for(const tid in this.teams){ this.teams[tid].maxBids={}; }
+    this.s.phase='auction';
+  }
+  slotsNeeded(tid){ const t=this.teams[tid]; const os=this.osCount(tid); const nep=t.squad.length-os; return {nep:Math.max(0,12-nep),os:Math.max(0,MIN_OS-os),total:Math.max(0,MIN_SQUAD-t.squad.length)}; }
+  canAdd(tid,p){ const t=this.teams[tid]; const os=this.osCount(tid); if(t.squad.length>=MAX_SQUAD) return false; if(p.nat!=='NEP'&&os>=MAX_OS) return false; if(p.nat==='NEP'&&(t.squad.length-os)>=14) return false; return true; }
+  budgetOf(tid,p){ const t=this.teams[tid]; return p.nat==='NEP'?t.purse:t.osPurse; }
+  reserveFor(tid,p){ const n=this.slotsNeeded(tid); return p.nat==='NEP'? Math.max(0,n.nep-1)*2.5 : Math.max(0,n.os-1)*6; }
+  aiMax(tid,p){
+    if(!this.canAdd(tid,p)) return 0;
+    const t=this.teams[tid]; const per=t.persona;
+    let v=p.value*this.needFor(tid,p);
+    const n=this.slotsNeeded(tid); if(p.nat!=='NEP'&&n.os>0) v*=1.2; if(p.nat==='NEP'&&n.nep>0) v*=1.1;
+    if(per==='Big spender') v*=1.25; else if(per==='Bargain hunter') v*=0.85; else if(per==='Youth builder') v*= p.age<=23?1.35: p.age>=32?0.75:1; else if(per==='Loyalist'&&p.prevTeam===tid) v*=1.4;
+    if(p.age<=21&&p.pot>=78) v*=1+(p.pot-78)/40;
+    const key=p.id; t.maxBids=t.maxBids||{}; if(t.maxBids[key]==null) t.maxBids[key]=v*rf(0.8,1.3);
+    const cap=this.budgetOf(tid,p)-this.reserveFor(tid,p);
+    return Math.max(0,Math.min(t.maxBids[key],cap));
+  }
+  lotStart(){
+    const A=this.s.auction; const lot=A.lots[A.i]; if(!lot) return null;
+    const p=this.P(lot.pid); A.cur={pid:p.id,set:lot.set,bid:null,base:this.basePrice(p),leader:null,userPassed:false,hist:[],done:false,rtmAsk:null};
+    return A.cur;
+  }
+  nextBidAmount(){ const c=this.s.auction.cur; const p=this.P(c.pid); return c.bid==null? c.base : Math.round((c.bid+this.incr(p,c.bid))*10)/10; }
+  // returns {type:'bid',team,amount} | {type:'wait'} | {type:'hammer'}
+  aiStep(userIsAI){
+    const A=this.s.auction,c=A.cur; const p=this.P(c.pid); const nb=this.nextBidAmount();
+    const cands=[];
+    for(const tid in this.teams){ if(tid===c.leader) continue; if(tid===this.user && !userIsAI) continue; const m=this.aiMax(tid,p); if(m>=nb) cands.push([tid,m-nb+0.5]); }
+    if(!cands.length) return {type:'none'};
+    let tot=cands.reduce((a,x)=>a+x[1],0), r=R()*tot; let pickT=cands[0][0]; for(const x of cands){ r-=x[1]; if(r<=0){pickT=x[0];break;} }
+    c.bid=nb; c.leader=pickT; c.hist.push([pickT,nb]); return {type:'bid',team:pickT,amount:nb};
+  }
+  userBid(){ const c=this.s.auction.cur; const p=this.P(c.pid); const nb=this.nextBidAmount(); if(!this.canAdd(this.user,p)) return 'Your squad has no room for this player.'; if(nb>this.budgetOf(this.user,p)) return 'You cannot afford that bid.'; c.bid=nb; c.leader=this.user; c.hist.push([this.user,nb]); return null; }
+  hammer(){
+    const A=this.s.auction,c=A.cur; const p=this.P(c.pid);
+    if(c.leader){ this.signPlayer(p,c.leader,c.bid); A.sold.push({pid:p.id,team:c.leader,price:c.bid,set:c.set}); }
+    else { A.unsold.push(p.id); }
+    c.done=true; A.i++;
+    return c.leader;
+  }
+  rtmCandidate(){ // mega only: previous team may match
+    const A=this.s.auction,c=A.cur; if(A.kind!=='mega'||!c.leader) return null; const p=this.P(c.pid); const pt=p.prevTeam;
+    if(!pt||pt===c.leader||!this.teams[pt].rtm||!this.canAdd(pt,p)) return null; if(this.budgetOf(pt,p)<c.bid) return null; return pt;
+  }
+  useRTM(pt){ const c=this.s.auction.cur; this.teams[pt].rtm--; c.leader=pt; c.hist.push([pt,c.bid,'RTM']); }
+  signPlayer(p,tid,price){ const t=this.teams[tid]; p.team=tid; p.salary=price; p.contractTo=this.s.settings.nextMega-1; t.squad.push(p.id); p.hist.push({year:this.year,team:tid}); this.recalcPurse(tid); }
+  simLot(userIsAI){ // instant resolution of current lot
+    const c=this.s.auction.cur; let guard=0;
+    while(guard++<400){ const r=this.aiStep(userIsAI); if(r.type==='none') break; }
+    const pt=this.rtmCandidate(); if(pt){ const p=this.P(c.pid); if(pt!==this.user||userIsAI){ if(p.value*this.needFor(pt,p)*1.1>=c.bid) this.useRTM(pt);} else { c.rtmAsk=pt; return 'rtm'; } }
+    return this.hammer();
+  }
+  finishAuction(){
+    const A=this.s.auction;
+    // accelerated fill for AI teams to minimums
+    const pool=()=>Object.values(this.players).filter(p=>!p.team&&!p.retired);
+    for(const tid in this.teams){ if(tid===this.user) continue; this.fillSquad(tid,pool); }
+    A.done=true;
+  }
+  fillSquad(tid,poolFn){
+    let guard=0;
+    while(guard++<30){
+      const need=this.slotsNeeded(tid); const t=this.teams[tid];
+      if(need.os<=0&&need.nep<=0&&need.total<=0) break;
+      const ok=p=>{ if(!this.canAdd(tid,p)) return false; const n=this.slotsNeeded(tid); const left=p.nat==='NEP'?Math.max(0,n.nep-1)*2:Math.max(0,n.os-1)*3; return this.basePrice(p)<=this.budgetOf(tid,p)-left; };
+      let cands=[];
+      if(need.os>0) cands=poolFn().filter(p=>p.nat!=='NEP'&&ok(p));
+      if(!cands.length&&(need.nep>0||need.total>0)) cands=poolFn().filter(p=>p.nat==='NEP'&&ok(p));
+      if(!cands.length&&need.total>0) cands=poolFn().filter(p=>ok(p));
+      cands.sort((a,b)=>ovr(b)-ovr(a));
+      if(!cands.length){ // last resort: minimum-wage contracts so a squad can always field a side
+        const need2=this.slotsNeeded(tid);
+        if(need2.os>0){ const c=poolFn().filter(p=>p.nat!=='NEP'&&this.canAdd(tid,p)).sort((a,b)=>a.value-b.value)[0]; if(c&&this.teams[tid].osPurse>=1){ this.signPlayer(c,tid,Math.min(3,this.teams[tid].osPurse)); continue; } }
+        if(need2.nep>0||need2.total>0){ const c=poolFn().filter(p=>p.nat==='NEP'&&this.canAdd(tid,p)).sort((a,b)=>ovr(b)-ovr(a))[0]; if(c){ this.signPlayer(c,tid,Math.min(2,Math.max(0,this.teams[tid].purse))); continue; } }
+        break; }
+      const p=cands[0]; this.signPlayer(p,tid,this.basePrice(p)); this.s.auction&&this.s.auction.sold.push({pid:p.id,team:tid,price:this.basePrice(p),set:'Accelerated'});
+    }
+  }
+  startSeason(){
+    const poolFn=()=>Object.values(this.players).filter(p=>!p.team&&!p.retired);
+    for(const tid in this.teams){ if(this.teams[tid].squad.length<MIN_SQUAD) this.fillSquad(tid,poolFn); }
+    for(const tid in this.teams){ const t=this.teams[tid]; const wages=t.squad.reduce((a,id)=>a+this.P(id).salary,0);
+      t.ledger={gate:0,sponsor:Math.round(40+t.fans*0.5),central:50,prize:0,wages:-Math.round(wages),staff:-15};
+      t.balance+=t.ledger.sponsor+t.ledger.central+t.ledger.wages+t.ledger.staff; }
+    for(const tid in this.teams){ const t=this.teams[tid]; if(!t.captainId||!t.squad.includes(t.captainId)) t.captainId=t.squad.slice().sort((a,b)=>ovr(this.P(b))-ovr(this.P(a)))[0]; this.recalcPurse(tid); }
+    if(this.year>2026) this.makeFixtures();
+    this.setObjectives(); this.s.phase='league';
+    const t=this.teams[this.user]; this.news(`Season ${this.year} begins. The board's objective: ${t.objective.txt}.`,'board');
+  }
+  // Pre-season overseas signing window
+  osFreeAgents(){ return Object.values(this.players).filter(p=>!p.team&&!p.retired&&p.nat!=='NEP').sort((a,b)=>ovr(b)-ovr(a)); }
+  signFA(pid,tid){ const p=this.P(pid); tid=tid||this.user; if(!this.canAdd(tid,p)) return 'No squad room.'; const price=p.nat==='NEP'?this.basePrice(p):p.value; if(price>this.budgetOf(tid,p)) return 'Not enough budget.'; this.signPlayer(p,tid,price); return null; }
+  releasePlayer(pid){ const p=this.P(pid); const t=this.teams[p.team]; t.squad=t.squad.filter(x=>x!==pid); p.prevTeam=p.team; p.team=null; if(t.xi) t.xi=t.xi.filter(x=>x!==pid); this.recalcPurse(t.id); }
+  aiPreseason(){
+    const signed={};
+    for(const tid in this.teams){ if(tid===this.user) continue; let g=0; while(this.osCount(tid)<MIN_OS && g++<10){ const c=this.osFreeAgents().filter(p=>p.value<=this.teams[tid].osPurse&&this.canAdd(tid,p)); if(!c.length) break; const p= R()<0.6? c[0]: pick(c.slice(0,6)); this.signFA(p.id,tid); (signed[tid]=signed[tid]||[]).push(`${p.name} (${fmtL(p.value)})`); }
+      const pool=()=>Object.values(this.players).filter(p=>!p.team&&!p.retired); this.fillSquad(tid,pool); }
+    const k=Object.keys(signed); if(k.length) this.news(`Overseas signings: ${k.length} franchise${k.length>1?'s':''} strengthen${k.length>1?'':'s'} up`,'league',{detail:k.map(t=>`${this.teams[t].name}: ${signed[t].join(', ')}`).join('. ')+'.',ne:'विदेशी खेलाडी अनुबन्ध'});
+  }
+}
+function ordinal(n){const s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);}
+function careerOf(p){ const c={m:0,inn:0,r:0,b:0,no:0,f:0,s:0,hs:0,ff:0,h:0,bb:0,rc:0,w:0,bw:0,br:999,ct:0,mom:0}; for(const y in p.stats){const s=p.stats[y]; for(const k of ['m','inn','r','b','no','f','s','ff','h','bb','rc','w','ct','mom']) c[k]+=s[k]; if(s.hs>c.hs)c.hs=s.hs; if(s.bw>c.bw||(s.bw===c.bw&&s.br<c.br)){c.bw=s.bw;c.br=s.br;}} return c; }
+export {Game,careerOf,ordinal,OS_CAP,DOM_CAP,MAX_OS,MIN_OS,SLABS,MAX_SQUAD,MIN_SQUAD};
