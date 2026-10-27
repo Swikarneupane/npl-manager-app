@@ -424,3 +424,25 @@ i.pp{background:var(--blue-solid)} i.mid{background:var(--gold)} i.death{backgro
   .ab-mid{font-size:20px}
   .bidbar .bidbtns .btn{min-height:44px}
 }
+
+/* ===== round 2 · phase 6: staff ===== */
+.staffpg{max-width:1100px}
+.lvl{display:inline-flex;gap:3px}
+.lvl i{display:block;width:14px;height:6px;border-radius:2px;background:var(--rule)}
+.lvl i.on{background:var(--blue-solid)}
+.staff-posts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;align-items:start}
+.staff-posts .panel{padding:16px}
+.staff-posts .panel.sel{border-color:var(--blue)}
+.staff-ic{width:36px;height:36px;border-radius:10px;background:var(--blue-soft);color:var(--blue);display:inline-flex;align-items:center;justify-content:center;flex:none}
+.sfx{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.sfx li{display:flex;gap:8px}
+.staff-low{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:900px){ .staff-low{grid-template-columns:minmax(0,1fr)} }
+.cands{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.cands li{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px}
+.cands li .btn{align-self:flex-start}
+.staff-sm{list-style:none;margin:0;padding:4px 14px}
+.staff-sm li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--rule)}
+.staff-sm li:last-child{border-bottom:0}
+.npl .staff-link{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:20px;padding:14px 16px;color:var(--ink);text-decoration:none}
+.staff-link:hover{border-color:var(--blue)}

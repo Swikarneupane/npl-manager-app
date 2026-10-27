@@ -3,6 +3,7 @@ import { useGame } from '../lib/store.jsx';
 import { Dot, Meter, Seg } from '../components/bits.jsx';
 import { ovr, fmtL, clamp, TYPE_LABEL } from '../game/engine.js';
 import { careerOf } from '../game/game.js';
+import { coachLine } from './Squad.jsx';
 import { COUNTRY_NAMES } from '../game/data.js';
 import { formDisp, potRange, seasonNo, tname } from '../lib/util.js';
 
@@ -44,7 +45,7 @@ export default function Player() {
             <tr><td style={{ paddingLeft: 0 }}>Salary</td><td className="r">{p.team ? `${fmtL(p.salary)} a season` : '—'}</td></tr>
             <tr><td style={{ paddingLeft: 0 }}>Ends</td><td className="r">{p.team ? `Before the ${G.s.settings.nextMega} mega auction` : '—'}</td></tr>
             <tr><td style={{ paddingLeft: 0 }}>Market value</td><td className="r">{fmtL(p.value)}</td></tr></tbody></table></div>
-          {mine && <div className="field"><span className="lbl">Training focus</span><Seg options={['Balanced', 'Batting', 'Bowling', 'Fitness'].map((f) => [f, f])} value={p.focus} onChange={(f) => update(() => { p.focus = f; })} label="Training focus" /></div>}
+          {mine && <div className="field"><span className="lbl">Training focus</span><Seg options={['Balanced', 'Batting', 'Bowling', 'Fitness'].map((f) => [f, f])} value={p.focus} onChange={(f) => update(() => { p.focus = f; })} label="Training focus" /><p className="t-small mut" style={{ marginTop: 6 }}>{coachLine(G, p)}{p.age >= 26 ? ' He is 26 or older, so the coach helps his form, not his development.' : ''}</p></div>}
         </section>
       </div>
       <section style={{ marginTop: 32 }}><h2 className="t-h3" style={{ marginBottom: 10 }}>Career by season</h2>

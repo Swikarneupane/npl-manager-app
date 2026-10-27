@@ -205,6 +205,8 @@ class Match{
     let w=bowl.bowl+bowl.form*1.0-(100-bowl.fit)*0.06;
     if(isPace(bowl.type)&&ph!=='mid') w+=3; if(isSpin(bowl.type)&&ph==='mid') w+=3;
     if(isSpin(bowl.type)&&this.dew&&inn===this.inns[1]) w-=4;
+    // bowling coach: +0.4 x level at the death
+    if(ph==='death'&&this.G.staffLevel) w+=0.4*this.G.staffLevel(inn.bowl,'bowl');
     if(bat.bat<30) b-=8;
     return {b,w};
   }
@@ -375,7 +377,7 @@ class Match{
     if(prev<100&&bs.r>=100) this.say(this.tr('milestone100',{bat:bat.name,r:bs.r,b:bs.b}),'mile');
     if(runs%2===1) [inn.striker,inn.non]=[inn.non,inn.striker];
     // injuries
-    if(R()<0.0009){ const p=this.P(inn.cur); if(bw.balls%6!==0){ bw.injured=true; p.inj=ri(1,3); this.say(`${p.name} pulls up holding his hamstring and leaves the field. He cannot bowl again today.`,'info inj'); inn.injSwap=true; } }
+    if(R()<0.0009){ const p=this.P(inn.cur); if(bw.balls%6!==0){ bw.injured=true; p.inj=this.G.injuryLength?this.G.injuryLength(inn.bowl,ri(1,3)):ri(1,3); this.say(`${p.name} pulls up holding his hamstring and leaves the field. He cannot bowl again today.`,'info inj'); inn.injSwap=true; } }
     if(this.hooks.afterBall) await this.hooks.afterBall(inn,this,{ev:String(runs)});
     if(inn.injSwap && inn.balls%6!==0){ inn.injSwap=false; const nb=this.aiBowler(inn,6-inn.balls%6); inn.cur=nb; if(!inn.bw[nb]) inn.bw[nb]={balls:0,r:0,w:0,dots:0,wd:0,nb:0}; this.say(`${this.P(nb).name} will finish the over.`,'info'); }
   }

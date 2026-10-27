@@ -6,6 +6,13 @@ import { ovr, fmtL } from '../game/engine.js';
 import { formDisp, potRange, tr } from '../lib/util.js';
 
 const FOCUS = ['Balanced', 'Batting', 'Bowling', 'Fitness'];
+// Who runs training: the batting and bowling coaches, by name and level.
+export function coachLine(G, p) {
+  const st = G.s.staff[G.user]; const b = st.bat, w = st.bowl;
+  const part = (x, who, what) => (x ? `${x.name} (level ${x.level}) works with the ${who}: +${Math.round(x.level / 2)} a season for under-26s, form back ${x.level * 10}% quicker${what}.` : `No ${who === 'batters' ? 'batting' : 'bowling'} coach: ${who} under 26 develop at the normal rate.`);
+  if (p) { const bat = p.role === 'BAT' || p.role === 'WK' || (p.role === 'AR' && p.focus !== 'Bowling'); return bat ? part(b, 'batters', '') : part(w, 'bowlers', ', and better death bowling'); }
+  return `${part(b, 'batters', '')} ${part(w, 'bowlers', ', and better death bowling')}`;
+}
 const INTENS = { Light: 'Faster recovery between matches, slower development.', Normal: 'Balanced load.', Intense: 'Better development and sharper form, more knocks in training.' };
 
 // The full squad: ratings, training focus, wages and contracts. The XI itself lives on the team sheet.
@@ -28,7 +35,7 @@ function SquadList() {
             <td><select className="input" value={p.focus} onChange={(e) => update(() => { p.focus = e.target.value; })} aria-label={`Training focus for ${p.name}`}>{FOCUS.map((f) => <option key={f}>{f}</option>)}</select></td>
           </tr>))}</tbody></table></div>
       <p className="faint t-small" style={{ marginTop: 10 }}>Highlighted rows are in the current XI. Potential shows as a range until a scout files a report. Form is a 0–10 rating that follows recent matches. Ratings are out of 100.</p>
-      <div className="field" style={{ marginTop: 24, maxWidth: 520 }}><span className="lbl">Team training intensity</span><Seg options={['Light', 'Normal', 'Intense'].map((x) => [x, x])} value={t.training} onChange={(v) => update(() => { t.training = v; })} label="Training intensity" /><p className="mut t-small" style={{ marginTop: 4 }}>{INTENS[t.training]}</p></div>
+      <div className="field" style={{ marginTop: 24, maxWidth: 520 }}><span className="lbl">Team training intensity</span><Seg options={['Light', 'Normal', 'Intense'].map((x) => [x, x])} value={t.training} onChange={(v) => update(() => { t.training = v; })} label="Training intensity" /><p className="mut t-small" style={{ marginTop: 4 }}>{INTENS[t.training]}</p><p className="t-small" style={{ marginTop: 6 }}>{coachLine(G)} <Link to="/staff">Staff</Link></p></div>
     </>
   );
 }

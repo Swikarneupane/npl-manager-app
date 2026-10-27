@@ -13,6 +13,7 @@ const Match = lazy(() => import('./screens/Match.jsx'));
 const Scorecard = lazy(() => import('./screens/Scorecard.jsx'));
 const Season = lazy(() => import('./screens/Season.jsx'));
 const News = lazy(() => import('./screens/News.jsx'));
+const Staff = lazy(() => import('./screens/Staff.jsx'));
 const Stats = lazy(() => import('./screens/Stats.jsx'));
 const History = lazy(() => import('./screens/History.jsx'));
 const Club = lazy(() => import('./screens/Club.jsx'));
@@ -80,6 +81,7 @@ export default function App() {
                   <Route path="/scorecard/:n" element={<Scorecard />} />
                   <Route path="/season" element={<Season />} />
                   <Route path="/news" element={<News />} />
+                  <Route path="/staff" element={<Staff />} />
                   <Route path="/fixtures" element={<Navigate to="/season?tab=fixtures" replace />} />
                   <Route path="/table" element={<Navigate to="/season" replace />} />
                   <Route path="/stats" element={<Stats />} />

@@ -1,8 +1,8 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useGame } from '../lib/store.jsx';
 import { Dot, Meter, PageHead } from '../components/bits.jsx';
 import { fmtL } from '../game/engine.js';
-import { ordinal } from '../game/game.js';
+import { ordinal, STAFF_POSTS } from '../game/game.js';
 import { boardMood, seasonNo, tname, tshort, tr } from '../lib/util.js';
 import { autosave } from '../lib/save.js';
 
@@ -28,7 +28,7 @@ export default function Club() {
         <section className="panel stack" style={{ gap: 10 }}><h2 className="sec" style={{ margin: 0 }}>Balance</h2><p className="t-display">{fmtL(t.balance)}</p>
           <table className="tbl plain compact"><tbody><tr><td style={{ paddingLeft: 0 }} colSpan={2} className="faint">Season {seasonNo(G.year)} so far</td></tr>
             <R k="Gate receipts" v={fmtL(L0.gate)} /><R k="Sponsorship" v={fmtL(L0.sponsor)} /><R k="Central pool" v={fmtL(L0.central)} /><R k="Prize money" v={fmtL(L0.prize)} />
-            <R k="Wages" v={`− ${fmtL(-L0.wages)}`} /><R k="Staff and operations" v={`− ${fmtL(-L0.staff)}`} /><R k={<b>Net</b>} v={<b>{net < 0 ? '− ' : ''}{fmtL(Math.abs(net))}</b>} /></tbody></table>
+            <R k="Wages" v={`− ${fmtL(-L0.wages)}`} /><R k={L0.staffFees ? `Staff wages (incl. ${fmtL(L0.staffFees)} release fees)` : 'Staff wages'} v={`− ${fmtL(-L0.staff)}`} /><R k={<b>Net</b>} v={<b>{net < 0 ? '− ' : ''}{fmtL(Math.abs(net))}</b>} /></tbody></table>
           <p className="faint t-small">Prize money is paid after the final: Rs 1 cr to the champions, Rs 50 L to the runners-up.</p></section>
         <section className="stack" style={{ gap: 20 }}>
           <div className="panel stack" style={{ gap: 10 }}><h2 className="sec" style={{ margin: 0 }}>Ticket price</h2><p className="t-display" style={{ fontSize: 36 }}>Rs {price}</p>
@@ -42,6 +42,7 @@ export default function Club() {
             <p className="faint t-micro">Rises with wins and fair ticket prices.</p></div>
         </section>
       </div>
+      <Link to="/staff" className="panel staff-link"><span><span className="t-small b6">Backroom staff</span><br /><span className="t-micro faint">{STAFF_POSTS.map(([k, l]) => { const x = G.s.staff[G.user][k]; return x ? `${l} L${x.level}` : `${l} vacant`; }).join(' · ')} · {fmtL(G.staffWages(G.user))} a season</span></span><span className="t-small blu b6">Open</span></Link>
       <section style={{ marginTop: 28 }}><h2 className="t-h3" style={{ marginBottom: 10 }}>Job offers</h2>
         {(s.offers || []).length ? <table className="tbl plain compact"><tbody>{s.offers.map((id) => { const o = G.teams[id]; return (
           <tr key={id}><td style={{ paddingLeft: 0 }}><Dot id={id} />{o.name}</td><td className="mut t-small">Finished {ordinal(st.findIndex((x) => x.id === id) + 1)} · purse {fmtL(o.purse)} · {o.persona.toLowerCase()} owners</td>

@@ -11,7 +11,7 @@ import { seasonNo, tr, userNextFixture, nextUnplayed } from '../lib/util.js';
 import { savedMatchFor } from '../lib/flow.js';
 
 const PHASES = { preseason: 'Pre-season', league: 'League', playoffs: 'Playoffs', seasonEnd: 'Season over', offseason: 'Off-season', retention: 'Retention', auction: 'Auction' };
-const MORE_ROUTES = ['/news', '/stats', '/history', '/club', '/settings', '/auction', '/retention', '/offseason', '/signings'];
+const MORE_ROUTES = ['/news', '/stats', '/history', '/club', '/staff', '/settings', '/auction', '/retention', '/offseason', '/signings'];
 
 // A match is live while it is being played, or part-played and saved.
 export function isLive(G, ui) { return !!((ui.live && ui.live.started && !ui.live.done) || savedMatchFor(G, userNextFixture(G))); }

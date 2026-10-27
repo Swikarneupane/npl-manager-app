@@ -1,11 +1,11 @@
 // Headless season flow: plays 2 full seasons with the real engine and checks the round 2 rules as
 // they are added (decisions and promises so far). Exits non-zero on the first broken rule.
-import { Game, cautiousIndex } from '../src/game/game.js';
-import { ovr } from '../src/game/engine.js';
+import { Game, cautiousIndex, STAFF_WAGE } from '../src/game/game.js';
+import { ovr, Match } from '../src/game/engine.js';
 import { AuctionRoom } from '../src/lib/auction.js';
 
 let checks = 0;
-const ok = (c, msg) => { if (!c) { console.error(`FAIL - ${msg}`); process.exit(1); } checks++; };
+const ok = (c, msg) => { if (!c) { console.error(`FAIL - ${msg}`); process.exit(1); } checks++; if (process.env.VERBOSE) console.log(`ok   ${msg}`); };
 const userFix = (G, f) => f.home === G.user || f.away === G.user;
 const reload = (G) => new Game(JSON.parse(JSON.stringify(G.s)));
 
@@ -79,8 +79,13 @@ for (let season = 0; season < 2; season++) {
   if (G.s.sacked) G.takeJob(G.s.offers[0]);
   // a decision left open into the off-season expires; open promises lapse
   if (!G.pendingDecisions().length) G.news('Test decision', 'event', { choices: [{ l: 'Bold', fx: { board: 3 } }, { l: 'Careful', fx: {} }], safe: 1, due: null, done: false });
+  const until0 = G.s.staff[G.user].bat && G.s.staff[G.user].bat.until; const year0 = G.year;
   G.startOffseason();
   ok(!G.pendingDecisions().length && !G.s.promises.length, 'off-season clears open decisions and promises');
+  // staff: contracts that ran out leave the user's posts vacant (AI teams rehire); fill them from the candidates
+  if (until0 != null && until0 < G.year) ok(!G.s.staff[G.user].bat && Object.keys(G.teams).filter((id) => id !== G.user).every((id) => G.s.staff[id].bat && G.s.staff[id].bat.until >= G.year), `expired contracts (until ${until0}) end in the ${G.year} off-season; AI teams rehire`);
+  for (const k of ['bat', 'bowl', 'physio']) if (!G.s.staff[G.user][k]) { const c = G.staffCandidates(k); ok(c.length === 3 && c.every((x) => x.wage === STAFF_WAGE[x.level]), `3 ${k} candidates priced by level`); ok(G.hireStaff(k, 2) === null && G.s.staff[G.user][k].until === G.year + 1, `hired a ${k} on a 2-season contract`); }
+  void year0;
   G.beginRetention(); G.applyRetention(); G.setupAuction();
   // ===== auction: scout and shortlist, then the room with auto-bids =====
   {
@@ -166,4 +171,44 @@ ok(reload(G).s.promises !== undefined, 'save round-trips');
   ok(O.teams[O.user].bowlPlan && Object.keys(O.teams[O.user].bowlPlan).length >= 5, 'old save gets a default bowling plan');
 }
 
+// ===== backroom staff =====
+{
+  const S = Game.create('LL', { lang: 'en' }); const t = S.teams[S.user]; const st = S.s.staff[S.user];
+  ok(Object.keys(S.teams).every((id) => ['bat', 'bowl', 'physio'].every((k) => S.s.staff[id][k] && S.s.staff[id][k].level >= 1 && S.s.staff[id][k].level <= 5)), 'every team starts with three staff');
+  ok(['bat', 'bowl', 'physio'].every((k) => st[k].level === 2 && st[k].wage === 5 && st[k].until === 2027), 'the user starts with level-2 staff to 2027');
+  ok(STAFF_WAGE.slice(1).join(',') === '3,5,8,10,12', 'wages Rs 3/5/8/10/12 L by level');
+  // release: half of the two unpaid seasons in the 2026 pre-season
+  const b0 = t.balance; const fee = S.releaseCost(S.user, 'physio'); ok(fee === 5, `release fee is half the remaining wage (${fee})`);
+  S.releaseStaff('physio'); ok(!st.physio && Math.abs(t.balance - (b0 - 5)) < 1e-9, 'release pays the fee from the balance');
+  ok(S.injuryLength(S.user, 2) === 3, 'no physio: injuries a match longer');
+  const c = S.staffCandidates('physio'); ok(c.length === 3, '3 physio candidates'); ok(S.staffCandidates('physio') === c, 'candidates stay the same within the off-season');
+  const lvl = c[1].level; S.hireStaff('physio', 1); ok(st.physio && st.physio.level === lvl, 'hire fills the post');
+  for (const [L, base, want] of [[1, 3, 2], [2, 3, 2], [4, 3, 1], [5, 3, 1], [5, 1, 1], [3, 2, 1]]) { st.physio.level = L; ok(S.injuryLength(S.user, base) === want, `physio L${L}: ${base}-match injury → ${want}`); }
+  st.physio.level = 4;
+  // wages at season start
+  S.aiPreseason(); for (const p of S.osFreeAgents()) { if (S.osCount(S.user) >= 6) break; S.signFA(p.id); }
+  const w = S.staffWages(S.user); S.startSeason();
+  ok(Math.abs(t.ledger.staff + w + 5) < 1e-9 && t.ledger.staffFees === 5, `ledger shows staff wages ${w} plus the 5 release fee (${t.ledger.staff})`);
+  ok(S.hireStaff('bat', 0) !== null && S.releaseStaff('bat') === null, 'no hiring or releasing during the season');
+  // physio +L fitness and coaches speed form recovery, after a match
+  const f = S.userNext(); const xi = S.autoXI(S.user); t.xi = xi; t.order = S.autoOrder(xi);
+  const bench = t.squad.map((id) => S.P(id)).filter((p) => !xi.includes(p.id) && !p.inj);
+  const pf = bench[0]; pf.fit = 50; const pb = bench.find((p) => p.role === 'BAT' || p.role === 'WK') || bench[1]; pb.form = -5; pb.fit = 100;
+  st.bat.level = 5; const fit0 = pf.fit, form0 = pb.form;
+  const m = await S.playFixture(f, null);
+  if (!m.lineups[S.user].xi.includes(pf.id)) ok(Math.round(pf.fit - fit0) === (t.training === 'Light' ? 10 : 7) + 4, `physio L4 adds +4 fitness after a match (${fit0} → ${pf.fit})`);
+  if (!m.lineups[S.user].xi.includes(pb.id)) ok(Math.abs(pb.form - form0 * (1 - 0.03 * 1.5)) < 1e-9, `batting coach L5 speeds form recovery 50% (${form0} → ${pb.form.toFixed(3)})`);
+  // bowling coach at the death: +0.4 x L to the bowler's strength
+  const mm = S.newMatch(S.userNext()); const bowlerTeam = mm.home === S.user ? mm.home : mm.away;
+  const inn = { bowl: bowlerTeam, bat: bowlerTeam === mm.home ? mm.away : mm.home }; const bw = S.P(xi.find((id) => S.P(id).bowl >= 50)); const bt = S.P(S.autoXI(inn.bat)[0]);
+  st.bowl.level = 0; const w0 = mm.strengths(inn, bt, bw, 'death').w; st.bowl.level = 5; const w5 = mm.strengths(inn, bt, bw, 'death').w; const wm = mm.strengths(inn, bt, bw, 'mid').w; st.bowl.level = 0; const wm0 = mm.strengths(inn, bt, bw, 'mid').w;
+  ok(Math.abs(w5 - w0 - 2) < 1e-9 && wm === wm0, `bowling coach L5: death bowling +2.0, middle overs unchanged (${w0.toFixed(1)} → ${w5.toFixed(1)})`); st.bowl.level = 3;
+  // development: under-26 batters get +round(L/2), up to potential
+  const young = t.squad.map((id) => S.P(id)).filter((p) => p.age < 25 && (p.role === 'BAT' || p.role === 'WK') && p.pot - ovr(p) >= 4);
+  st.bat.level = 4; for (const p of young) { S.develop(p); ok(p.coachDev === 2, `${p.name} (${p.age}) gets +2 from a level-4 batting coach`); }
+  const old = t.squad.map((id) => S.P(id)).find((p) => p.age >= 27); if (old) { S.develop(old); ok(old.coachDev === 0, 'no coach development at 26 and over'); }
+  // old saves get staff
+  const O = JSON.parse(JSON.stringify(S.s)); delete O.staff; delete O.staffPool; const G2 = new Game(O);
+  ok(Object.keys(G2.teams).every((id) => G2.s.staff[id] && G2.s.staff[id].bat), 'old save gets staff for every team');
+}
 console.log(`ok - ${checks} season-flow checks`);
