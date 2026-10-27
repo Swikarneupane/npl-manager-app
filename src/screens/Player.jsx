@@ -19,6 +19,9 @@ export default function Player() {
   const c = careerOf(p);
   const canRelease = mine && ['preseason', 'offseason'].includes(G.s.phase);
   const isCap = p.team && G.teams[p.team].captainId === p.id;
+  // shortlist from the profile while the auction is ahead (off-season, retention) or running
+  const canStar = !mine && !p.retired && ['offseason', 'retention', 'auction'].includes(G.s.phase) && !(G.s.auction && G.s.auction.done && G.s.phase === 'auction');
+  const starred = canStar && !!G.slEntry(p.id);
   return (
     <div style={{ maxWidth: 1100 }} className="stack">
       <Link to={mine ? '/squad' : '/stats'} className="t-small" style={{ marginBottom: 12 }}>← {mine ? 'Squad' : 'Back'}</Link>
@@ -26,6 +29,7 @@ export default function Player() {
         <div className="stack" style={{ gap: 4 }}><h1 className="t-h1">{p.name}{isCap ? ' (c)' : ''}</h1>
           <p className="mut">{p.team ? <><Dot id={p.team} />{tname(G, p.team)}</> : p.retired ? 'Retired' : 'Free agent'} · {COUNTRY_NAMES[p.nat] || p.nat} · {p.age} · {p.role} · {p.hand === 'L' ? 'left' : 'right'}-hand bat{p.type ? `, ${TYPE_LABEL[p.type].toLowerCase()}` : ''}{p.prov ? ` · ${p.prov} Province` : ''}</p></div>
         <div className="row" style={{ gap: 8 }}>
+          {canStar && <button className={`btn${starred ? ' btn-blue' : ''}`} aria-pressed={starred} onClick={() => update(() => { const on = G.toggleShortlist(p.id); toast(on ? `${p.name} added to your shortlist.` : `${p.name} removed from your shortlist.`); })}>{starred ? '★ On your shortlist' : '☆ Add to shortlist'}</button>}
           {!p.scouted && p.pot > o && <button className="btn" onClick={() => update(() => { G.teams[G.user].balance -= 0.5; p.scouted = true; toast('Scout report filed.'); })}>Scout report · Rs 0.5 L</button>}
           {canRelease && <button className="btn" onClick={() => { update(() => G.releasePlayer(p.id)); toast(`${p.name} released.`); nav('/squad'); }}>Release</button>}
         </div>

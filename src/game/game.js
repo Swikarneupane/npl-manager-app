@@ -3,6 +3,11 @@ import {R,ri,rf,pick,clamp,shuffle,isSpin,isPace,TYPE_LABEL,fmtL,ovr,calcValue,m
 // ===== Game state & league logic =====
 const SLABS={NEP:[12,9,6],OS:[30,22,15]};
 const BOWL_PHASES={pp:6,mid:9,death:5}, PHASE_CAP={pp:3,mid:5,death:3};
+// Squad needs by role for the shortlist and the auction room (a player can fill more than one).
+const NEEDS=[['wk','Wicketkeepers','Keeper',2],['open','Openers','Opener',2],['pace','Pace bowlers','Pace',3],['spin','Spinners','Spin',2],['ar','All-rounders','All-rounder',2]];
+function needRoles(p){ const r=[]; if(p.role==='WK') r.push('wk'); if((p.role==='BAT'||p.role==='WK')&&p.bat>=60) r.push('open');
+  if(p.bowl>=55&&isPace(p.type)) r.push('pace'); if(p.bowl>=55&&isSpin(p.type)) r.push('spin'); if(p.role==='AR') r.push('ar'); return r; }
+const roundL=(x)=>x<10?Math.round(x*2)/2:Math.round(x);
 const OS_CAP=150, DOM_CAP=90, MAX_OS=8, MIN_OS=6, MAX_SQUAD=22, MIN_SQUAD=18;
 const PERSONAS=['Big spender','Balanced','Bargain hunter','Youth builder','Loyalist','Balanced','Big spender','Bargain hunter'];
 const MONTHS={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
@@ -37,6 +42,9 @@ class Game{
   constructor(s){ this.s=s; if(s&&s.pid) setPID(s.pid); if(s) this.migrate(); }
   // Defaults for state added after a save was written, so old saves keep loading.
   migrate(){ const s=this.s; s.inbox??=[]; s.promises??=[]; s.phaseEco??={};
+    // shortlist: older saves kept a list of ids and a max-bid map on the auction
+    if(!s.shortlist){ const A=s.auction||{}; s.shortlist=(A.shortlist||[]).map(pid=>({pid,max:(A.maxBid&&A.maxBid[pid])||0,priority:'B'})); }
+    if(s.auction&&s.auction.prep===undefined) s.auction.prep=false;
     // decisions from older saves: give them a title, a deadline (the user's next match) and a cautious choice
     const nf=s.fixtures&&s.user?this.userNext():null;
     for(const n of s.inbox) if(n.choices&&!n.done){ n.title??=n.text; if(n.due===undefined) n.due=nf?nf.n:null; n.safe??=cautiousIndex(n); }
@@ -320,10 +328,12 @@ class Game{
   // user's next fixture) and a cautious choice (safe) that is taken if the deadline passes unanswered.
   makeEvent(m,f){
     const u=this.user, t=this.teams[u]; const xi=m.lineups[u].xi; const sur=(p)=>p.name.split(' ').slice(-1)[0];
-    const benched=t.squad.map(id=>this.P(id)).filter(p=>!xi.includes(p.id)&&!p.inj&&ovr(p)>=60);
+    // one open promise per player: nobody who is already waiting on one is offered another
+    const promised=new Set((this.s.promises||[]).map(pr=>pr.pid));
+    const benched=t.squad.map(id=>this.P(id)).filter(p=>!xi.includes(p.id)&&!p.inj&&ovr(p)>=60&&!promised.has(p.id));
     const stars=xi.map(id=>this.P(id)).sort((a,b)=>ovr(b)-ovr(a));
     const tired=xi.map(id=>this.P(id)).filter(p=>p.fit<70);
-    const young=t.squad.map(id=>this.P(id)).filter(p=>p.nat==='NEP'&&p.age<=23&&!p.inj&&!hasPlayed(p)).sort((a,b)=>ovr(b)-ovr(a))[0];
+    const young=t.squad.map(id=>this.P(id)).filter(p=>p.nat==='NEP'&&p.age<=23&&!p.inj&&!hasPlayed(p)&&!promised.has(p.id)).sort((a,b)=>ovr(b)-ovr(a))[0];
     const opts=[];
     if(benched.length) { const p=pick(benched); const cap=t.captainId&&t.captainId!==p.id&&t.squad.includes(t.captainId)?this.P(t.captainId):null;
       opts.push({cat:'Squad',title:`${p.name} wants to know why he isn't in the XI`,text:`${p.name} has asked to see you. He feels he deserves a place in the XI.`,pid:p.id,sum:'Morale and selection',
@@ -364,6 +374,7 @@ class Game{
   }
   // A promise to start a player in the next match, or to give a young player a debut within 3.
   addPromise(pid,kind){
+    if(this.s.promises.some(pr=>pr.pid===pid)) return;
     const ups=this.s.fixtures.filter(f=>!f.res&&(f.home===this.user||f.away===this.user)); if(!ups.length) return;
     const left=Math.min(kind==='start'?1:3,ups.length);
     this.s.promises.push({id:'pr'+Date.now()+ri(0,999),pid,kind,dueFixture:ups[left-1].n,matchesLeft:left});
@@ -571,7 +582,7 @@ class Game{
     const unc=rest.filter(p=>p.nat==='NEP'&&p.uncapped).sort((a,b)=>ovr(b)-ovr(a));
     sets.push(['Overseas set 1',os.slice(0,12)],['Nepali category A',nep.filter(p=>ovr(p)>=68)],['Overseas set 2',os.slice(12,this.s.mega?40:26)],['Nepali category B',nep.filter(p=>ovr(p)>=60&&ovr(p)<68)],['Nepali category C',nep.filter(p=>ovr(p)<60).slice(0,this.s.mega?60:30)],['Uncapped youngsters',unc.slice(0,this.s.mega?30:20)]);
     const lots=[]; for(const [name,arr] of sets) for(const p of arr) lots.push({pid:p.id,set:name});
-    this.s.auction={kind:this.s.mega?'mega':'mini',lots,i:0,cur:null,sold:[],unsold:[],accel:false,log:[],shortlist:(this.s.auction&&this.s.auction.shortlist)||[]};
+    this.s.auction={kind:this.s.mega?'mega':'mini',lots,i:0,cur:null,sold:[],unsold:[],accel:false,log:[],prep:true};
     for(const tid in this.teams){ this.teams[tid].maxBids={}; }
     this.s.phase='auction';
   }
@@ -595,6 +606,58 @@ class Game{
     const p=this.P(lot.pid); A.cur={pid:p.id,set:lot.set,bid:null,base:this.basePrice(p),leader:null,userPassed:false,hist:[],done:false,rtmAsk:null};
     return A.cur;
   }
+  // ===== Shortlist and scouting =====
+  // Squad needs: how many of each role the user has against the target, and how many are still needed.
+  userNeeds(tid){ const sq=this.teams[tid||this.user].squad.map(id=>this.P(id));
+    return NEEDS.map(([k,label,short,target])=>{ const have=sq.filter(p=>needRoles(p).includes(k)).length; return {k,label,short,target,have,left:Math.max(0,target-have)}; }); }
+  // Tags for a pool player: the needs he would fill, or high potential.
+  fitTags(p,needs){ needs=needs||this.userNeeds(); const r=needRoles(p); const tags=needs.filter(n=>n.left>0&&r.includes(n.k)).map(n=>({t:`${n.short} need`,c:'b'}));
+    if(p.age<=21&&p.pot>=78) tags.push({t:'High potential',c:'g'}); return tags; }
+  // How many AI teams badly want this player (needFor above 1.2).
+  needDemand(p){ let d=0; for(const tid in this.teams){ if(tid===this.user) continue; if(this.canAdd(tid,p)&&this.needFor(tid,p)>1.2) d++; } return d; }
+  // Likely price: a range from value x need demand, never below the base price.
+  likelyPrice(p){ const base=this.basePrice(p), d=this.needDemand(p), v=Math.max(p.value,base);
+    const lo=Math.max(base,v*(0.9+0.06*d)), hi=Math.max(lo+(lo<10?1:2),v*(1.1+0.09*d)); return [roundL(lo),roundL(hi)]; }
+  slEntry(pid){ return this.s.shortlist.find(e=>e.pid===pid)||null; }
+  toggleShortlist(pid){ const i=this.s.shortlist.findIndex(e=>e.pid===pid); if(i>=0){ this.s.shortlist.splice(i,1); return false; } this.s.shortlist.push({pid,max:0,priority:'B'}); return true; }
+  setShortlist(pid,patch){ let e=this.slEntry(pid); if(!e){ e={pid,max:0,priority:'B'}; this.s.shortlist.push(e); } Object.assign(e,patch); if(e.max<0) e.max=0; return e; }
+  // The auction pool: lots in order, or before setup, everyone without a club.
+  auctionPool(){ const A=this.s.auction; if(A&&A.lots) return A.lots.map(l=>this.P(l.pid)); return Object.values(this.players).filter(p=>!p.team&&!p.retired); }
+  // Sum of max bids per purse, and what still needs attention.
+  budgetCheck(){ const t=this.teams[this.user]; const r={os:{sum:0,purse:t.osPurse},dom:{sum:0,purse:t.purse},warn:[]};
+    for(const e of this.s.shortlist){ const p=this.P(e.pid); if(!p||p.team) continue; const k=p.nat==='NEP'?'dom':'os'; r[k].sum+=e.max||0;
+      const [lo]=this.likelyPrice(p);
+      if(!e.max&&e.priority==='A') r.warn.push(`Set a max for ${p.name}.${lo>r[k].purse?` His likely price is more than your remaining ${k==='os'?'overseas':'domestic'} budget.`:''}`);
+      else if(e.max&&e.max<lo) r.warn.push(`Your max for ${p.name} is below his likely price.`); }
+    for(const k of ['os','dom']) if(r[k].sum>r[k].purse) r.warn.push(`Your ${k==='os'?'overseas':'domestic'} max bids add up to more than the purse.`);
+    return r; }
+  // Best value per unfilled need, within each purse after keeping money back for the minimum squad.
+  // Value = rating minus the likely price as a share of that purse, so a Rs 40 L overseas star can beat
+  // a Rs 5 L Nepali squad player. Then overseas targets are topped up to the 6-player minimum.
+  autoSuggest(){
+    const t=this.teams[this.user]; const needs=this.userNeeds(); const added=[];
+    const cap={os:t.osPurse,dom:t.purse}; const left={os:t.osPurse,dom:t.purse};
+    const live=()=>this.s.shortlist.map(e=>({e,p:this.P(e.pid)})).filter(x=>x.p&&!x.p.team);
+    for(const {e,p} of live()) left[p.nat==='NEP'?'dom':'os']-=e.max||0;
+    const taken=new Set(this.s.shortlist.map(e=>e.pid)); const pool=this.auctionPool().filter(p=>p&&!p.team&&!p.retired&&this.canAdd(this.user,p));
+    const kind=p=>p.nat==='NEP'?'dom':'os';
+    const score=(p,lp)=>ovr(p)-25*((lp[0]+lp[1])/2)/Math.max(10,cap[kind(p)]);
+    const take=(p,lp)=>{ left[kind(p)]-=lp[1]; taken.add(p.id); this.s.shortlist.push({pid:p.id,max:lp[1],priority:added.length<2?'A':'B'}); added.push(p.id); };
+    // money kept back for minimum-squad slots not yet covered by a target, after this pick, priced at the
+    // cheapest likely prices actually in the pool
+    const cheap={os:[],dom:[]}; for(const p of pool) cheap[kind(p)].push(this.likelyPrice(p)[1]); cheap.os.sort((a,b)=>a-b); cheap.dom.sort((a,b)=>a-b);
+    const sumLow=(k,n)=>cheap[k].slice(0,Math.max(0,n)).reduce((a,b)=>a+b,0);
+    const reserve=(k)=>{ const os=this.osCount(this.user)+live().filter(x=>x.p.nat!=='NEP').length, sq=t.squad.length+live().length;
+      const osLeft=Math.max(0,MIN_OS-os), domLeft=Math.max(0,MIN_SQUAD-sq-osLeft);
+      return k==='os'? sumLow('os',osLeft-1) : sumLow('dom',domLeft-1); };
+    const best=(filter)=>pool.filter(p=>!taken.has(p.id)&&filter(p)).map(p=>({p,lp:this.likelyPrice(p)})).filter(x=>x.lp[1]+reserve(kind(x.p))<=left[kind(x.p)]).map(x=>({...x,v:score(x.p,x.lp)})).sort((a,b)=>b.v-a.v);
+    for(const nd of needs){ let want=nd.left-live().filter(x=>needRoles(x.p).includes(nd.k)).length;
+      while(want>0){ const c=best(p=>needRoles(p).includes(nd.k))[0]; if(!c) break; take(c.p,c.lp); want--; } }
+    let osWant=Math.max(0,MIN_OS-this.osCount(this.user)-live().filter(x=>x.p.nat!=='NEP').length);
+    while(osWant>0){ const c=best(p=>p.nat!=='NEP')[0]; if(!c) break; take(c.p,c.lp); osWant--; }
+    return added; }
+  // "Jump to": two increments above the current bid (a normal bid is one).
+  jumpBidAmount(){ const c=this.s.auction.cur; const p=this.P(c.pid); const a=this.nextBidAmount(); return Math.round((a+this.incr(p,a))*10)/10; }
   nextBidAmount(){ const c=this.s.auction.cur; const p=this.P(c.pid); return c.bid==null? c.base : Math.round((c.bid+this.incr(p,c.bid))*10)/10; }
   // returns {type:'bid',team,amount} | {type:'wait'} | {type:'hammer'}
   aiStep(userIsAI){
@@ -605,7 +668,7 @@ class Game{
     let tot=cands.reduce((a,x)=>a+x[1],0), r=R()*tot; let pickT=cands[0][0]; for(const x of cands){ r-=x[1]; if(r<=0){pickT=x[0];break;} }
     c.bid=nb; c.leader=pickT; c.hist.push([pickT,nb]); return {type:'bid',team:pickT,amount:nb};
   }
-  userBid(){ const c=this.s.auction.cur; const p=this.P(c.pid); const nb=this.nextBidAmount(); if(!this.canAdd(this.user,p)) return 'Your squad has no room for this player.'; if(nb>this.budgetOf(this.user,p)) return 'You cannot afford that bid.'; c.bid=nb; c.leader=this.user; c.hist.push([this.user,nb]); return null; }
+  userBid(amount){ const c=this.s.auction.cur; const p=this.P(c.pid); const nb=amount&&amount>this.nextBidAmount()?amount:this.nextBidAmount(); if(!this.canAdd(this.user,p)) return 'Your squad has no room for this player.'; if(nb>this.budgetOf(this.user,p)) return 'You cannot afford that bid.'; c.bid=nb; c.leader=this.user; c.hist.push([this.user,nb]); return null; }
   hammer(){
     const A=this.s.auction,c=A.cur; const p=this.P(c.pid);
     if(c.leader){ this.signPlayer(p,c.leader,c.bid); A.sold.push({pid:p.id,team:c.leader,price:c.bid,set:c.set}); }
@@ -628,9 +691,11 @@ class Game{
   finishAuction(){
     const A=this.s.auction;
     // accelerated fill for AI teams to minimums
-    const pool=()=>Object.values(this.players).filter(p=>!p.team&&!p.retired);
+    // Nepali slots only: overseas free agents stay open for the user's pre-season window, and the AI
+    // teams sign theirs in aiPreseason() when the user starts the season.
+    const pool=()=>Object.values(this.players).filter(p=>!p.team&&!p.retired&&p.nat==='NEP');
     for(const tid in this.teams){ if(tid===this.user) continue; this.fillSquad(tid,pool); }
-    A.done=true;
+    A.done=true; this.s.shortlist=[];
   }
   fillSquad(tid,poolFn){
     let guard=0;
@@ -675,4 +740,4 @@ class Game{
 }
 function ordinal(n){const s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);}
 function careerOf(p){ const c={m:0,inn:0,r:0,b:0,no:0,f:0,s:0,hs:0,ff:0,h:0,bb:0,rc:0,w:0,bw:0,br:999,ct:0,mom:0}; for(const y in p.stats){const s=p.stats[y]; for(const k of ['m','inn','r','b','no','f','s','ff','h','bb','rc','w','ct','mom']) c[k]+=s[k]; if(s.hs>c.hs)c.hs=s.hs; if(s.bw>c.bw||(s.bw===c.bw&&s.br<c.br)){c.bw=s.bw;c.br=s.br;}} return c; }
-export {Game,careerOf,ordinal,effectLines,cautiousIndex,BOWL_PHASES,PHASE_CAP,OS_CAP,DOM_CAP,MAX_OS,MIN_OS,SLABS,MAX_SQUAD,MIN_SQUAD};
+export {Game,careerOf,ordinal,effectLines,cautiousIndex,BOWL_PHASES,PHASE_CAP,NEEDS,needRoles,OS_CAP,DOM_CAP,MAX_OS,MIN_OS,SLABS,MAX_SQUAD,MIN_SQUAD};

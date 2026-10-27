@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { ovr } from '../game/engine.js';
 export const seasonNo = (y) => y - 2023;
 export const last = (n) => String(n).split(' ').slice(-1)[0];
@@ -20,3 +21,11 @@ export const nextUnplayed = (G) => G.s.fixtures.find((f) => !f.res);
 export function boardMood(bc) { return bc >= 75 ? 'Delighted' : bc >= 60 ? 'Satisfied' : bc >= 45 ? 'Uneasy' : bc >= 30 ? 'Concerned' : 'Losing patience'; }
 export const NP_UI = { Home: 'गृह', Squad: 'टोली', Match: 'खेल', Fixtures: 'तालिका', Table: 'अंकतालिका', Auction: 'लिलामी', Stats: 'तथ्यांक', History: 'इतिहास', Club: 'क्लब', Settings: 'सेटिङ', Signings: 'अनुबन्ध', 'Off-season': 'अफ-सिजन', Season: 'सिजन', News: 'समाचार', More: 'थप' };
 export const tr = (G, k) => (G && G.s.lang === 'np' && NP_UI[k] ? NP_UI[k] : k);
+
+// True on phone widths (the same 760px breakpoint as the CSS), for layouts that differ too much for CSS alone.
+const NARROW = '(max-width:760px)';
+export function useNarrow() {
+  const [n, setN] = useState(() => typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia(NARROW).matches);
+  useEffect(() => { const m = window.matchMedia && window.matchMedia(NARROW); if (!m) return undefined; const f = (e) => setN(e.matches); m.addEventListener('change', f); return () => m.removeEventListener('change', f); }, []);
+  return n;
+}

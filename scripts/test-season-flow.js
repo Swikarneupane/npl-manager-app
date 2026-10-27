@@ -2,6 +2,7 @@
 // they are added (decisions and promises so far). Exits non-zero on the first broken rule.
 import { Game, cautiousIndex } from '../src/game/game.js';
 import { ovr } from '../src/game/engine.js';
+import { AuctionRoom } from '../src/lib/auction.js';
 
 let checks = 0;
 const ok = (c, msg) => { if (!c) { console.error(`FAIL - ${msg}`); process.exit(1); } checks++; };
@@ -57,6 +58,8 @@ for (let season = 0; season < 2; season++) {
       const P = G._promise; const live = P && G.s.promises.find((x) => x.id === P.pr.id);
       if (live) { if (P.mode === 'keep' && !G.P(live.pid).inj) startPlayer(G, live.pid); else if (P.mode === 'break') dropPlayer(G, live.pid); else G.teams[G.user].xi = null; }
       const morale0 = live ? G.P(live.pid).morale : 0; const left0 = live ? live.matchesLeft : 0;
+      // decisions that expire in this match apply their cautious option first; add their morale effect on the promised player
+      const expMorale = live ? G.pendingDecisions().filter((n) => n.due != null && n.due <= f.n).reduce((a, n) => { const fx = n.choices[cautiousIndex(n)].fx || {}; return a + (fx.pid === live.pid ? fx.morale || 0 : 0) + (fx.team || 0); }, 0) : 0;
       const m = await G.playFixture(f, null); lastM = { ...m, n: f.n, lineups: m.lineups, result: m.result };
       const E = G._expectExpire;
       if (E) { ok(E.n.done && E.n.auto && E.n.picked === E.safe.l, 'unanswered decision took the cautious option'); ok(/Board confidence −2/.test(E.n.outcome), 'expiry notes the board penalty'); stats.expired++; G._expectExpire = null; }
@@ -65,7 +68,7 @@ for (let season = 0; season < 2; season++) {
         if (xi.includes(live.pid)) { ok(!still, 'promise kept is cleared'); stats.kept++; G._promise = null; }
         else if (p.inj && still) ok(still.matchesLeft === left0, 'an injured player does not use up a promised match');
         else if (still) ok(still.matchesLeft === left0 - 1, `a missed match counts down (${left0} → ${still.matchesLeft})`);
-        else { ok(Math.round(morale0 - p.morale) >= 19 || p.morale === 0, `broken promise costs morale 20 (${morale0} → ${p.morale})`); ok(G.s.inbox.some((x) => /^Promise broken/.test(x.text)), 'broken promise is in the news'); stats.broken++; G._promise = null; }
+        else { const want = Math.max(0, Math.min(100, Math.min(100, Math.max(0, morale0 + expMorale)) - 20)); ok(Math.abs(p.morale - want) < 0.5, `broken promise costs morale 20 (${morale0}${expMorale ? ` ${expMorale > 0 ? '+' : ''}${expMorale} from an expired decision` : ''} → ${p.morale}, expected ${want})`); ok(G.s.inbox.some((x) => /^Promise broken/.test(x.text)), 'broken promise is in the news'); stats.broken++; G._promise = null; }
       }
       G.teams[G.user].xi = null; G.teams[G.user].order = null;
     } else await G.playFixture(f, null);
@@ -78,7 +81,40 @@ for (let season = 0; season < 2; season++) {
   if (!G.pendingDecisions().length) G.news('Test decision', 'event', { choices: [{ l: 'Bold', fx: { board: 3 } }, { l: 'Careful', fx: {} }], safe: 1, due: null, done: false });
   G.startOffseason();
   ok(!G.pendingDecisions().length && !G.s.promises.length, 'off-season clears open decisions and promises');
-  G.beginRetention(); G.applyRetention(); G.setupAuction(); while (G.lotStart()) G.simLot(true); G.finishAuction();
+  G.beginRetention(); G.applyRetention(); G.setupAuction();
+  // ===== auction: scout and shortlist, then the room with auto-bids =====
+  {
+    const A = G.s.auction; const t = G.teams[G.user];
+    ok(A.prep === true && Array.isArray(G.s.shortlist), 'auction opens on the shortlist screen');
+    for (const l of A.lots.slice(0, 30)) { const p = G.P(l.pid); const [lo, hi] = G.likelyPrice(p); ok(lo >= G.basePrice(p) && hi > lo, `likely price ${lo}–${hi} is a range above base for ${p.name}`); }
+    const needs = G.userNeeds(); ok(needs.length === 5 && needs.every((n) => n.left === Math.max(0, n.target - n.have)), 'needs coverage by role');
+    const added = G.autoSuggest(); const bc = G.budgetCheck();
+    // nothing to add is fine when needs are met, or the purses cannot cover the cheapest player in a needed role
+    const pool = A.lots.map((l) => G.P(l.pid)).filter((p) => !p.team);
+    const affordable = needs.filter((n) => n.left).some((n) => pool.some((p) => G.fitTags(p, needs).some((f) => f.t.startsWith(n.short)) && G.likelyPrice(p)[1] <= (p.nat === 'NEP' ? t.purse : t.osPurse)));
+    ok(added.length > 0 || !affordable || G.s.shortlist.length > 0, `auto-suggest picks targets (${added.length}; purses ${t.purse}/${t.osPurse}; squad ${t.squad.length}, OS ${G.osCount(G.user)})`);
+    ok(bc.os.sum <= t.osPurse && bc.dom.sum <= t.purse, `auto-suggest stays within the purses (OS ${bc.os.sum}/${t.osPurse}, dom ${bc.dom.sum}/${t.purse})`);
+    for (const id of added) { const p = G.P(id); ok(G.fitTags(p, needs).some((f) => f.c === 'b') || p.nat !== 'NEP', `${p.name} fills a need or an overseas slot`); }
+    ok(G.osCount(G.user) + added.filter((id) => G.P(id).nat !== 'NEP').length >= Math.min(6, G.osCount(G.user) + A.lots.filter((l) => G.P(l.pid).nat !== 'NEP').length) || bc.os.sum > t.osPurse - 20, 'auto-suggest aims for the 6-overseas minimum');
+    const room = new AuctionRoom(G, () => {}); room.enter(); room.stop(); ok(!A.prep && A.cur, 'entering the room opens lot 1');
+    let stops = 0, won = 0;
+    while (A.lots[A.i] || (A.cur && !A.cur.done)) {
+      if (A.cur && !A.cur.done && !G.slEntry(A.cur.pid)) { room.jump(); room.stop(); if (!A.cur || A.cur.done) break; }
+      const c = A.cur; if (!c || c.done) { room.next(); room.stop(); continue; }
+      const e = G.slEntry(c.pid); ok(!!e, 'Sim to my next target stops at a shortlisted lot'); stops++;
+      const p = G.P(c.pid); const owner0 = t.squad.length;
+      room.resolveQuick(false); room.stop();
+      if (c.leader === G.user) { won++; ok(c.bid <= e.max, `auto-bid stays within the max (${c.bid} ≤ ${e.max})`); ok(t.squad.length === owner0 + 1, 'won player joins the squad'); }
+      else if (c.leader) ok(!e.max || c.bid + G.incr(p, c.bid) > e.max || c.hist.some((h) => h[0] === G.user) || !G.canAdd(G.user, p) || G.budgetOf(G.user, p) < c.bid, `lost lot ${p.name} only above the max (${c.bid} v ${e.max})`);
+      room.next(); room.stop();
+    }
+    ok(stops >= added.length, `stopped at every target (${stops}/${added.length}, won ${won})`);
+    room.simRest(); room.stop();
+    const os0 = Object.fromEntries(Object.keys(G.teams).map((id) => [id, G.osCount(id)]));
+    G.finishAuction(); G.s.phase = 'preseason';
+    ok(Object.keys(G.teams).every((id) => G.osCount(id) === os0[id]), 'finishing the auction signs no overseas players: the user goes first in pre-season');
+    ok(!G.s.shortlist.length, 'shortlist clears after the auction');
+  }
   console.log(`season ${G.year - 1} done · answered ${stats.answered}, expired ${stats.expired}, promises kept ${stats.kept}, broken ${stats.broken}`);
 }
 ok(stats.answered > 0 && stats.expired > 0, 'decisions were both answered and left to expire');
