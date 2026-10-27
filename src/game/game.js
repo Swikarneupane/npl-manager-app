@@ -1,7 +1,8 @@
 import {NE_TEAM,TEAMS,SQUADS,FREE_NEP,FREE_OS,HISTORY,FIX2026,PLAYOFF_DATES2026,NEP_NAMES,PROV_BIAS,OS_NAMES,COUNTRY_NAMES,PROVINCES} from './data.js';
-import {R,ri,rf,pick,clamp,shuffle,isSpin,isPace,fmtL,ovr,calcValue,mkPlayer,Match,setPID,getPID} from './engine.js';
+import {R,ri,rf,pick,clamp,shuffle,isSpin,isPace,TYPE_LABEL,fmtL,ovr,calcValue,mkPlayer,Match,setPID,getPID} from './engine.js';
 // ===== Game state & league logic =====
 const SLABS={NEP:[12,9,6],OS:[30,22,15]};
+const BOWL_PHASES={pp:6,mid:9,death:5}, PHASE_CAP={pp:3,mid:5,death:3};
 const OS_CAP=150, DOM_CAP=90, MAX_OS=8, MIN_OS=6, MAX_SQUAD=22, MIN_SQUAD=18;
 const PERSONAS=['Big spender','Balanced','Bargain hunter','Youth builder','Loyalist','Balanced','Big spender','Bargain hunter'];
 const MONTHS={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
@@ -35,7 +36,7 @@ function effectLines(G,n,ci){
 class Game{
   constructor(s){ this.s=s; if(s&&s.pid) setPID(s.pid); if(s) this.migrate(); }
   // Defaults for state added after a save was written, so old saves keep loading.
-  migrate(){ const s=this.s; s.inbox??=[]; s.promises??=[];
+  migrate(){ const s=this.s; s.inbox??=[]; s.promises??=[]; s.phaseEco??={};
     // decisions from older saves: give them a title, a deadline (the user's next match) and a cautious choice
     const nf=s.fixtures&&s.user?this.userNext():null;
     for(const n of s.inbox) if(n.choices&&!n.done){ n.title??=n.text; if(n.due===undefined) n.due=nf?nf.n:null; n.safe??=cautiousIndex(n); }
@@ -130,6 +131,67 @@ class Game{
     // openers: two best among top that are BAT/WK; then rest by bat
     return top.concat(tail).map(p=>p.id);
   }
+  // ===== Team sheet =====
+  // Batting: the top seven in the order; bowling: the best five bowlers; fielding: all eleven.
+  teamStrength(xi,order){
+    const ps=(order&&order.length===11?order:xi).map(id=>this.P(id)); const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+    return {bat:Math.round(avg(ps.slice(0,7).map(p=>p.bat))),bowl:Math.round(avg(ps.map(p=>p.bowl||0).sort((a,b)=>b-a).slice(0,5))),field:Math.round(avg(ps.map(p=>p.field||50)))};
+  }
+  // Win chance: a logistic on the gap in combined strength (batting and bowling weigh 45% each).
+  winChance(a,b){ const c=x=>0.45*x.bat+0.45*x.bowl+0.1*x.field; return 1/(1+Math.exp(-(c(a)-c(b))/6)); }
+  orderWarnings(order,tid){
+    const w=[]; const t=this.teams[tid||this.user];
+    order.forEach((id,i)=>{ const p=this.P(id), n=i+1;
+      if(p.bat>=68&&n>=8) w.push({pid:id,kind:'high',text:`${p.name} should bat higher than ${n}`});
+      if(p.bat<45&&n<=7) w.push({pid:id,kind:'low',text:`${p.name} at ${n} makes a long tail`}); });
+    if(!order.some(id=>this.P(id).role==='WK')&&!(t.keeperId&&order.includes(t.keeperId))) w.push({pid:null,kind:'wk',text:'No wicketkeeper in the XI'});
+    return w;
+  }
+  // The five team-sheet rules: 7 Nepali, 4 overseas, a keeper, 5+ bowling options (bowl 50+), a captain.
+  xiRules(tid,xi){
+    const t=this.teams[tid], ps=xi.map(id=>this.P(id)); const nep=ps.filter(p=>p.nat==='NEP').length, os=ps.length-nep;
+    const wk=(t.keeperId&&xi.includes(t.keeperId))?this.P(t.keeperId):ps.find(p=>p.role==='WK'); const bowl=ps.filter(p=>p.bowl>=50).length;
+    const cap=t.captainId&&xi.includes(t.captainId)?this.P(t.captainId):null;
+    return [
+      {k:'nep',label:'Nepali players',value:`${nep} of 7`,ok:nep===7&&ps.length===11},
+      {k:'os',label:'Overseas players',value:`${os} of 4`,ok:os===4||(os<4&&nep===11-os&&os>=Math.min(4,t.squad.filter(id=>this.P(id).nat!=='NEP'&&!this.P(id).inj).length))},
+      {k:'wk',label:'Wicketkeeper',value:wk?wk.name:'None',ok:!!wk},
+      {k:'bowl',label:'Bowling options',value:String(bowl),ok:bowl>=5},
+      {k:'cap',label:'Captain',value:cap?cap.name:'Not in the XI',ok:!!cap},
+    ];
+  }
+  // Bowling plan: overs per bowler per phase. Phase totals 6 / 9 / 5, at most 4 overs per bowler,
+  // and at most 3 / 5 / 3 in one phase (a bowler cannot bowl consecutive overs).
+  defaultBowlPlan(xi){ return this.fillBowlPlan({},xi); }
+  fillBowlPlan(plan,xi){
+    const P={}; for(const id of xi) if(plan[id]) P[id]={pp:plan[id].pp||0,mid:plan[id].mid||0,death:plan[id].death||0};
+    const tot=id=>P[id]?P[id].pp+P[id].mid+P[id].death:0; const used=k=>Object.values(P).reduce((a,x)=>a+x[k],0);
+    const pool=xi.map(id=>this.P(id)).filter(p=>p.bowl>=40);
+    const fit=(p,k)=>p.bowl+(isPace(p.type)&&k!=='mid'?6:0)+(isSpin(p.type)&&k==='mid'?6:0)-(tot(p.id)*1.5);
+    for(const k of ['death','pp','mid']){
+      while(used(k)<BOWL_PHASES[k]){
+        const c=pool.filter(p=>tot(p.id)<4&&((P[p.id]&&P[p.id][k])||0)<PHASE_CAP[k]).sort((a,b)=>fit(b,k)-fit(a,k))[0];
+        if(!c) break; (P[c.id]??={pp:0,mid:0,death:0})[k]++;
+      }
+    }
+    return P;
+  }
+  // Keep the user's plan in step with the XI: drop players who left it, fill any gaps from ratings.
+  syncBowlPlan(tid){ const t=this.teams[tid]; if(!t.xi||t.xi.length!==11) return; t.bowlPlan=this.fillBowlPlan(t.bowlPlan||{},t.xi); }
+  // One line on the next opponent: their two main bowlers, dew, and their weakest bowling phase.
+  scoutReport(f){
+    const opp=f.home===this.user?f.away:f.home; const T=this.teams[opp]; const sn=T.name.split(' ')[0];
+    const xi=this.autoXI(opp).map(id=>this.P(id)).filter(p=>p.bowl>=50).sort((a,b)=>b.bowl-a.bowl).slice(0,2);
+    const lab=p=>(TYPE_LABEL[p.type]||p.type||'').toLowerCase();
+    const parts=[];
+    if(xi.length) parts.push(`${sn} lean on ${xi.map(p=>`${p.name.split(' ').slice(-1)[0]}'s ${lab(p)}`).join(' and ')}.`);
+    parts.push(this.dewFor(f)?'Dew expected tonight, which helps the side batting second.':f.night?'No dew expected tonight.':'Day match, so no dew.');
+    const E=(this.s.phaseEco[this.year]||{})[opp];
+    if(E){ const names={pp:'powerplay bowling',mid:'middle-overs bowling',death:'death bowling'};
+      const ph=Object.keys(E).filter(k=>E[k][1]>=6).sort((a,b)=>E[b][0]/E[b][1]-E[a][0]/E[a][1])[0];
+      if(ph) parts.push(`Their weak spot: ${names[ph]}, at ${(E[ph][0]/E[ph][1]).toFixed(1)} an over.`); }
+    return parts.join(' ');
+  }
   validXI(tid,xi){
     const t=this.teams[tid]; if(!xi||xi.length!==11) return false;
     const os=xi.filter(id=>this.P(id).nat!=='NEP').length; const osAvail=t.squad.filter(id=>this.P(id).nat!=='NEP'&&!this.P(id).inj).length;
@@ -140,6 +202,7 @@ class Game{
     const t=this.teams[tid]; let xi, order;
     if(tid===this.user && !this.s.settings.autoXI && this.validXI(tid,t.xi)){ xi=t.xi.slice(); order=(t.order&&t.order.length===11&&t.order.every(id=>xi.includes(id)))?t.order.slice():this.autoOrder(xi); }
     else { xi=this.autoXI(tid); order=this.autoOrder(xi); if(tid===this.user){ t.xi=xi.slice(); t.order=order.slice(); } }
+    if(tid===this.user){ const keep=t.xi; t.xi=xi; this.syncBowlPlan(tid); t.xi=keep; }
     const ps=xi.map(id=>this.P(id));
     let keeper=(ps.filter(p=>p.role==='WK').sort((a,b)=>b.bat-a.bat)[0]||ps.slice().sort((a,b)=>b.field-a.field)[0]).id;
     if(tid===this.user && t.keeperId && xi.includes(t.keeperId)) keeper=t.keeperId;
@@ -169,7 +232,9 @@ class Game{
   }
   nextFixture(){ return this.s.fixtures.find(f=>!f.res); }
   // ===== Playing matches =====
-  newMatch(f){ return new Match(this,f.home,f.away,{lang:this.s.lang,night:f.night,stage:f.stage}); }
+  newMatch(f){ return new Match(this,f.home,f.away,{lang:this.s.lang,night:f.night,stage:f.stage,dew:this.dewFor(f)}); }
+  // Dew is decided once per fixture so the scout report and the match agree.
+  dewFor(f){ if(f.dew===undefined) f.dew=!!f.night&&R()<0.6; return f.dew; }
   async playFixture(f,hooks){
     const m=this.newMatch(f); await m.run(hooks); this.recordMatch(m,f); return m;
   }
@@ -224,7 +289,9 @@ class Game{
     f.att=att; const gate=att*home.ticket/1e5*0.3; home.balance+=gate; if(home.ledger) home.ledger.gate+=gate;
     home.fans=clamp(home.fans+ (home.ticket<400?0.4: home.ticket>900?-0.6:0),0,100);
     // user news
-    if(f.home===this.user||f.away===this.user){ const t=this.teams[this.user]; if(res.winner===this.user) t.board=clamp(t.board+2,0,100); else if(res.winner) t.board=clamp(t.board-2,0,100); t.formStr=(t.formStr||''); this.expireDecisions(f.n); this.checkPromises(m.lineups[this.user].xi); this.matchNews(m,f); }
+    if(f.home===this.user||f.away===this.user){ const t=this.teams[this.user]; if(res.winner===this.user) t.board=clamp(t.board+2,0,100); else if(res.winner) t.board=clamp(t.board-2,0,100); t.formStr=(t.formStr||''); t.lastXI={xi:m.lineups[this.user].xi.slice(),order:m.lineups[this.user].order.slice()}; this.expireDecisions(f.n); this.checkPromises(m.lineups[this.user].xi); this.matchNews(m,f); }
+    // bowling economy by phase for each side this season (scout report)
+    for(const inn of m.inns){ if(!inn.phx) continue; const E=((this.s.phaseEco[y]??={})[inn.bowl]??={pp:[0,0],mid:[0,0],death:[0,0]}); for(const k in inn.phx){ E[k][0]+=inn.phx[k][0]; E[k][1]+=inn.phx[k][1]; } }
     for(const side of [m.home,m.away]){ const t=this.teams[side]; t.form=(t.form||[]).concat([res.winner===side?'W':res.winner?'L':'–']).slice(-5); }
     this.s.pid=getPID();
   }
@@ -608,4 +675,4 @@ class Game{
 }
 function ordinal(n){const s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);}
 function careerOf(p){ const c={m:0,inn:0,r:0,b:0,no:0,f:0,s:0,hs:0,ff:0,h:0,bb:0,rc:0,w:0,bw:0,br:999,ct:0,mom:0}; for(const y in p.stats){const s=p.stats[y]; for(const k of ['m','inn','r','b','no','f','s','ff','h','bb','rc','w','ct','mom']) c[k]+=s[k]; if(s.hs>c.hs)c.hs=s.hs; if(s.bw>c.bw||(s.bw===c.bw&&s.br<c.br)){c.bw=s.bw;c.br=s.br;}} return c; }
-export {Game,careerOf,ordinal,effectLines,cautiousIndex,OS_CAP,DOM_CAP,MAX_OS,MIN_OS,SLABS,MAX_SQUAD,MIN_SQUAD};
+export {Game,careerOf,ordinal,effectLines,cautiousIndex,BOWL_PHASES,PHASE_CAP,OS_CAP,DOM_CAP,MAX_OS,MIN_OS,SLABS,MAX_SQUAD,MIN_SQUAD};

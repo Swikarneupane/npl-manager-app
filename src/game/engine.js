@@ -145,7 +145,7 @@ class Match{
     this.G=G; this.home=home; this.away=away; this.opt=opt||{};
     this.overs=opt.overs||20; this.maxBalls=this.overs*6;
     this.night = opt.night!=null? opt.night : R()<0.5;
-    this.pitch = rf(0.9,1.1); this.dew=this.night && R()<0.6;
+    this.pitch = rf(0.9,1.1); this.dew = opt.dew!=null ? !!opt.dew : (this.night && R()<0.6);
     this.lang=opt.lang||'en'; this.log=[]; this.result=null; this.inns=[];
     this.weather=null;
     const rainRoll=R();
@@ -177,6 +177,7 @@ class Match{
   aiBowler(inn,need=6){
     const opts=this.bowlerOptions(inn,need); const o=Math.floor(inn.balls/6); const ph=o<6?'pp':o>=15?'death':'mid';
     const oversLeft=this.overs-o;
+    const team=this.G.teams[inn.bowl]; const plan=inn.bowl===this.G.user&&team&&team.bowlPlan&&Object.keys(team.bowlPlan).length?team.bowlPlan:null;
     let best=null,bs=-1e9;
     const capable=opts.filter(id=>this.P(id).bowl>=45);
     const pool=capable.length?capable:opts;
@@ -188,6 +189,8 @@ class Match{
       const ov=s.balls/6; sc-=ov*1.5; if(s.balls>=6){const eco=s.r/(s.balls/6); sc-=(eco-8)*1.2; sc+=s.w*2;}
       // save death overs for best pacers
       if(ph!=='death' && isPace(p.type) && p.bowl>=68 && ov>=2) sc-=6;
+      // the user's captain follows the bowling plan: prefer bowlers with plan overs left in this phase
+      if(plan){ const want=(plan[id]&&plan[id][ph])||0, done=(s.ph&&s.ph[ph])||0; if(want>done) sc+=30; else if(want>0||plan[id]) sc-=8; }
       sc+=rf(-3,3);
       if(sc>bs){bs=sc;best=id;}
     }
@@ -257,6 +260,7 @@ class Match{
         if(this.hooks.chooseBowler && inn.bowl===this.G.user) bid=await this.hooks.chooseBowler(inn,this);
         if(!bid || !this.bowlerOptions(inn).includes(bid)) bid=this.aiBowler(inn);
         inn.cur=bid; if(!inn.bw[bid]) inn.bw[bid]={balls:0,r:0,w:0,dots:0,wd:0,nb:0};
+        { const b=inn.bw[bid]; (b.ph||(b.ph={pp:0,mid:0,death:0}))[phaseOf(inn.balls)]++; }
         if(this.hooks.beforeOver) await this.hooks.beforeOver(inn,this);
       }
       await this.ball(inn);
@@ -268,6 +272,8 @@ class Match{
     if(!(inn.balls%6===0 && inn.balls>0 && inn.overStart!=null && inn.balls!==inn.lastOverEnd && inn.overStart!==inn.balls)) return;
     if((isSecond&&inn.runs>=inn.target) || inn.wkts>=10) return;
     inn.lastOverEnd=inn.balls;
+    // runs and overs per phase, for the scout report's weakest phase
+    { const px=inn.phx||(inn.phx={pp:[0,0],mid:[0,0],death:[0,0]}); const ph0=phaseOf(inn.balls-1); px[ph0][0]+=inn.overRuns||0; px[ph0][1]++; }
     const s=inn.bw[inn.cur]; const fig=`${Math.floor(s.balls/6)}-${s.r}-${s.w}`;
     const bats=[inn.striker,inn.non].filter(id=>inn.bs[id]&&!inn.bs[id].out).map(id=>`${this.P(id).name.split(' ').slice(-1)[0]} ${inn.bs[id].r} (${inn.bs[id].b})`);
     const need=isSecond?`Need ${inn.target-inn.runs} from ${this.maxBalls-inn.balls}`:`Run rate ${(inn.runs/(inn.balls/6)).toFixed(2)}`;

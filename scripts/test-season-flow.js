@@ -95,4 +95,39 @@ ok(stats.kept + stats.broken > 0, 'at least one promise was settled');
   ok(O.decisionsDue().some((x) => x.id === 'old1'), 'old decision gates the next match');
 }
 ok(reload(G).s.promises !== undefined, 'save round-trips');
+
+// ===== team sheet: bowling plan, captain follows it, order warnings, rules =====
+{
+  const H = Game.create('LL', { lang: 'en' }); H.aiPreseason(); for (const p of H.osFreeAgents()) { if (H.osCount(H.user) >= 6) break; H.signFA(p.id); } H.startSeason();
+  const t = H.teams[H.user]; const xi = H.autoXI(H.user); t.xi = xi; t.order = H.autoOrder(xi);
+  const plan = H.defaultBowlPlan(xi); const sum = (k) => Object.values(plan).reduce((a, x) => a + x[k], 0);
+  ok(sum('pp') === 6 && sum('mid') === 9 && sum('death') === 5, `default plan totals 6/9/5 (${sum('pp')}/${sum('mid')}/${sum('death')})`);
+  ok(Object.values(plan).every((x) => x.pp + x.mid + x.death <= 4 && x.pp <= 3 && x.mid <= 5 && x.death <= 3), 'no bowler over 4 overs or a phase cap');
+  ok(Object.keys(plan).every((id) => xi.includes(id)), 'plan only uses the XI');
+  // the user's captain follows the plan: count overs that went to a bowler with plan overs left in that phase
+  let agree = 0, total = 0, games = 0;
+  for (const f of H.s.fixtures) {
+    if (games >= 6) break; if (f.home !== H.user && f.away !== H.user) { await H.playFixture(f, null); continue; }
+    t.bowlPlan = H.defaultBowlPlan(t.xi = H.autoXI(H.user)); t.order = H.autoOrder(t.xi); const P0 = JSON.parse(JSON.stringify(t.bowlPlan));
+    const m = await H.playFixture(f, null); games++;
+    const inn = m.inns.find((i) => i.bowl === H.user); if (!inn || m.overs < 20) continue;
+    for (const [id, b] of Object.entries(inn.bw)) for (const k of ['pp', 'mid', 'death']) { const n = (b.ph && b.ph[k]) || 0; total += n; agree += Math.min(n, (P0[id] && P0[id][k]) || 0); }
+  }
+  ok(total > 0 && agree / total >= 0.8, `captain follows the bowling plan (${agree}/${total} overs)`);
+  ok(Object.keys(H.s.phaseEco[H.year] || {}).length > 0, 'phase economy is recorded for the scout report');
+  const f = H.userNext(); ok(/lean on|dew/.test(H.scoutReport(f)), `scout report: ${H.scoutReport(f)}`);
+  ok(typeof f.dew === 'boolean' && H.newMatch(f).dew === f.dew, 'dew is fixed per fixture and the match uses it');
+  // order warnings: best batter at 11, a tail-ender at 3, no keeper
+  const ord = H.autoOrder(H.autoXI(H.user)); const bad = ord.slice(); const top = bad.shift(); bad.push(top);
+  const ps = bad.map((id) => H.P(id)); const tail = ps.filter((p) => p.bat < 45).pop(); if (tail) { bad.splice(bad.indexOf(tail.id), 1); bad.splice(2, 0, tail.id); }
+  const w = H.orderWarnings(bad); ok(H.P(top).bat < 68 || w.some((x) => x.kind === 'high' && x.pid === top), 'warns when a 68+ batter is at 8 or lower');
+  ok(!tail || w.some((x) => x.kind === 'low' && x.pid === tail.id), 'warns when a sub-45 batter is in the top 7');
+  const noWk = H.autoXI(H.user).filter((id) => H.P(id).role !== 'WK'); while (noWk.length < 11) noWk.push(t.squad.find((id) => !noWk.includes(id) && H.P(id).role !== 'WK'));
+  t.keeperId = null; ok(H.orderWarnings(noWk).some((x) => x.kind === 'wk') && !H.xiRules(H.user, noWk).find((r) => r.k === 'wk').ok, 'no keeper is flagged');
+  ok(H.xiRules(H.user, H.autoXI(H.user)).every((r) => r.ok || r.k === 'cap'), 'an auto XI passes the rules');
+  // old saves without a plan get one at match time
+  const O = new Game(JSON.parse(JSON.stringify(H.s))); delete O.teams[O.user].bowlPlan; O.lineup(O.user);
+  ok(O.teams[O.user].bowlPlan && Object.keys(O.teams[O.user].bowlPlan).length >= 5, 'old save gets a default bowling plan');
+}
+
 console.log(`ok - ${checks} season-flow checks`);

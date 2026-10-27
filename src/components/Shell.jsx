@@ -39,6 +39,8 @@ export default function Shell({ children }) {
     window.addEventListener('popstate', pop);
     return () => { window.removeEventListener('popstate', pop); if (moreBtn.current) moreBtn.current.focus(); };
   }, [more]);
+  // a new page starts at the top (tab changes within a page, ?tab=, keep their place)
+  useEffect(() => { window.scrollTo(0, 0); }, [loc.pathname]);
   const where = loc.pathname + loc.search;
   const opened = useRef(where);
   useEffect(() => { if (more && where !== opened.current) setMore(false); opened.current = where; }, [where]); // eslint-disable-line react-hooks/exhaustive-deps
