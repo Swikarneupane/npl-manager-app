@@ -12,7 +12,7 @@ export class LiveMatch {
     this.G = G; this.f = f; this.onChange = onChange;
     this.m = saved ? Match.restore(G, saved.data) : G.newMatch(f);
     this.done = false; this.started = false; this.wait = null; this.simTo = null; this.pauseReq = false;
-    this.pending = null; this.mode = G.s.settings.mode; this.prevOver = null; this.nextBat = null; this.lastInn = null; this.innIdx = 1;
+    this.pending = null; this.mode = G.s.settings.mode; this.prevOver = null; this.nextBat = null; this.nextBowler = null; this.lastInn = null; this.innIdx = 1;
     this.error = null; this.snap = null; this.resumed = false;
     if (saved) { this.mode = saved.mode || this.mode; this.prevOver = saved.prevOver || null; this.resumed = true; this.snap = saved.data; this.lastInn = this.m.inns[this.m.inns.length - 1] || null; }
   }
@@ -40,11 +40,15 @@ export class LiveMatch {
     const hooks = {
       onLine: () => {},
       toss: () => (self.fast() ? (self.m.night ? 'field' : 'bat') : new Promise((res) => { self.pending = { type: 'toss', res }; self.refresh(); })),
-      chooseBowler: (inn) => {
-        if (self.fast()) return null;
+      // A bowler picked ahead of time (nextBowler) is used without stopping; otherwise the game
+      // stops at the overs the mode asks about, with the captain's pick preselected.
+      chooseBowler: (inn, m) => {
+        const want = self.nextBowler; self.nextBowler = null;
+        const ok = want && m.bowlerOptions(inn).includes(want) ? want : null;
+        if (self.fast()) return ok;
         const o = Math.floor(inn.balls / 6);
-        if (self.mode === 'key' && !(o === 0 || o === 6 || o >= 15)) return null;
-        return new Promise((res) => { self.pending = { type: 'bowler', res }; self.refresh(); });
+        if (ok || (self.mode === 'key' && !(o === 0 || o === 6 || o >= 15))) return ok;
+        return new Promise((res) => { self.pending = { type: 'bowler', res, pick: m.aiBowler(inn) }; self.refresh(); });
       },
       review: (inn, m, info) => {
         if (self.fast() && !G.s.settings.pauseDRS) return info.hint === 'doubt' ? R() < 0.7 : R() < 0.1;

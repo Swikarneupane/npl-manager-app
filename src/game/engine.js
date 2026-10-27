@@ -194,6 +194,24 @@ class Match{
     if(!best){ const lu=this.lineups[inn.bowl]; best=lu.xi.find(id=>id!==inn.last)||lu.xi[0]; }
     return best;
   }
+  // ---- ball settings, shared by ball() and the read-outs ----
+  aggrFor(inn){ return (inn.bat===this.G.user && inn.aggr!=='auto')? +inn.aggr : autoAggr(inn,this.maxBalls); }
+  fieldFor(inn,ph){ return (inn.bowl===this.G.user && inn.field!=='auto')? inn.field : (ph==='death'?'death': (inn.target && (inn.target-inn.runs)/(Math.max(1,this.maxBalls-inn.balls)/6)>10)?'defend':'balanced'); }
+  strengths(inn,bat,bowl,ph){
+    let b=bat.bat+bat.form*1.2-(100-bat.fit)*0.08+(isSpin(bowl.type)?bat.vsSpin:-bat.vsSpin)*0.5;
+    let w=bowl.bowl+bowl.form*1.0-(100-bowl.fit)*0.06;
+    if(isPace(bowl.type)&&ph!=='mid') w+=3; if(isSpin(bowl.type)&&ph==='mid') w+=3;
+    if(isSpin(bowl.type)&&this.dew&&inn===this.inns[1]) w-=4;
+    if(bat.bat<30) b-=8;
+    return {b,w};
+  }
+  // Outcome probabilities of the next ball for the current striker, without bowling it.
+  // o.aggr / o.field / o.bowler override what the innings would use. Uses no randomness.
+  preview(inn,o={}){
+    const bat=this.P(inn.striker), bowl=this.P(o.bowler||inn.cur); if(!bat||!bowl||!inn.bs[inn.striker]) return null;
+    const ph=phaseOf(inn.balls); const {b,w}=this.strengths(inn,bat,bowl,ph);
+    return ballProbs(b,w,o.aggr!=null?o.aggr:this.aggrFor(inn),{phase:ph,set:inn.bs[inn.striker].b,field:o.field||this.fieldFor(inn,ph),pitch:this.pitch,freeHit:inn.freeHit});
+  }
   // ---- save / resume ----
   serialize(){ const o={}; for(const k of Match.FIELDS) if(this[k]!==undefined) o[k]=this[k]; return JSON.parse(JSON.stringify(o)); }
   static restore(G,data){ const m=Object.create(Match.prototype); Object.assign(m,JSON.parse(JSON.stringify(data))); m.G=G; m.hooks={}; m._ne=null; m._cur=null; return m; }
@@ -267,17 +285,11 @@ class Match{
     const wideP=0.045-acc*0.00028, nbP=0.008-acc*0.00004;
     const ex=R();
     const user=this.G.user;
-    const aggr = (inn.bat===user && inn.aggr!=='auto')? +inn.aggr : autoAggr(inn,this.maxBalls);
-    const field = (inn.bowl===user && inn.field!=='auto')? inn.field : (ph==='death'?'death': (inn.target && (inn.target-inn.runs)/(Math.max(1,this.maxBalls-inn.balls)/6)>10)?'defend':'balanced');
+    const aggr=this.aggrFor(inn), field=this.fieldFor(inn,ph);
     const vars={bat:bat.name,bowler:bowl.name};
     if(ex<wideP){ inn.runs++; inn.extras++; bw.r++; bw.wd++; inn.overRuns++; inn.partnership++; this.say(this.tr('wide',vars),'extra',{ball:true,o:this.ballLbl(inn,false),ev:'wd'}); inn.overSeq.push('wd'); if(this.hooks.afterBall) await this.hooks.afterBall(inn,this,{ev:'wd'}); return; }
     let noBall=false; if(ex<wideP+nbP){ noBall=true; }
-    // batter/bowler strength
-    let b=bat.bat+bat.form*1.2-(100-bat.fit)*0.08+(isSpin(bowl.type)?bat.vsSpin:-bat.vsSpin)*0.5;
-    let w=bowl.bowl+bowl.form*1.0-(100-bowl.fit)*0.06;
-    if(isPace(bowl.type)&&ph!=='mid') w+=3; if(isSpin(bowl.type)&&ph==='mid') w+=3;
-    if(isSpin(bowl.type)&&this.dew&&inn===this.inns[1]) w-=4;
-    if(bat.bat<30) b-=8;
+    const {b,w}=this.strengths(inn,bat,bowl,ph);
     const P=ballProbs(b,w,aggr,{phase:ph,set:bs.b,field,pitch:this.pitch,freeHit:inn.freeHit});
     let out=choose(P);
     const wasFree=inn.freeHit; inn.freeHit=false;
@@ -455,4 +467,4 @@ class Match{
     const p=1/(1+Math.exp(-(exp-need)/14)); return {bat:i.bat,p:need<=0?1:(i.wkts>=10||i.balls>=this.maxBalls)?0:p};
   }
 }
-export {R,ri,rf,pick,clamp,shuffle,isSpin,isPace,TYPE_LABEL,fmtL,ovr,calcValue,mkPlayer,Match,dlsRes,cm,setPID,getPID};
+export {R,ri,rf,pick,clamp,shuffle,isSpin,isPace,TYPE_LABEL,fmtL,ovr,calcValue,mkPlayer,Match,dlsRes,cm,setPID,getPID,ballProbs,autoAggr,phaseOf};
