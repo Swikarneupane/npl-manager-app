@@ -17,7 +17,8 @@
     "dist:linux": "vite build && electron-builder --linux AppImage deb",
     "android:sync": "vite build && cap sync android",
     "android:apk": "vite build && cap sync android && cd android && ./gradlew assembleDebug",
-    "test:resume": "node scripts/test-resume.js"
+    "test:resume": "node scripts/test-resume.js",
+    "test:flow": "node scripts/test-season-flow.js"
   },
   "devDependencies": {
     "@capacitor/android": "8.5.0",

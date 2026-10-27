@@ -7,10 +7,39 @@ const PERSONAS=['Big spender','Balanced','Bargain hunter','Youth builder','Loyal
 const MONTHS={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
 // "Nov 3" -> epoch ms for that day; null for labels that are not dates ("Off-season").
 function dayTime(d,y){ const m=/^([A-Z][a-z]{2}) (\d{1,2})$/.exec(d||''); return m&&m[1] in MONTHS? new Date(y,MONTHS[m[1]],+m[2]).getTime() : null; }
+const hasPlayed=(p)=>Object.values(p.stats||{}).some(x=>x.m>0);
+// The cautious choice for a decision; older saves carry no 'safe' field.
+const CAUTIOUS=['Tell him to keep working','Decline, he needs rest','Back the players publicly','Rest him next match','Winning comes first'];
+function cautiousIndex(n){ if(n.safe!=null&&n.choices[n.safe]) return n.safe; const k=n.choices.findIndex(c=>CAUTIOUS.includes(c.l)); if(k>=0) return k; const np=n.choices.findIndex(c=>!(c.fx&&c.fx.promise)); return np>=0?np:0; }
+// What a choice does, as lines for the decision sheet and the stored outcome.
+// tone: up (good), down (bad), warn (a condition you must meet), mut (neutral).
+function effectLines(G,n,ci){
+  const c=n.choices[ci], fx=c.fx||{}, out=[]; const sur=(id)=>G.P(id).name.split(' ').slice(-1)[0];
+  const num=(v)=>(v>0?'+':'−')+Math.abs(v); const add=(v,text)=>out.push({sign:v>0?'+':'−',tone:v>0?'up':'down',text});
+  if(fx.pid&&fx.morale) add(fx.morale,`${sur(fx.pid)} morale ${num(fx.morale)}`);
+  if(fx.pid&&fx.fit) add(fx.fit,`${sur(fx.pid)} fitness ${num(fx.fit)}`);
+  if(fx.pid&&fx.rest) out.push({sign:'·',tone:'mut',text:`${sur(fx.pid)} is rested for the next match`});
+  if(fx.balance) add(fx.balance,`Club balance ${fx.balance>0?'+':'−'}Rs ${Math.abs(fx.balance)} L`);
+  if(fx.team) add(fx.team,`Squad morale ${num(fx.team)}`);
+  if(fx.cap) add(fx.cap,`Captain morale ${num(fx.cap)}`);
+  if(fx.form) add(fx.form,`Senior players' form ${num(fx.form)}`);
+  if(fx.fans) add(fx.fans,`Fan support ${num(fx.fans)}`);
+  if(fx.board) add(fx.board,`Board confidence ${num(fx.board)}`);
+  if(fx.promise==='start'){ const f=n.due!=null?G.s.fixtures.find(x=>x.n===n.due):G.userNext(); const opp=f?(f.home===G.user?f.away:f.home):null;
+    out.push({sign:'!',tone:'warn',text:`He must start${opp?` v ${G.teams[opp].name.split(' ')[0]}`:' the next match'}, or morale −20 and board −4`}); }
+  if(fx.promise==='debut') out.push({sign:'!',tone:'warn',text:`${sur(fx.pid)} must debut within 3 matches, or morale −20 and board −4`});
+  if(!fx.promise&&n.choices.some(x=>x.fx&&x.fx.promise&&x.fx.promise!==true)) out.push({sign:'+',tone:'mut',text:'No promise to keep'});
+  if(!out.length) out.push({sign:'·',tone:'mut',text:'No other effect'});
+  return out;
+}
 class Game{
   constructor(s){ this.s=s; if(s&&s.pid) setPID(s.pid); if(s) this.migrate(); }
   // Defaults for state added after a save was written, so old saves keep loading.
-  migrate(){ const s=this.s; s.inbox??=[]; }
+  migrate(){ const s=this.s; s.inbox??=[]; s.promises??=[];
+    // decisions from older saves: give them a title, a deadline (the user's next match) and a cautious choice
+    const nf=s.fixtures&&s.user?this.userNext():null;
+    for(const n of s.inbox) if(n.choices&&!n.done){ n.title??=n.text; if(n.due===undefined) n.due=nf?nf.n:null; n.safe??=cautiousIndex(n); }
+  }
   get players(){return this.s.players;} get teams(){return this.s.teams;} get user(){return this.s.user;} get year(){return this.s.year;}
   P(id){return this.s.players[id];}
   static create(userTeam,opts){
@@ -195,7 +224,7 @@ class Game{
     f.att=att; const gate=att*home.ticket/1e5*0.3; home.balance+=gate; if(home.ledger) home.ledger.gate+=gate;
     home.fans=clamp(home.fans+ (home.ticket<400?0.4: home.ticket>900?-0.6:0),0,100);
     // user news
-    if(f.home===this.user||f.away===this.user){ const t=this.teams[this.user]; if(res.winner===this.user) t.board=clamp(t.board+2,0,100); else if(res.winner) t.board=clamp(t.board-2,0,100); t.formStr=(t.formStr||''); this.matchNews(m,f); }
+    if(f.home===this.user||f.away===this.user){ const t=this.teams[this.user]; if(res.winner===this.user) t.board=clamp(t.board+2,0,100); else if(res.winner) t.board=clamp(t.board-2,0,100); t.formStr=(t.formStr||''); this.expireDecisions(f.n); this.checkPromises(m.lineups[this.user].xi); this.matchNews(m,f); }
     for(const side of [m.home,m.away]){ const t=this.teams[side]; t.form=(t.form||[]).concat([res.winner===side?'W':res.winner?'L':'–']).slice(-5); }
     this.s.pid=getPID();
   }
@@ -219,26 +248,73 @@ class Game{
     this.news(head,'match',{detail:`${res.text}.${mom}`,ne,fix:f.n});
     if(R()<0.33) this.makeEvent(m,f);
   }
+  // ===== Decisions and promises =====
+  // Decisions are inbox items (kind 'event') with choices. Each carries a deadline (due: the n of the
+  // user's next fixture) and a cautious choice (safe) that is taken if the deadline passes unanswered.
   makeEvent(m,f){
-    const u=this.user, t=this.teams[u]; const xi=m.lineups[u].xi;
+    const u=this.user, t=this.teams[u]; const xi=m.lineups[u].xi; const sur=(p)=>p.name.split(' ').slice(-1)[0];
     const benched=t.squad.map(id=>this.P(id)).filter(p=>!xi.includes(p.id)&&!p.inj&&ovr(p)>=60);
     const stars=xi.map(id=>this.P(id)).sort((a,b)=>ovr(b)-ovr(a));
     const tired=xi.map(id=>this.P(id)).filter(p=>p.fit<70);
+    const young=t.squad.map(id=>this.P(id)).filter(p=>p.nat==='NEP'&&p.age<=23&&!p.inj&&!hasPlayed(p)).sort((a,b)=>ovr(b)-ovr(a))[0];
     const opts=[];
-    if(benched.length) { const p=pick(benched); opts.push({text:`${p.name} has asked to see you. He feels he deserves a place in the XI.`,choices:[{l:'Promise him a chance',fx:{pid:p.id,morale:12,promise:true}},{l:'Tell him to keep working',fx:{pid:p.id,morale:-10}}]}); }
-    if(stars.length) { const p=stars[0]; opts.push({text:`A sponsor wants ${p.name} for an advert shoot on the rest day. They will pay Rs 3 lakh.`,choices:[{l:'Agree',fx:{balance:3,pid:p.id,fit:-8}},{l:'Decline, he needs rest',fx:{board:-2}}]}); }
-    if(m.result.loser===u) opts.push({text:'The press conference after the defeat is tense. A reporter asks if the team is good enough.',choices:[{l:'Back the players publicly',fx:{team:6}},{l:'Demand more from the senior players',fx:{team:-4,board:3,form:1}}]});
-    if(tired.length){ const p=pick(tired); opts.push({text:`The physio warns that ${p.name} is fatigued (fitness ${Math.round(p.fit)}%).`,choices:[{l:'Rest him next match',fx:{pid:p.id,rest:true}},{l:'He plays',fx:{}}]}); }
-    opts.push({text:`Fans from ${t.city} are asking for more chances for local youngsters.`,choices:[{l:'Promise to give youth a chance',fx:{fans:3}},{l:'Winning comes first',fx:{fans:-2,board:2}}]});
-    const ev=pick(opts); this.news(ev.text,'event',{choices:ev.choices,done:false});
+    if(benched.length) { const p=pick(benched); const cap=t.captainId&&t.captainId!==p.id&&t.squad.includes(t.captainId)?this.P(t.captainId):null;
+      opts.push({cat:'Squad',title:`${p.name} wants to know why he isn't in the XI`,text:`${p.name} has asked to see you. He feels he deserves a place in the XI.`,pid:p.id,sum:'Morale and selection',
+        quote:pick(["I'm hitting the ball as well as anyone. I can't win you matches from the bench.","I've done everything you asked in the nets. When do I get my chance?"]),
+        choices:[{l:'Promise him the next match',fx:{pid:p.id,morale:12,promise:'start'}},{l:'Tell him to earn it in training',fx:{pid:p.id,morale:-10}},...(cap?[{l:`Ask ${cap.name} to talk to him`,fx:{pid:p.id,morale:5,cap:-3}}]:[])],safe:1}); }
+    if(stars.length) { const p=stars[0]; opts.push({cat:'Sponsor',title:`A sponsor wants ${p.name} for an advert`,text:`A sponsor wants ${p.name} for an advert shoot on the rest day. They will pay Rs 3 lakh.`,pid:p.id,sum:'Rs 3 L, but he loses fitness',
+      choices:[{l:'Agree',fx:{balance:3,pid:p.id,fit:-8}},{l:'Decline, he needs rest',fx:{board:-2}}],safe:1}); }
+    if(m.result.loser===u) opts.push({cat:'Press',title:'A tense press conference after the defeat',text:'The press conference after the defeat is tense. A reporter asks if the team is good enough.',sum:'Squad morale or the board',
+      quote:'Is this squad good enough to reach the playoffs?',choices:[{l:'Back the players publicly',fx:{team:6}},{l:'Demand more from the senior players',fx:{team:-4,board:3,form:1}}],safe:0});
+    if(tired.length){ const p=pick(tired); opts.push({cat:'Medical',title:`The physio wants ${p.name} rested`,text:`The physio warns that ${p.name} is fatigued (fitness ${Math.round(p.fit)}%).`,pid:p.id,sum:'Fitness and selection',
+      quote:`His fitness is down to ${Math.round(p.fit)}%. Another game now and we risk an injury.`,choices:[{l:'Rest him next match',fx:{pid:p.id,rest:true}},{l:'He plays',fx:{}}],safe:0}); }
+    opts.push({cat:'Fans',title:`${t.city} fans want local youngsters given a chance`,text:`Fans from ${t.city} are asking for more chances for local youngsters.`,sum:'Fans and selection',
+      choices:[young?{l:`Promise ${sur(young)} a debut`,fx:{fans:3,pid:young.id,promise:'debut'}}:{l:'Promise to give youth a chance',fx:{fans:3}},{l:'Winning comes first',fx:{fans:-2,board:2}}],safe:1});
+    const ev=pick(opts); const nf=this.userNext();
+    this.news(ev.text,'event',{title:ev.title,cat:ev.cat,quote:ev.quote,pid:ev.pid,sum:ev.sum,choices:ev.choices,safe:ev.safe,due:nf?nf.n:null,done:false});
   }
-  applyEvent(n,ci){
+  userNext(){ return this.s.fixtures.find(f=>!f.res&&(f.home===this.user||f.away===this.user)); }
+  pendingDecisions(){ return this.s.inbox.filter(n=>n.choices&&!n.done); }
+  // Decisions that must be answered before the user's next match can be played.
+  decisionsDue(){ const f=this.userNext(); return f? this.pendingDecisions().filter(n=>n.due!=null&&n.due<=f.n) : []; }
+  applyEvent(n,ci,auto){
     const c=n.choices[ci]; const fx=c.fx||{}; const t=this.teams[this.user];
     if(fx.pid){ const p=this.P(fx.pid); if(fx.morale) p.morale=clamp(p.morale+fx.morale,0,100); if(fx.fit) p.fit=clamp(p.fit+fx.fit,30,100); if(fx.rest) p.rest=true; }
     if(fx.balance) t.balance+=fx.balance; if(fx.board) t.board=clamp(t.board+fx.board,0,100); if(fx.fans) t.fans=clamp(t.fans+fx.fans,0,100);
     if(fx.team) t.squad.forEach(id=>{const p=this.P(id); p.morale=clamp(p.morale+fx.team,0,100);});
     if(fx.form) t.squad.forEach(id=>{const p=this.P(id); if(ovr(p)>65) p.form=clamp(p.form+fx.form,-10,10);});
-    n.done=true; n.picked=c.l;
+    if(fx.cap&&t.captainId){ const p=this.P(t.captainId); p.morale=clamp(p.morale+fx.cap,0,100); }
+    if(fx.promise&&fx.pid&&fx.promise!==true) this.addPromise(fx.pid,fx.promise);
+    n.done=true; n.picked=c.l; n.read=true;
+    n.outcome=effectLines(this,n,ci).filter(e=>e.tone!=='mut').map(e=>e.text).join('. ');
+    if(auto){ n.auto=true; t.board=clamp(t.board-2,0,100); n.outcome=(n.outcome?n.outcome+'. ':'')+'Board confidence −2 for not answering'; }
+  }
+  // Unanswered decisions whose deadline has passed take the cautious option, and the board notices.
+  expireDecisions(uptoN){
+    const late=this.pendingDecisions().filter(n=>uptoN===Infinity||(n.due!=null&&n.due<=uptoN));
+    for(const n of late){ this.applyEvent(n,cautiousIndex(n),true); this.news(`No answer in time: "${n.picked}" was chosen for you.`,'board',{detail:n.outcome}); }
+    return late.length;
+  }
+  // A promise to start a player in the next match, or to give a young player a debut within 3.
+  addPromise(pid,kind){
+    const ups=this.s.fixtures.filter(f=>!f.res&&(f.home===this.user||f.away===this.user)); if(!ups.length) return;
+    const left=Math.min(kind==='start'?1:3,ups.length);
+    this.s.promises.push({id:'pr'+Date.now()+ri(0,999),pid,kind,dueFixture:ups[left-1].n,matchesLeft:left});
+  }
+  // After each user match: kept if the player was in the XI; otherwise one match fewer left, broken at 0.
+  // An injured player does not use up a match; a player who has left the club voids the promise.
+  checkPromises(xi){
+    const keep=[];
+    for(const pr of this.s.promises){
+      const p=this.P(pr.pid); if(!p||p.team!==this.user||p.retired) continue;
+      if(xi.includes(pr.pid)){ this.news(`Promise kept: ${p.name} ${pr.kind==='debut'?'made his NPL debut':'started, as you promised'}.`,'board'); continue; }
+      if(p.inj){ const nx=this.userNext(); if(nx) pr.dueFixture=Math.max(pr.dueFixture,nx.n); keep.push(pr); continue; }
+      pr.matchesLeft--;
+      if(pr.matchesLeft<=0){ const t=this.teams[this.user]; p.morale=clamp(p.morale-20,0,100); t.board=clamp(t.board-4,0,100);
+        this.news(`Promise broken: ${p.name} ${pr.kind==='debut'?'is still waiting for his debut':'did not start'}. His morale −20, board confidence −4.`,'board'); continue; }
+      keep.push(pr);
+    }
+    this.s.promises=keep;
   }
   // ===== Season flow =====
   setObjectives(){
@@ -312,6 +388,8 @@ class Game{
   takeJob(tid){ const old=this.user; this.s.user=tid; this.teams[tid].board=55; this.teams[tid].xi=null; this.teams[tid].order=null; this.s.sacked=false; this.s.offers=null; this.news(`You are the new head coach of ${this.teams[tid].name}. Good luck!`,'board'); this.setObjectives(); }
   // ===== Off-season =====
   startOffseason(){
+    this.expireDecisions(Infinity);
+    if(this.s.promises.length){ this.news(`The season ended with ${this.s.promises.length} promise${this.s.promises.length>1?'s':''} still open. They lapse without penalty.`,'board'); this.s.promises=[]; }
     const y=this.year; const retired=[]; const nep=[], os=[];
     for(const p of Object.values(this.players)){
       if(p.retired) continue;
@@ -530,4 +608,4 @@ class Game{
 }
 function ordinal(n){const s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);}
 function careerOf(p){ const c={m:0,inn:0,r:0,b:0,no:0,f:0,s:0,hs:0,ff:0,h:0,bb:0,rc:0,w:0,bw:0,br:999,ct:0,mom:0}; for(const y in p.stats){const s=p.stats[y]; for(const k of ['m','inn','r','b','no','f','s','ff','h','bb','rc','w','ct','mom']) c[k]+=s[k]; if(s.hs>c.hs)c.hs=s.hs; if(s.bw>c.bw||(s.bw===c.bw&&s.br<c.br)){c.bw=s.bw;c.br=s.br;}} return c; }
-export {Game,careerOf,ordinal,OS_CAP,DOM_CAP,MAX_OS,MIN_OS,SLABS,MAX_SQUAD,MIN_SQUAD};
+export {Game,careerOf,ordinal,effectLines,cautiousIndex,OS_CAP,DOM_CAP,MAX_OS,MIN_OS,SLABS,MAX_SQUAD,MIN_SQUAD};

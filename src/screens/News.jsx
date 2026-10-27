@@ -1,22 +1,16 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../lib/store.jsx';
-import { autosave } from '../lib/save.js';
 import { Icon } from '../components/icons.jsx';
 import { FILTERS, NewsRow, ageOf, isPending, today } from '../components/news.jsx';
 import { tr } from '../lib/util.js';
+import { openDecisions, dueLabel } from '../components/DecisionSheet.jsx';
 
 const PAGE = 20;
 const GROUPS = ['Today', 'Yesterday', 'This week', 'Earlier'];
 
-// The choices of an open decision, answered in place until decisions get their own sheet.
-export function Choices({ n }) {
-  const { G, update } = useGame();
-  return <div className="row" style={{ gap: 8, marginTop: 10 }}>{n.choices.map((c, i) => <button key={i} type="button" className={`btn btn-sm${i === 0 ? ' btn-primary' : ''}`} onClick={() => update(() => { G.applyEvent(n, i); n.read = true; autosave(G); })}>{c.l}</button>)}</div>;
-}
-
 export default function News() {
-  const { G, update } = useGame(); const nav = useNavigate(); const s = G.s;
+  const { G, ui, update } = useGame(); const nav = useNavigate(); const s = G.s;
   const [q, setQ] = useState(''); const [flt, setFlt] = useState('all'); const [limit, setLimit] = useState(PAGE);
   // leaving the page marks what was shown as read, as the old Home inbox did
   useEffect(() => () => { s.inbox.forEach((n) => { if (!isPending(n)) n.read = true; }); }, [s]);
@@ -40,7 +34,7 @@ export default function News() {
 
       {pending.length > 0 && <section className="nsec"><h2 className="sec">Needs you · {pending.length}</h2>
         <div className="stack" style={{ gap: 8 }}>{pending.map((n) => (
-          <div key={n.id} className="panel need"><p className="t-micro crim">Decision{n.d ? ` · ${n.d}` : ''}</p><p className="t-small" style={{ marginTop: 2 }}>{n.text}</p><Choices n={n} /></div>))}</div></section>}
+          <div key={n.id} className="panel need"><p className="t-micro crim">Decision · {dueLabel(G, n).replace(/^Before/, 'before')}</p><p className="t-small" style={{ marginTop: 2 }}>{n.text}</p><button type="button" className="btn btn-primary btn-sm" style={{ marginTop: 10 }} onClick={() => openDecisions(G, ui, update, n.id)}>Open decision</button></div>))}</div></section>}
 
       {groups.map(([g, list]) => (
         <section key={g} className="nsec"><h2 className="sec">{g}</h2>

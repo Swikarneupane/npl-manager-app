@@ -3,6 +3,7 @@ import { useGame } from '../lib/store.jsx';
 import { Dot, Meter } from '../components/bits.jsx';
 import { Icon } from '../components/icons.jsx';
 import { NewsRow, ageOf, isPending, today } from '../components/news.jsx';
+import { openDecisions, dueLabel } from '../components/DecisionSheet.jsx';
 import { ovr } from '../game/engine.js';
 import { ordinal } from '../game/game.js';
 import { seasonNo, fmtNRR, formDisp, stageName, tname, tshort, userNextFixture, nextUnplayed, boardMood } from '../lib/util.js';
@@ -27,11 +28,11 @@ function Head({ title, to, link }) {
 }
 
 function DecisionPin() {
-  const { G } = useGame(); const p = G.s.inbox.filter(isPending);
-  if (!p.length) return null;
+  const { G, ui, update } = useGame(); const p = G.s.inbox.filter(isPending);
+  if (!p.length || G.decisionsDue().length) return null;
   const before = (G.s.phase === 'league' || G.s.phase === 'playoffs') && userNextFixture(G);
   return (
-    <Link to="/news" className="pin p-pin"><Icon name="alert" size={22} />
+    <Link to="/news" className="pin p-pin" onClick={(e) => { e.preventDefault(); openDecisions(G, ui, update); }}><Icon name="alert" size={22} />
       <span className="pin-body"><span className="t-small b6">{plural(p.length, 'decision')} {before ? 'before your next match' : 'waiting'}</span><span className="t-micro">{clip(p[0].text, 64)}</span></span>
       <span className="t-small b6">Decide</span></Link>
   );
@@ -70,17 +71,27 @@ function Hero() {
       const before = s.fixtures.filter((x) => !x.res && x.n < f.n).length;
       const live = (ui.live && !ui.live.done && ui.live.started) || !!savedMatchFor(G, f);
       const form = (id) => (G.teams[id].form || []).slice(-3).join(' ') || '–';
-      const goMatch = async () => { if (!live) { if (before) toast('Simulating other matches…'); await simUntilUser(G); autosave(G); if (ui.live && ui.live.done) ui.live = null; } nav('/match'); };
-      const quick = async () => { await simUntilUser(G); const ff = userNextFixture(G); if (ff) { ui.live = null; const m = await quickSimUserMatch(G, ff); autosave(G); toast(`${m.result.text}.`); } update(); };
+      const due = G.decisionsDue(); const gated = due.length > 0;
+      const decide = (id) => openDecisions(G, ui, update, id);
+      const goMatch = async () => { if (gated) { decide(); return; } if (!live) { if (before) toast('Simulating other matches…'); await simUntilUser(G); autosave(G); if (ui.live && ui.live.done) ui.live = null; } nav('/match'); };
+      const quick = async () => { if (gated) { decide(); return; } await simUntilUser(G); const ff = userNextFixture(G); if (ff) { ui.live = null; const m = await quickSimUserMatch(G, ff); autosave(G); toast(`${m.result.text}.`); } update(); };
       return (
         <Card>
           <p className="faint t-micro">Next match · {f.date}, {f.night ? '7:15 pm' : '3:00 pm'} · {f.stage === 'L' ? `Match ${f.n}` : stageName(f)}</p>
           <H1><span className="tm"><Dot id={f.home} big />{tshort(G, f.home)}</span><span className="faint" style={{ fontWeight: 400 }}>v</span><span className="tm"><Dot id={f.away} big />{tshort(G, f.away)}</span></H1>
           <p className="t-small mut">{f.stage === 'L' && <>{pos(f.home)} v {pos(f.away)} · </>}Form <span className="board-f formstr">{form(f.home)}</span> v <span className="board-f formstr">{form(f.away)}</span></p>
+          {gated && <div className="gate">
+            <p className="t-small crim b6">{plural(due.length, 'decision')} before this match</p>
+            {due.map((n) => <div key={n.id} className="gate-row"><span className="gate-ic" aria-hidden="true"><Icon name="alert" size={20} /></span>
+              <span className="gate-t"><span className="t-micro faint">{n.cat || 'Club'} · {dueLabel(G, n).replace(/^Before/, 'before').replace(/ · .*$/, '')}</span><span className="t-small b6">{n.title || n.text}</span>{n.sum && <span className="t-micro mut">{n.sum}</span>}</span>
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => decide(n.id)}>Decide</button></div>)}
+            <p className="t-micro faint" style={{ padding: '8px 0 10px' }}>Not answering in time picks the cautious option for you, and the board notices.</p>
+          </div>}
           <div className="hero-btns">
-            <button className="btn btn-primary btn-lg" onClick={goMatch}>{live ? (ui.live && ui.live.started ? 'Back to live match' : 'Resume match') : 'Go to match'}</button>
+            <button className="btn btn-primary btn-lg" disabled={gated} onClick={goMatch}>{live ? (ui.live && ui.live.started ? 'Back to live match' : 'Resume match') : 'Go to match'}</button>
             <button className="btn btn-lg" onClick={() => nav('/squad')} title={`XI: ${xiStatus(G)}`}>Review XI</button>
           </div>
+          {gated && <p className="t-micro faint" style={{ textAlign: 'center', maxWidth: 520 }}>{due.length === 1 ? 'Answer the decision to play' : due.length === 2 ? 'Answer both decisions to play' : `Answer all ${due.length} decisions to play`}</p>}
           <div className="row" style={{ gap: 8, alignItems: 'center' }}>
             {!(ui.live && ui.live.started && !ui.live.done) && <button className="btn btn-ghost btn-sm" onClick={quick}>{live ? 'Quick sim the rest' : 'Quick sim'}</button>}
             {before > 0 && !live && <span className="faint t-micro">{before} other match{before > 1 ? 'es' : ''} will be simulated first.</span>}
@@ -107,6 +118,33 @@ function Hero() {
   if (s.phase === 'retention') return simple(s.mega ? 'Retention' : 'Releases', s.mega ? 'Pick up to 3 players to keep before the mega auction.' : 'Choose who to release before the mini auction.', `Go to ${s.mega ? 'retention' : 'releases'}`, '/retention');
   if (s.phase === 'auction') return simple(`${s.auction.kind === 'mega' ? 'Mega' : 'Mini'} auction ${G.year}`, 'The auction room is open.', 'Enter the auction room', '/auction');
   return null;
+}
+
+// "Start Paudel v Pokhara" / "Give Jora a debut", with how long is left.
+export function promiseText(G, pr) {
+  const p = G.P(pr.pid); const f = G.s.fixtures.find((x) => x.n === pr.dueFixture); const opp = f ? (f.home === G.user ? f.away : f.home) : null;
+  return pr.kind === 'debut' ? `Give ${p.name} a debut` : `Start ${p.name}${opp ? ` v ${tshort(G, opp)}` : ''}`;
+}
+function Promises() {
+  const { G } = useGame(); const list = G.s.promises || [];
+  if (!list.length) return null;
+  return (
+    <section className="p-promises"><h2 className="sec" style={{ marginBottom: 6 }}>Promises you've made</h2>
+      <div className="panel stack" style={{ gap: 6, padding: '12px 14px' }}>
+        {list.map((pr) => <div key={pr.id} className="sechead" style={{ margin: 0, alignItems: 'center' }}><span className="t-small">{promiseText(G, pr)}</span><span className={`ptag${pr.matchesLeft <= 1 ? ' g' : ''}`}>{pr.matchesLeft <= 1 ? 'Due next match' : `${pr.matchesLeft} matches left`}</span></div>)}
+        <p className="t-micro faint">Breaking a promise costs morale and board confidence.</p>
+      </div>
+    </section>
+  );
+}
+function LastAnswer() {
+  const { G } = useGame(); const n = G.s.inbox.find((x) => x.kind === 'event' && x.done && x.picked && x.y === G.year);
+  if (!n) return null;
+  return (
+    <section className="p-answer"><h2 className="sec" style={{ marginBottom: 6 }}>After your last match</h2>
+      <div className="panel" style={{ padding: '12px 14px' }}><p className="t-micro faint">{n.auto ? 'Not answered in time' : 'Answered'} · {(n.cat || 'Club').toLowerCase()}</p><p className="t-small">{n.picked}.{n.outcome ? ` ${n.outcome}.` : ''}</p></div>
+    </section>
+  );
 }
 
 function NewsPortal() {
@@ -210,7 +248,7 @@ function BoardPortal() {
 export default function Home() {
   return (
     <div className="wrap portals">
-      <div className="pcol"><DecisionPin /><Hero /><NewsPortal /><ResultsPortal /></div>
+      <div className="pcol"><DecisionPin /><Hero /><Promises /><LastAnswer /><NewsPortal /><ResultsPortal /></div>
       <div className="pcol"><TablePortal /><CapRaces /><SquadWatch /><BoardPortal /></div>
     </div>
   );

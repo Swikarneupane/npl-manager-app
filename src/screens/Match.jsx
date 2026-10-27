@@ -9,6 +9,7 @@ import { simUntilUser, savedMatchFor } from '../lib/flow.js';
 import { autosave } from '../lib/save.js';
 import { xiStatus } from './Home.jsx';
 import { Actions, BatPlan, BowlPlan } from '../components/MatchPlan.jsx';
+import { openDecisions } from '../components/DecisionSheet.jsx';
 
 const MODES = [['ball', 'Every ball'], ['over', 'Every over'], ['key', 'Key moments'], ['quick', 'Quick sim']];
 
@@ -116,6 +117,13 @@ function Feed({ lm }) {
 function StartDone({ lm }) {
   const { G, update, ui } = useGame(); const nav = useNavigate();
   if (lm.error) return <p className="crim">Match error: {lm.error}</p>;
+  const due = !lm.started && !lm.done ? G.decisionsDue() : [];
+  if (due.length) return (
+    <section className="panel plan">
+      <p className="t-small crim b6">{due.length} decision{due.length > 1 ? 's' : ''} before this match</p>
+      <p className="t-small mut">Answer {due.length > 1 ? 'them' : 'it'} to start the match. Not answering in time picks the cautious option for you, and the board notices.</p>
+      <div className="acts-row"><button className="btn btn-primary btn-lg" onClick={() => openDecisions(G, ui, update)}>Decide</button><button className="btn btn-lg" disabled>{lm.resumed ? 'Resume match' : 'Start match'}</button></div>
+    </section>);
   if (lm.done) return <div className="acts-row"><button className="btn btn-primary btn-lg" onClick={() => { ui.liveSeen = true; ui.live = null; update(); nav('/'); }}>Continue</button><Link className="btn btn-lg" to={`/scorecard/${lm.f.n}`}>Full scorecard</Link></div>;
   return (
     <section className="panel plan">

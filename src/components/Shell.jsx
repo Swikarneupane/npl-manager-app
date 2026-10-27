@@ -4,6 +4,7 @@ import { useGame } from '../lib/store.jsx';
 import { Dot } from './bits.jsx';
 import { Icon } from './icons.jsx';
 import MoreSheet, { auctionLink } from './MoreSheet.jsx';
+import DecisionSheet from './DecisionSheet.jsx';
 import { unreadCount } from './news.jsx';
 import { fmtL } from '../game/engine.js';
 import { seasonNo, tr, userNextFixture, nextUnplayed } from '../lib/util.js';
@@ -83,6 +84,7 @@ export default function Shell({ children }) {
         </button>
       </nav>
       {more && <MoreSheet onClose={closeMore} />}
+      {ui.decide && <DecisionSheet />}
       {modal}
     </>
   );
