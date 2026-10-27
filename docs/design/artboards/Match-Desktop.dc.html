@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Match, batting (desktop)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#0B3A8C}a:hover{color:#072a66}
+.npl{--bg:#F6F5F1;--surface:#FFFFFF;--sunk:#EEECE6;--ink:#15171C;--ink-2:#454A54;--ink-3:#5E636C;--rule:#E1DED6;--rule-strong:#C8C4B9;--crimson:#B5122F;--crimson-soft:#FBEAED;--blue:#0B3A8C;--blue-soft:#E8EEF9;--gold:#7E5300;--gold-soft:#F6EDD8;--board:#0D2856;--board-ink:#F4F6FA;--board-ink-2:#B9C7E4;--board-rule:#26467F;font-family:"IBM Plex Sans","IBM Plex Sans Devanagari",system-ui,sans-serif;font-size:15px;line-height:1.5;color:var(--ink);background:var(--bg);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;box-sizing:border-box;position:relative;overflow:hidden}
+.npl *{box-sizing:border-box}
+.npl p,.npl h1,.npl h2,.npl h3{margin:0}
+.bf{font-family:"Anek Latin","Arial Narrow",sans-serif;font-stretch:75%;font-weight:600;letter-spacing:-.01em}
+.mut{color:var(--ink-2)}.faint{color:var(--ink-3)}.crim{color:var(--crimson)}.blu{color:var(--blue)}.gld{color:var(--gold)}
+.sm{font-size:13px;line-height:19px}.xs{font-size:12px;line-height:16px}
+.h1{font-size:24px;line-height:30px;font-weight:600;letter-spacing:-.01em}.h2{font-size:18px;line-height:24px;font-weight:600}.h3{font-size:15px;line-height:22px;font-weight:600}
+.sec{font-size:12px;line-height:16px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.t-bk{background:#7A3FB0}.t-cr{background:#2E7D4F}.t-jb{background:#D9711A}.t-ky{background:#1F8A9A}.t-kg{background:#8B1E3F}.t-ll{background:#C99512}.t-pa{background:#2B5FD9}.t-sr{background:#C2185B}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:12px}
+.btn{font:inherit;font-size:14px;font-weight:500;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;text-decoration:none}
+.btn-p{background:var(--crimson);border-color:var(--crimson);color:#fff}
+.btn-b{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn-g{border-color:transparent;background:transparent;color:var(--blue)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.chip{font:inherit;font-size:13px;min-height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink-2);display:inline-flex;align-items:center;gap:6px}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.tag{display:inline-flex;align-items:center;font-size:11px;line-height:16px;font-weight:600;padding:1px 7px;border-radius:5px;background:var(--sunk);color:var(--ink-2)}
+.tag.c{background:var(--crimson-soft);color:var(--crimson)}.tag.b{background:var(--blue-soft);color:var(--blue)}.tag.g{background:var(--gold-soft);color:var(--gold)}
+.board{background:var(--board);color:var(--board-ink);border-radius:14px}
+.blbl{font-size:12px;line-height:16px;color:var(--board-ink-2)}
+.top{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--rule)}
+.tabbar{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--surface);border-top:1px solid var(--rule);padding:6px 4px 18px}
+.tabbar a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;line-height:14px;font-weight:500;color:var(--ink-3);text-decoration:none;min-height:48px;justify-content:center;border-radius:10px;position:relative}
+.tabbar a.on{color:var(--crimson)}
+.tabbar svg{width:24px;height:24px}
+.ico{width:20px;height:20px;flex:none}
+.meter{height:6px;border-radius:3px;background:var(--sunk);overflow:hidden}.meter i{display:block;height:100%;background:var(--blue)}
+.ball{width:30px;height:30px;border-radius:50%;border:1px solid var(--rule-strong);display:inline-flex;align-items:center;justify-content:center;font-family:"Anek Latin",sans-serif;font-stretch:75%;font-weight:600;font-size:15px;background:var(--surface)}
+.ball.b4{background:var(--blue-soft);border-color:#9DB4E3;color:var(--blue)}.ball.b6{background:var(--blue);border-color:var(--blue);color:#fff}.ball.bw{background:var(--crimson);border-color:var(--crimson);color:#fff}.ball.nx{border-style:dashed;background:transparent}
+.feed{list-style:none;margin:0;padding:0}
+.feed li{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid var(--rule);font-size:14px;line-height:20px}
+.feed .ov{font-family:"Anek Latin",sans-serif;font-stretch:75%;font-size:15px;color:var(--ink-3)}
+.row{display:flex;align-items:center}
+</style>
+
+</helmet>
+<div class="npl" style="width: 100%; min-height: 1000px">
+<header class="top" style="gap: 24px; padding: 12px 24px"><span style="font-weight: 600">NPL Manager</span><span class="row" style="gap: 8px; font-weight: 500"><span class="dot t-ll"></span>Lumbini Lions</span><span class="sm faint">Season 3 · 2026</span><span class="tag c">● Match 7 live</span><span style="flex: 1"></span><span class="sm"><span class="faint">Domestic purse</span> Rs 17.5 L</span><span class="sm"><span class="faint">Overseas purse</span> Rs 39 L</span></header>
+<div style="display: flex; flex-wrap: wrap">
+<nav aria-label="Main" style="flex: 0 0 200px; padding: 16px 12px; border-right: 1px solid #E1DED6; min-height: 940px"><a href="#" style="display: block; padding: 9px 12px; border-radius: 8px; text-decoration: none; font-size: 14px; color: #454A54">Home</a><a href="#" style="display: block; padding: 9px 12px; border-radius: 8px; text-decoration: none; font-size: 14px; color: #454A54">Squad</a><a href="#" style="display: block; padding: 9px 12px; border-radius: 8px; text-decoration: none; font-size: 14px; background: #EEECE6; color: #15171C; font-weight: 600">Match</a><a href="#" style="display: block; padding: 9px 12px; border-radius: 8px; text-decoration: none; font-size: 14px; color: #454A54">Fixtures</a><a href="#" style="display: block; padding: 9px 12px; border-radius: 8px; text-decoration: none; font-size: 14px; color: #454A54">Table</a><a href="#" style="display: block; padding: 9px 12px; border-radius: 8px; text-decoration: none; font-size: 14px; color: #454A54">Auction</a><a href="#" style="display: block; padding: 9px 12px; border-radius: 8px; text-decoration: none; font-size: 14px; color: #454A54">Stats</a><a href="#" style="display: block; padding: 9px 12px; border-radius: 8px; text-decoration: none; font-size: 14px; color: #454A54">History</a><a href="#" style="display: block; padding: 9px 12px; border-radius: 8px; text-decoration: none; font-size: 14px; color: #454A54">Club</a><a href="#" style="display: block; padding: 9px 12px; border-radius: 8px; text-decoration: none; font-size: 14px; color: #454A54">Settings</a></nav>
+<main style="flex: 999 1 560px; min-width: 0; padding: 20px 28px 40px; display: flex; flex-direction: column; gap: 16px; max-width: 1240px">
+<p class="sm faint">Match 7 of 28 · TU International Cricket Ground, Kirtipur · Karnali Yaks won the toss and chose to bat</p>
+<section class="board" style="padding: 18px 24px; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px 36px" aria-label="Scoreboard">
+<div><p class="blbl row" style="gap: 6px"><span class="dot t-ll"></span>Lumbini Lions · chasing 164</p><p class="bf" style="font-size: 72px; line-height: 1">112/3 <span style="font-size: 30px; color: #B9C7E4">13.4 ov</span></p></div>
+<div class="row" style="gap: 32px"><div><p class="blbl">Need</p><p class="bf" style="font-size: 30px">52 off 38</p></div><div><p class="blbl">Required</p><p class="bf" style="font-size: 30px">8.21</p></div><div><p class="blbl">Run rate</p><p class="bf" style="font-size: 30px">8.19</p></div><div><p class="blbl">Partnership</p><p class="bf" style="font-size: 30px">61</p></div></div>
+<div style="flex: 1 1 220px; min-width: 200px"><div class="row" style="justify-content: space-between"><span class="bf" style="font-size: 17px">LL 46%</span><span class="bf" style="font-size: 17px; color: #B9C7E4">54% KY</span></div><div style="height: 8px; border-radius: 4px; overflow: hidden; display: flex; margin-top: 6px"><i style="width: 46%; background: #C99512"></i><i style="width: 54%; background: #1F8A9A"></i></div></div>
+</section>
+<section class="card" style="padding: 16px 18px; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 18px 28px" aria-label="Batting plan">
+<div style="display: flex; flex-direction: column; gap: 6px"><p class="sec">Batting intent · you're batting</p><div role="radiogroup" aria-label="Intent" style="display: inline-flex; border-radius: 10px; overflow: hidden"><button role="radio" aria-checked="false" class="btn" style="border-radius: 0; margin-left: -1px; min-height: 48px; background: #FFFFFF">Block</button><button role="radio" aria-checked="false" class="btn" style="border-radius: 0; margin-left: -1px; min-height: 48px; background: #FFFFFF">Rotate</button><button role="radio" aria-checked="false" class="btn" style="border-radius: 0; margin-left: -1px; min-height: 48px; background: #FFFFFF">Normal</button><button role="radio" aria-checked="true" class="btn" style="border-radius: 0; margin-left: -1px; min-height: 48px; background: #15171C; color: #FFFFFF; border-color: #15171C; font-weight: 600">Attack</button><button role="radio" aria-checked="false" class="btn" style="border-radius: 0; margin-left: -1px; min-height: 48px; background: #FFFFFF">Hit out</button></div></div>
+<div style="display: flex; gap: 20px"><div style="width: 110px"><p class="xs faint">Expected scoring</p><p class="bf" style="font-size: 24px">9.4 / over</p><div class="meter"><i style="width: 72%"></i></div></div><div style="width: 110px"><p class="xs faint">Wicket risk</p><p class="bf crim" style="font-size: 24px">High</p><div class="meter"><i style="width: 68%; background: #B5122F"></i></div></div></div>
+<div class="field" style="display: flex; flex-direction: column; gap: 6px"><label for="nb" class="xs faint">Next batter in</label><select id="nb" style="font: inherit; font-size: 14px; height: 48px; padding: 0 12px; border-radius: 10px; border: 1px solid #C8C4B9; background: #FFFFFF; min-width: 220px"><option>Sundeep Jora · form 7.2</option></select></div>
+<label class="row" style="gap: 10px; min-height: 48px"><input type="checkbox" role="switch" aria-label="Auto intent" style="width: 40px; height: 22px"><span class="sm">Auto intent</span></label>
+<span style="flex: 1"></span>
+<div class="row" style="gap: 8px"><button class="btn btn-p" style="min-height: 48px; padding: 0 28px; font-weight: 600">Next ball</button><button class="btn" style="min-height: 48px">Sim over</button><button class="btn btn-g" style="min-height: 48px">Sim innings</button><button class="btn btn-g" style="min-height: 48px">Sim match</button></div>
+</section>
+<div style="display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start">
+<section style="flex: 999 1 520px; min-width: 0">
+<div class="row" style="justify-content: space-between; border-bottom: 1px solid #C8C4B9; padding-bottom: 8px"><h2 class="h3">Commentary</h2><span class="row" style="gap: 8px"><span class="sm mut">This over</span><span class="ball">1</span><span class="ball b4">4</span><span class="ball">·</span><span class="ball">2</span><span class="ball nx"></span><span class="ball nx"></span></span></div>
+<ol class="feed">
+<li><span class="ov">13.4</span><span>Kami to Paudel: worked into the leg side, they come back for two.</span></li>
+<li><span class="ov">13.3</span><span class="mut">Kami to Paudel: slower ball, beaten. Dot.</span></li>
+<li><span class="ov">13.2</span><span><span class="tag b" style="margin-right: 6px">4</span>Kami to Sheikh: opens the face, past point. FOUR!</span></li>
+<li><span class="ov">13.1</span><span>Kami to Paudel: dabbed to third man for one.</span></li>
+<li style="grid-template-columns: 1fr; font-size: 13px; color: #454A54"><span><b style="color: #15171C">End of over 13</b> · 9 runs · Lumbini 105/3 · Paudel 45 (28) · Sheikh 8 (6) · Need 59 from 42</span></li>
+<li><span class="ov">12.6</span><span><span class="tag c" style="margin-right: 6px">W</span>Watt to Dinesh Adhikari: down the track, misses, stumped! Lumbini lose their third.</span></li>
+</ol>
+</section>
+<aside style="flex: 1 1 300px; display: flex; flex-direction: column; gap: 12px">
+<div class="card" style="padding: 14px 16px"><p class="xs faint">On strike</p><p class="h3">Rohit Paudel (c)</p><p><span class="bf" style="font-size: 30px">48</span> <span class="bf faint" style="font-size: 18px">(31)</span> <span class="xs faint">4s 4 · 6s 2</span></p></div>
+<div class="card" style="padding: 14px 16px"><p class="xs faint">Non-striker</p><p class="h3">Aasif Sheikh</p><p><span class="bf" style="font-size: 30px">12</span> <span class="bf faint" style="font-size: 18px">(9)</span></p></div>
+<div class="card" style="padding: 14px 16px"><p class="xs faint">Bowling</p><p class="h3">Sompal Kami</p><p class="bf" style="font-size: 30px">3.4–29–1</p></div>
+</aside>
+</div>
+</main>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

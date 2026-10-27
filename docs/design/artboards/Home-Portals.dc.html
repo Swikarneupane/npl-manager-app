@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Home as portals</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#0B3A8C}a:hover{color:#072a66}
+.npl{--bg:#F6F5F1;--surface:#FFFFFF;--sunk:#EEECE6;--ink:#15171C;--ink-2:#454A54;--ink-3:#5E636C;--rule:#E1DED6;--rule-strong:#C8C4B9;--crimson:#B5122F;--crimson-soft:#FBEAED;--blue:#0B3A8C;--blue-soft:#E8EEF9;--gold:#7E5300;--gold-soft:#F6EDD8;--board:#0D2856;--board-ink:#F4F6FA;--board-ink-2:#B9C7E4;--board-rule:#26467F;font-family:"IBM Plex Sans","IBM Plex Sans Devanagari",system-ui,sans-serif;font-size:15px;line-height:1.5;color:var(--ink);background:var(--bg);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;box-sizing:border-box;position:relative;overflow:hidden}
+.npl *{box-sizing:border-box}
+.npl p,.npl h1,.npl h2,.npl h3{margin:0}
+.bf{font-family:"Anek Latin","Arial Narrow",sans-serif;font-stretch:75%;font-weight:600;letter-spacing:-.01em}
+.mut{color:var(--ink-2)}.faint{color:var(--ink-3)}.crim{color:var(--crimson)}.blu{color:var(--blue)}.gld{color:var(--gold)}
+.sm{font-size:13px;line-height:19px}.xs{font-size:12px;line-height:16px}
+.h1{font-size:24px;line-height:30px;font-weight:600;letter-spacing:-.01em}.h2{font-size:18px;line-height:24px;font-weight:600}.h3{font-size:15px;line-height:22px;font-weight:600}
+.sec{font-size:12px;line-height:16px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.t-bk{background:#7A3FB0}.t-cr{background:#2E7D4F}.t-jb{background:#D9711A}.t-ky{background:#1F8A9A}.t-kg{background:#8B1E3F}.t-ll{background:#C99512}.t-pa{background:#2B5FD9}.t-sr{background:#C2185B}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:12px}
+.btn{font:inherit;font-size:14px;font-weight:500;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;text-decoration:none}
+.btn-p{background:var(--crimson);border-color:var(--crimson);color:#fff}
+.btn-b{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn-g{border-color:transparent;background:transparent;color:var(--blue)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.chip{font:inherit;font-size:13px;min-height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink-2);display:inline-flex;align-items:center;gap:6px}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.tag{display:inline-flex;align-items:center;font-size:11px;line-height:16px;font-weight:600;padding:1px 7px;border-radius:5px;background:var(--sunk);color:var(--ink-2)}
+.tag.c{background:var(--crimson-soft);color:var(--crimson)}.tag.b{background:var(--blue-soft);color:var(--blue)}.tag.g{background:var(--gold-soft);color:var(--gold)}
+.board{background:var(--board);color:var(--board-ink);border-radius:14px}
+.blbl{font-size:12px;line-height:16px;color:var(--board-ink-2)}
+.top{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--rule)}
+.tabbar{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--surface);border-top:1px solid var(--rule);padding:6px 4px 18px}
+.tabbar a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;line-height:14px;font-weight:500;color:var(--ink-3);text-decoration:none;min-height:48px;justify-content:center;border-radius:10px;position:relative}
+.tabbar a.on{color:var(--crimson)}
+.tabbar svg{width:24px;height:24px}
+.ico{width:20px;height:20px;flex:none}
+.meter{height:6px;border-radius:3px;background:var(--sunk);overflow:hidden}.meter i{display:block;height:100%;background:var(--blue)}
+.ball{width:30px;height:30px;border-radius:50%;border:1px solid var(--rule-strong);display:inline-flex;align-items:center;justify-content:center;font-family:"Anek Latin",sans-serif;font-stretch:75%;font-weight:600;font-size:15px;background:var(--surface)}
+.ball.b4{background:var(--blue-soft);border-color:#9DB4E3;color:var(--blue)}.ball.b6{background:var(--blue);border-color:var(--blue);color:#fff}.ball.bw{background:var(--crimson);border-color:var(--crimson);color:#fff}.ball.nx{border-style:dashed;background:transparent}
+.feed{list-style:none;margin:0;padding:0}
+.feed li{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid var(--rule);font-size:14px;line-height:20px}
+.feed .ov{font-family:"Anek Latin",sans-serif;font-stretch:75%;font-size:15px;color:var(--ink-3)}
+.row{display:flex;align-items:center}
+</style>
+
+</helmet>
+<div class="npl" style="width: 390px; height: 1620px">
+<header class="top" style="justify-content: space-between"><span class="row" style="gap: 8px; font-weight: 600"><span class="dot t-ll"></span>Lumbini Lions</span><span class="sm faint">Season 3 · League · 6 of 28</span></header>
+<div style="padding: 14px 16px 120px; display: flex; flex-direction: column; gap: 24px">
+<a href="#" style="display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; background: #B5122F; color: #FFFFFF; text-decoration: none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6M12 16.5v.5"></path></svg><span style="flex: 1"><span class="sm" style="font-weight: 600">1 decision before your next match</span><br><span class="xs" style="opacity: .85">Sundeep Jora wants a word</span></span><span class="sm" style="font-weight: 600">Decide</span></a>
+<section class="card" style="padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+<p class="xs faint">Next match · Nov 3, 7:15 pm · Match 13</p>
+<p class="h1 row" style="gap: 8px; flex-wrap: wrap"><span class="dot t-ll" style="width: 11px; height: 11px"></span>Lumbini <span class="faint" style="font-weight: 400">v</span> <span class="dot t-pa" style="width: 11px; height: 11px"></span>Pokhara</p>
+<p class="sm mut">6th v 5th · Form <span class="bf" style="font-size: 16px; letter-spacing: .08em">W L W</span> v <span class="bf" style="font-size: 16px; letter-spacing: .08em">L W W</span></p>
+<div style="display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px"><button class="btn btn-p">Go to match</button><button class="btn">Review XI</button></div>
+</section>
+<section><div class="row" style="justify-content: space-between; margin-bottom: 6px"><h2 class="h2">News</h2><a href="#" class="sm row" style="gap: 2px; font-weight: 500; text-decoration: none; min-height: 32px">All news · 24<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></a></div><a href="#" style="display: grid; grid-template-columns: 10px minmax(0,1fr); gap: 10px; padding: 10px 0; border-bottom: 1px solid #E1DED6; color: #15171C; text-decoration: none"><span style="width: 8px; height: 8px; border-radius: 50%; margin-top: 7px; background: #B5122F"></span><span><span class="xs faint">Result</span><br><span class="sm" style="font-weight: 600">Lumbini beat Karnali by 4 wickets</span><br><span class="xs faint">Paudel 71* · 2 h ago</span></span></a><a href="#" style="display: grid; grid-template-columns: 10px minmax(0,1fr); gap: 10px; padding: 10px 0; border-bottom: 1px solid #E1DED6; color: #15171C; text-decoration: none"><span style="width: 8px; height: 8px; border-radius: 50%; margin-top: 7px; background: #B5122F"></span><span><span class="xs faint">Injury</span><br><span class="sm" style="font-weight: 600">Kishore Mahato out for 2 matches</span><br><span class="xs faint">Hamstring · 2 h ago</span></span></a><a href="#" style="display: grid; grid-template-columns: 10px minmax(0,1fr); gap: 10px; padding: 10px 0; border-bottom: 1px solid #E1DED6; color: #15171C; text-decoration: none"><span style="width: 8px; height: 8px; border-radius: 50%; margin-top: 7px; background: transparent"></span><span><span class="xs faint">League</span><br><span class="sm" style="font-weight: 400">Shahab Alam takes a hat-trick for Kathmandu</span><br><span class="xs faint">Yesterday</span></span></a></section>
+<section><div class="row" style="justify-content: space-between; margin-bottom: 6px"><h2 class="h2">Table</h2><a href="#" class="sm row" style="gap: 2px; font-weight: 500; text-decoration: none; min-height: 32px">Full table<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></a></div><table style="width: 100%; border-collapse: collapse; font-size: 14px"><thead><tr class="xs faint"><th style="text-align: left; font-weight: 500; padding-bottom: 4px">#</th><th style="text-align: left; font-weight: 500">Team</th><th style="text-align: right; font-weight: 500">P</th><th style="text-align: right; font-weight: 500">Pts</th><th style="text-align: right; font-weight: 500">NRR</th></tr></thead><tbody><tr><td style="padding: 7px 0" class="faint">1</td><td><span class="row" style="gap: 8px"><span class="dot t-sr"></span>Sudurpaschim</span></td><td style="text-align: right" class="faint">6</td><td style="text-align: right; font-weight: 600">10</td><td style="text-align: right" class="faint">+0.91</td></tr><tr><td style="padding: 7px 0" class="faint">2</td><td><span class="row" style="gap: 8px"><span class="dot t-kg"></span>Kathmandu</span></td><td style="text-align: right" class="faint">6</td><td style="text-align: right; font-weight: 600">8</td><td style="text-align: right" class="faint">+0.44</td></tr><tr><td style="padding: 7px 0" class="faint">3</td><td><span class="row" style="gap: 8px"><span class="dot t-bk"></span>Biratnagar</span></td><td style="text-align: right" class="faint">6</td><td style="text-align: right; font-weight: 600">8</td><td style="text-align: right" class="faint">+0.12</td></tr><tr><td style="padding: 7px 0" class="faint">4</td><td><span class="row" style="gap: 8px"><span class="dot t-jb"></span>Janakpur</span></td><td style="text-align: right" class="faint">6</td><td style="text-align: right; font-weight: 600">6</td><td style="text-align: right" class="faint">−0.08</td></tr><tr><td colspan="5" style="padding: 0"><div style="border-top: 1px dashed #C8C4B9"></div></td></tr><tr style="background: #E8EEF9"><td style="padding: 7px 0 7px 6px" class="faint">6</td><td><span class="row" style="gap: 8px; font-weight: 600"><span class="dot t-ll"></span>Lumbini (you)</span></td><td style="text-align: right" class="faint">6</td><td style="text-align: right; font-weight: 600">6</td><td style="text-align: right; padding-right: 6px" class="faint">−0.21</td></tr></tbody></table><p class="xs faint" style="margin-top: 6px">2 points off the playoff places</p></section>
+<section><div class="row" style="justify-content: space-between; margin-bottom: 6px"><h2 class="h2">Results</h2><a href="#" class="sm row" style="gap: 2px; font-weight: 500; text-decoration: none; min-height: 32px">All fixtures<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></a></div><div class="row" style="gap: 10px; padding: 8px 0; border-bottom: 1px solid #E1DED6"><span class="bf" style="width: 26px; height: 26px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; background: #E8EEF9; color: #0B3A8C">W</span><span class="sm" style="flex: 1">Lumbini beat Karnali</span><span class="xs faint">by 4 wickets</span></div><div class="row" style="gap: 10px; padding: 8px 0; border-bottom: 1px solid #E1DED6"><span class="bf" style="width: 26px; height: 26px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; background: #FBEAED; color: #B5122F">L</span><span class="sm" style="flex: 1">Biratnagar beat Lumbini</span><span class="xs faint">by 18 runs</span></div><div class="row" style="gap: 10px; padding: 8px 0; border-bottom: 1px solid #E1DED6"><span class="bf" style="width: 26px; height: 26px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 16px; background: #E8EEF9; color: #0B3A8C">W</span><span class="sm" style="flex: 1">Lumbini beat Chitwan</span><span class="xs faint">by 31 runs</span></div></section>
+<section><div class="row" style="justify-content: space-between; margin-bottom: 6px"><h2 class="h2">Cap races</h2><a href="#" class="sm row" style="gap: 2px; font-weight: 500; text-decoration: none; min-height: 32px">All stats<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></a></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<div class="card" style="padding: 12px"><p class="xs faint">Platinum Cap · runs</p><p class="sm" style="font-weight: 600">Rohit Paudel</p><p class="bf" style="font-size: 26px">284</p><p class="xs faint">Next: Warner 251</p></div>
+<div class="card" style="padding: 12px"><p class="xs faint">Golden Cap · wickets</p><p class="sm" style="font-weight: 600">S. Lamichhane</p><p class="bf" style="font-size: 26px">13</p><p class="xs faint">Next: Sher Malla 11</p></div>
+</div></section>
+<section><div class="row" style="justify-content: space-between; margin-bottom: 6px"><h2 class="h2">Squad watch</h2><a href="#" class="sm row" style="gap: 2px; font-weight: 500; text-decoration: none; min-height: 32px">Squad · 22<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></a></div>
+<div class="row" style="justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #E1DED6"><span class="sm">Kishore Mahato</span><span class="xs crim" style="font-weight: 600">Injured · 2 matches</span></div>
+<div class="row" style="justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #E1DED6"><span class="sm">Ruben Trumpelmann</span><span class="xs mut">Fitness 68%</span></div>
+<div class="row" style="justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #E1DED6"><span class="sm">Sher Malla</span><span class="xs blu" style="font-weight: 600">In form · 8.4</span></div>
+</section>
+<section><div class="row" style="justify-content: space-between; margin-bottom: 6px"><h2 class="h2">Board</h2><a href="#" class="sm row" style="gap: 2px; font-weight: 500; text-decoration: none; min-height: 32px">Club<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></a></div><div class="card" style="padding: 12px 14px"><div class="row" style="justify-content: space-between" ><span class="sm">Reach the playoffs</span><span class="sm mut">58 · Uneasy</span></div><div class="meter" style="margin-top: 8px"><i style="width: 58%"></i></div></div></section>
+</div>
+<nav class="tabbar" aria-label="Main">
+<a href="#" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path><path d="M10 21v-6h4v6"></path></svg>Home</a>
+<a href="#" class=""><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"></path><circle cx="17" cy="9" r="2.6"></circle><path d="M16.5 14.6c2.6.2 4.3 1.9 5 4.9"></path></svg>Squad</a>
+<a href="#" class=""><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M7.2 6.2c1.7 1.6 2.6 3.6 2.6 5.8s-.9 4.2-2.6 5.8"></path><path d="M16.8 6.2c-1.7 1.6-2.6 3.6-2.6 5.8s.9 4.2 2.6 5.8"></path></svg>Match</a>
+<a href="#" class=""><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path><path d="M8 14h3M8 17h6"></path></svg>Season</a>
+<a href="#" class=""><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>More</a>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1620}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

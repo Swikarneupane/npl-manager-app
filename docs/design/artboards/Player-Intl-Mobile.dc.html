@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Player international career (phone)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#0B3A8C}a:hover{color:#072a66}
+.npl{--bg:#F6F5F1;--surface:#FFFFFF;--sunk:#EEECE6;--ink:#15171C;--ink-2:#454A54;--ink-3:#5E636C;--rule:#E1DED6;--rule-strong:#C8C4B9;--crimson:#B5122F;--crimson-soft:#FBEAED;--blue:#0B3A8C;--blue-soft:#E8EEF9;--gold:#7E5300;--gold-soft:#F6EDD8;--board:#0D2856;--board-ink:#F4F6FA;--board-ink-2:#B9C7E4;--board-rule:#26467F;font-family:"IBM Plex Sans","IBM Plex Sans Devanagari",system-ui,sans-serif;font-size:15px;line-height:1.5;color:var(--ink);background:var(--bg);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;box-sizing:border-box;position:relative;overflow:hidden}
+.npl *{box-sizing:border-box}
+.npl p,.npl h1,.npl h2,.npl h3{margin:0}
+.bf{font-family:"Anek Latin","Arial Narrow",sans-serif;font-stretch:75%;font-weight:600;letter-spacing:-.01em}
+.mut{color:var(--ink-2)}.faint{color:var(--ink-3)}.crim{color:var(--crimson)}.blu{color:var(--blue)}.gld{color:var(--gold)}
+.sm{font-size:13px;line-height:19px}.xs{font-size:12px;line-height:16px}
+.h1{font-size:24px;line-height:30px;font-weight:600;letter-spacing:-.01em}.h2{font-size:18px;line-height:24px;font-weight:600}.h3{font-size:15px;line-height:22px;font-weight:600}
+.sec{font-size:12px;line-height:16px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.t-bk{background:#7A3FB0}.t-cr{background:#2E7D4F}.t-jb{background:#D9711A}.t-ky{background:#1F8A9A}.t-kg{background:#8B1E3F}.t-ll{background:#C99512}.t-pa{background:#2B5FD9}.t-sr{background:#C2185B}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:12px}
+.btn{font:inherit;font-size:14px;font-weight:500;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;text-decoration:none}
+.btn-p{background:var(--crimson);border-color:var(--crimson);color:#fff}
+.btn-b{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn-g{border-color:transparent;background:transparent;color:var(--blue)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.chip{font:inherit;font-size:13px;min-height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink-2);display:inline-flex;align-items:center;gap:6px}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.tag{display:inline-flex;align-items:center;font-size:11px;line-height:16px;font-weight:600;padding:1px 7px;border-radius:5px;background:var(--sunk);color:var(--ink-2)}
+.tag.c{background:var(--crimson-soft);color:var(--crimson)}.tag.b{background:var(--blue-soft);color:var(--blue)}.tag.g{background:var(--gold-soft);color:var(--gold)}
+.board{background:var(--board);color:var(--board-ink);border-radius:14px}
+.blbl{font-size:12px;line-height:16px;color:var(--board-ink-2)}
+.top{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--rule)}
+.tabbar{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--surface);border-top:1px solid var(--rule);padding:6px 4px 18px}
+.tabbar a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;line-height:14px;font-weight:500;color:var(--ink-3);text-decoration:none;min-height:48px;justify-content:center;border-radius:10px;position:relative}
+.tabbar a.on{color:var(--crimson)}
+.tabbar svg{width:24px;height:24px}
+.ico{width:20px;height:20px;flex:none}
+.meter{height:6px;border-radius:3px;background:var(--sunk);overflow:hidden}.meter i{display:block;height:100%;background:var(--blue)}
+.ball{width:30px;height:30px;border-radius:50%;border:1px solid var(--rule-strong);display:inline-flex;align-items:center;justify-content:center;font-family:"Anek Latin",sans-serif;font-stretch:75%;font-weight:600;font-size:15px;background:var(--surface)}
+.ball.b4{background:var(--blue-soft);border-color:#9DB4E3;color:var(--blue)}.ball.b6{background:var(--blue);border-color:var(--blue);color:#fff}.ball.bw{background:var(--crimson);border-color:var(--crimson);color:#fff}.ball.nx{border-style:dashed;background:transparent}
+.feed{list-style:none;margin:0;padding:0}
+.feed li{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid var(--rule);font-size:14px;line-height:20px}
+.feed .ov{font-family:"Anek Latin",sans-serif;font-stretch:75%;font-size:15px;color:var(--ink-3)}
+.row{display:flex;align-items:center}
+</style>
+
+</helmet>
+<div class="npl" style="width: 390px; height: 1250px">
+<header class="top" style="justify-content: space-between"><div class="row" style="gap: 6px"><a href="#" class="btn btn-g" style="min-height: 40px; padding: 0 6px" aria-label="Back"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></a><span class="sm mut">Player</span></div></header>
+<div style="padding: 12px 12px 110px; display: flex; flex-direction: column; gap: 14px">
+<section class="board" style="padding: 16px">
+<div class="row" style="gap: 6px"><span class="tag" style="background: #B5122F; color: #FFFFFF">Nepal international</span><span class="tag" style="background: #26467F; color: #F4F6FA">Capped</span></div>
+<p class="bf" style="font-size: 38px; line-height: 1.05; margin-top: 8px">Gulshan Jha</p>
+<p class="blbl" style="font-size: 14px">Karnali Yaks · 20 · all-rounder · right-arm fast-medium</p>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; border-top: 1px solid #26467F; padding-top: 10px"><div><p class="blbl">Overall</p><p class="bf" style="font-size: 30px">68</p></div><div><p class="blbl">Potential</p><p class="bf" style="font-size: 30px">78–84</p></div><div><p class="blbl">Form</p><p class="bf" style="font-size: 30px">7.0</p></div></div></section>
+<div role="tablist" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 10px; background: #EEECE6"><button role="tab" aria-selected="false" style="font: inherit; font-size: 13px; min-height: 40px; border: 0; border-radius: 8px; background: transparent; color: #454A54">Overview</button><button role="tab" aria-selected="false" style="font: inherit; font-size: 13px; min-height: 40px; border: 0; border-radius: 8px; background: transparent; color: #454A54">NPL</button><button role="tab" aria-selected="true" style="font: inherit; font-size: 13px; font-weight: 600; min-height: 40px; border: 0; border-radius: 8px; background: #FFFFFF; box-shadow: 0 1px 2px rgba(0,0,0,.12)">Nepal</button></div>
+<section class="card" style="padding: 14px; display: flex; flex-direction: column; gap: 12px">
+<div class="row" style="gap: 8px"><svg width="16" height="19" viewBox="0 0 22 26" aria-hidden="true"><path d="M2 1v24h18L8 13h11L2 1z" fill="#B5122F" stroke="#0B3A8C" stroke-width="1.8" stroke-linejoin="round"></path></svg><h2 class="h3">International career</h2></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<div style="padding: 10px; border-radius: 10px; background: #EEECE6"><p class="xs faint">T20Is</p><p class="bf" style="font-size: 26px"><span style="display: inline-block; padding: 0 6px; border: 1px dashed #7E5300; border-radius: 6px; color: #7E5300; font-family: IBM Plex Sans, sans-serif; font-size: 13px; font-weight: 500; font-stretch: 100%">[real caps]</span> <span style="font-size: 18px">+ 3</span></p><p class="xs faint">at game start · + in your game</p></div>
+<div style="padding: 10px; border-radius: 10px; background: #EEECE6"><p class="xs faint">ODIs</p><p class="bf" style="font-size: 26px"><span style="display: inline-block; padding: 0 6px; border: 1px dashed #7E5300; border-radius: 6px; color: #7E5300; font-family: IBM Plex Sans, sans-serif; font-size: 13px; font-weight: 500; font-stretch: 100%">[real caps]</span> <span style="font-size: 18px">+ 5</span></p><p class="xs faint">at game start · + in your game</p></div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px">
+<div><p class="xs faint">Debut</p><p class="sm" style="font-weight: 600"><span style="display: inline-block; padding: 0 6px; border: 1px dashed #7E5300; border-radius: 6px; color: #7E5300; font-family: IBM Plex Sans, sans-serif; font-size: 13px; font-weight: 500; font-stretch: 100%">[date, opponent]</span></p></div>
+<div><p class="xs faint">Central contract</p><p class="sm" style="font-weight: 600">Grade B <span class="xs faint">(CAN 2025)</span></p></div>
+<div><p class="xs faint">Selectors’ view</p><p class="sm" style="font-weight: 600">First-choice all-rounder</p></div>
+<div><p class="xs faint">Next squad</p><p class="sm" style="font-weight: 600 ; color: #0B3A8C">Certain</p></div>
+</div></section>
+<section><h2 class="h3" style="margin-bottom: 2px">Nepal games in your career</h2><ul style="list-style: none; margin: 0; padding: 0"><li style="display: grid; grid-template-columns: 70px minmax(0,1fr); gap: 10px; padding: 8px 0; border-bottom: 1px solid #E1DED6"><span class="xs faint">Mar 2027</span><span><span class="sm" style="font-weight: 500">v Bangladesh · 3 T20Is</span><br><span class="xs mut">64 runs · 3 wkts</span></span></li><li style="display: grid; grid-template-columns: 70px minmax(0,1fr); gap: 10px; padding: 8px 0; border-bottom: 1px solid #E1DED6"><span class="xs faint">Dec 2026</span><span><span class="sm" style="font-weight: 500">CWC Qualifier Play-Off · 5 ODIs</span><br><span class="xs mut">148 runs · 6 wkts</span></span></li><li style="display: grid; grid-template-columns: 70px minmax(0,1fr); gap: 10px; padding: 8px 0; border-bottom: 1px solid #E1DED6"><span class="xs faint">Dec 2026</span><span><span class="sm" style="font-weight: 500">v India A · 2 T20s</span><br><span class="xs mut">22 runs · 1 wkt</span></span></li></ul></section>
+<section class="card" style="padding: 12px 14px; background: #F6EDD8; border-color: transparent"><p class="sm gld" style="font-weight: 600">Why it matters</p><p class="sm" style="margin-top: 4px">Each Nepal series adds experience (+1 to +2 rating). Capped players are worth more at auction and bring in more fans.</p></section>
+</div>
+<nav class="tabbar" aria-label="Main">
+<a href="#" class=""><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path><path d="M10 21v-6h4v6"></path></svg>Home</a>
+<a href="#" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"></path><circle cx="17" cy="9" r="2.6"></circle><path d="M16.5 14.6c2.6.2 4.3 1.9 5 4.9"></path></svg>Squad</a>
+<a href="#" class=""><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M7.2 6.2c1.7 1.6 2.6 3.6 2.6 5.8s-.9 4.2-2.6 5.8"></path><path d="M16.8 6.2c-1.7 1.6-2.6 3.6-2.6 5.8s.9 4.2 2.6 5.8"></path></svg>Match</a>
+<a href="#" class=""><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path><path d="M8 14h3M8 17h6"></path></svg>Season</a>
+<a href="#" class=""><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>More</a>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1250}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Blocking decision</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#0B3A8C}a:hover{color:#072a66}
+.npl{--bg:#F6F5F1;--surface:#FFFFFF;--sunk:#EEECE6;--ink:#15171C;--ink-2:#454A54;--ink-3:#5E636C;--rule:#E1DED6;--rule-strong:#C8C4B9;--crimson:#B5122F;--crimson-soft:#FBEAED;--blue:#0B3A8C;--blue-soft:#E8EEF9;--gold:#7E5300;--gold-soft:#F6EDD8;--board:#0D2856;--board-ink:#F4F6FA;--board-ink-2:#B9C7E4;--board-rule:#26467F;font-family:"IBM Plex Sans","IBM Plex Sans Devanagari",system-ui,sans-serif;font-size:15px;line-height:1.5;color:var(--ink);background:var(--bg);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;box-sizing:border-box;position:relative;overflow:hidden}
+.npl *{box-sizing:border-box}
+.npl p,.npl h1,.npl h2,.npl h3{margin:0}
+.bf{font-family:"Anek Latin","Arial Narrow",sans-serif;font-stretch:75%;font-weight:600;letter-spacing:-.01em}
+.mut{color:var(--ink-2)}.faint{color:var(--ink-3)}.crim{color:var(--crimson)}.blu{color:var(--blue)}.gld{color:var(--gold)}
+.sm{font-size:13px;line-height:19px}.xs{font-size:12px;line-height:16px}
+.h1{font-size:24px;line-height:30px;font-weight:600;letter-spacing:-.01em}.h2{font-size:18px;line-height:24px;font-weight:600}.h3{font-size:15px;line-height:22px;font-weight:600}
+.sec{font-size:12px;line-height:16px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.t-bk{background:#7A3FB0}.t-cr{background:#2E7D4F}.t-jb{background:#D9711A}.t-ky{background:#1F8A9A}.t-kg{background:#8B1E3F}.t-ll{background:#C99512}.t-pa{background:#2B5FD9}.t-sr{background:#C2185B}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:12px}
+.btn{font:inherit;font-size:14px;font-weight:500;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;text-decoration:none}
+.btn-p{background:var(--crimson);border-color:var(--crimson);color:#fff}
+.btn-b{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn-g{border-color:transparent;background:transparent;color:var(--blue)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.chip{font:inherit;font-size:13px;min-height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink-2);display:inline-flex;align-items:center;gap:6px}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.tag{display:inline-flex;align-items:center;font-size:11px;line-height:16px;font-weight:600;padding:1px 7px;border-radius:5px;background:var(--sunk);color:var(--ink-2)}
+.tag.c{background:var(--crimson-soft);color:var(--crimson)}.tag.b{background:var(--blue-soft);color:var(--blue)}.tag.g{background:var(--gold-soft);color:var(--gold)}
+.board{background:var(--board);color:var(--board-ink);border-radius:14px}
+.blbl{font-size:12px;line-height:16px;color:var(--board-ink-2)}
+.top{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--rule)}
+.tabbar{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--surface);border-top:1px solid var(--rule);padding:6px 4px 18px}
+.tabbar a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;line-height:14px;font-weight:500;color:var(--ink-3);text-decoration:none;min-height:48px;justify-content:center;border-radius:10px;position:relative}
+.tabbar a.on{color:var(--crimson)}
+.tabbar svg{width:24px;height:24px}
+.ico{width:20px;height:20px;flex:none}
+.meter{height:6px;border-radius:3px;background:var(--sunk);overflow:hidden}.meter i{display:block;height:100%;background:var(--blue)}
+.ball{width:30px;height:30px;border-radius:50%;border:1px solid var(--rule-strong);display:inline-flex;align-items:center;justify-content:center;font-family:"Anek Latin",sans-serif;font-stretch:75%;font-weight:600;font-size:15px;background:var(--surface)}
+.ball.b4{background:var(--blue-soft);border-color:#9DB4E3;color:var(--blue)}.ball.b6{background:var(--blue);border-color:var(--blue);color:#fff}.ball.bw{background:var(--crimson);border-color:var(--crimson);color:#fff}.ball.nx{border-style:dashed;background:transparent}
+.feed{list-style:none;margin:0;padding:0}
+.feed li{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid var(--rule);font-size:14px;line-height:20px}
+.feed .ov{font-family:"Anek Latin",sans-serif;font-stretch:75%;font-size:15px;color:var(--ink-3)}
+.row{display:flex;align-items:center}
+</style>
+
+</helmet>
+<div class="npl" style="width: 390px; height: 844px; background: #15171C">
+<section role="dialog" aria-modal="true" aria-labelledby="dt" style="position: absolute; inset: 24px 0 0 0; background: #F6F5F1; border-radius: 18px 18px 0 0; display: flex; flex-direction: column">
+<div style="padding: 16px 16px 0">
+<div class="row" style="justify-content: space-between"><span class="tag c">Decision 1 of 2</span><span class="xs faint">Before Match 13 · Nov 3</span></div>
+<div class="row" style="gap: 4px; margin-top: 10px"><i style="flex: 1; height: 4px; border-radius: 2px; background: #B5122F"></i><i style="flex: 1; height: 4px; border-radius: 2px; background: #E1DED6"></i></div>
+<h1 id="dt" class="h1" style="margin-top: 16px">Sundeep Jora wants to know why he's been dropped</h1>
+</div>
+<div style="padding: 14px 16px; display: flex; flex-direction: column; gap: 14px; flex: 1">
+<div class="card" style="padding: 12px 14px; display: grid; grid-template-columns: 44px minmax(0,1fr); gap: 12px; align-items: center">
+<span class="bf" style="width: 44px; height: 44px; border-radius: 50%; background: #E8EEF9; color: #0B3A8C; display: inline-flex; align-items: center; justify-content: center; font-size: 18px">SJ</span>
+<div><p class="sm" style="font-weight: 600">Sundeep Jora · Batter · 25</p><p class="xs faint">Form 7.2 · morale 54 · benched for the last 2 matches</p></div>
+</div>
+<blockquote style="margin: 0; padding: 0 0 0 14px; border-left: 3px solid #C8C4B9; font-size: 15px; line-height: 22px; color: #454A54">“I made 38 and 51 in my last two games. I can't win you matches from the bench.”</blockquote>
+<div role="radiogroup" aria-labelledby="dt" style="display: flex; flex-direction: column; gap: 8px"><button role="radio" aria-checked="true" style="font: inherit; color: #15171C; text-align: left; display: flex; gap: 12px; padding: 12px 14px; border-radius: 12px; cursor: pointer; border: 2px solid #B5122F; background: #FBEAED"><span style="width: 20px; height: 20px; border-radius: 50%; flex: none; margin-top: 2px; border: 2px solid #B5122F; display: inline-flex; align-items: center; justify-content: center"><i style="width: 10px; height: 10px; border-radius: 50%; background: #B5122F"></i></span><span><span class="sm" style="font-weight: 600">Promise him the next match</span><ul style="list-style: none; margin: 4px 0 0; padding: 0"><li class="xs row" style="gap: 6px; margin-top: 3px; color: #0B3A8C"><span style="font-weight: 700">+</span>Jora morale +12</li><li class="xs row" style="gap: 6px; margin-top: 3px; color: #B5122F"><span style="font-weight: 700">!</span>He must start v Pokhara, or morale −20</li></ul></span></button><button role="radio" aria-checked="false" style="font: inherit; color: #15171C; text-align: left; display: flex; gap: 12px; padding: 12px 14px; border-radius: 12px; cursor: pointer; border: 1px solid #C8C4B9; background: #FFFFFF"><span style="width: 20px; height: 20px; border-radius: 50%; flex: none; margin-top: 2px; border: 2px solid #8C8F96; display: inline-flex; align-items: center; justify-content: center"></span><span><span class="sm" style="font-weight: 600">Tell him to earn it in training</span><ul style="list-style: none; margin: 4px 0 0; padding: 0"><li class="xs row" style="gap: 6px; margin-top: 3px; color: #B5122F"><span style="font-weight: 700">−</span>Jora morale −10</li><li class="xs row" style="gap: 6px; margin-top: 3px; color: #454A54"><span style="font-weight: 700">+</span>No promise to keep</li></ul></span></button><button role="radio" aria-checked="false" style="font: inherit; color: #15171C; text-align: left; display: flex; gap: 12px; padding: 12px 14px; border-radius: 12px; cursor: pointer; border: 1px solid #C8C4B9; background: #FFFFFF"><span style="width: 20px; height: 20px; border-radius: 50%; flex: none; margin-top: 2px; border: 2px solid #8C8F96; display: inline-flex; align-items: center; justify-content: center"></span><span><span class="sm" style="font-weight: 600">Ask Rohit Paudel to talk to him</span><ul style="list-style: none; margin: 4px 0 0; padding: 0"><li class="xs row" style="gap: 6px; margin-top: 3px; color: #0B3A8C"><span style="font-weight: 700">+</span>Jora morale +5</li><li class="xs row" style="gap: 6px; margin-top: 3px; color: #B5122F"><span style="font-weight: 700">−</span>Captain morale −3</li></ul></span></button></div>
+</div>
+<div style="padding: 12px 16px 28px; border-top: 1px solid #E1DED6; background: #FFFFFF; display: flex; flex-direction: column; gap: 8px">
+<button class="btn btn-p" style="min-height: 52px; font-size: 16px; font-weight: 600">Confirm · next decision</button>
+<p class="xs faint" style="text-align: center">You need to answer before the match can start.</p>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

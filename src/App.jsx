@@ -11,8 +11,8 @@ const Squad = lazy(() => import('./screens/Squad.jsx'));
 const Player = lazy(() => import('./screens/Player.jsx'));
 const Match = lazy(() => import('./screens/Match.jsx'));
 const Scorecard = lazy(() => import('./screens/Scorecard.jsx'));
-const Fixtures = lazy(() => import('./screens/Fixtures.jsx'));
-const Table = lazy(() => import('./screens/Table.jsx'));
+const Season = lazy(() => import('./screens/Season.jsx'));
+const News = lazy(() => import('./screens/News.jsx'));
 const Stats = lazy(() => import('./screens/Stats.jsx'));
 const History = lazy(() => import('./screens/History.jsx'));
 const Club = lazy(() => import('./screens/Club.jsx'));
@@ -47,9 +47,10 @@ function useSession() {
   useEffect(() => {
     if (!G || restored.current) return;
     restored.current = true;
-    const p = G.s.uiPath; if (p && p !== '/' && loc.pathname === '/') nav(p, { replace: true });
+    const p = G.s.uiPath; if (p && p !== '/' && loc.pathname === '/' && !loc.search) nav(p, { replace: true });
   }, [G]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { if (G) G.s.uiPath = loc.pathname; }, [G, loc.pathname]);
+  // pathname + query, so tabs such as /season?tab=results come back too
+  useEffect(() => { if (G) G.s.uiPath = loc.pathname + loc.search; }, [G, loc.pathname, loc.search]);
   useEffect(() => {
     const flush = () => { if (!G) return; if (ui.live && ui.live.started && !ui.live.done) ui.live.persist(true); else saveLocal(G, true); };
     const onVis = () => { if (document.visibilityState === 'hidden') flush(); };
@@ -77,8 +78,10 @@ export default function App() {
                   <Route path="/player/:id" element={<Player />} />
                   <Route path="/match" element={<Match />} />
                   <Route path="/scorecard/:n" element={<Scorecard />} />
-                  <Route path="/fixtures" element={<Fixtures />} />
-                  <Route path="/table" element={<Table />} />
+                  <Route path="/season" element={<Season />} />
+                  <Route path="/news" element={<News />} />
+                  <Route path="/fixtures" element={<Navigate to="/season?tab=fixtures" replace />} />
+                  <Route path="/table" element={<Navigate to="/season" replace />} />
                   <Route path="/stats" element={<Stats />} />
                   <Route path="/history" element={<History />} />
                   <Route path="/club" element={<Club />} />

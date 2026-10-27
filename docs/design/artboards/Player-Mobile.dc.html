@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Player profile (phone)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#0B3A8C}a:hover{color:#072a66}
+.npl{--bg:#F6F5F1;--surface:#FFFFFF;--sunk:#EEECE6;--ink:#15171C;--ink-2:#454A54;--ink-3:#5E636C;--rule:#E1DED6;--rule-strong:#C8C4B9;--crimson:#B5122F;--crimson-soft:#FBEAED;--blue:#0B3A8C;--blue-soft:#E8EEF9;--gold:#7E5300;--gold-soft:#F6EDD8;--board:#0D2856;--board-ink:#F4F6FA;--board-ink-2:#B9C7E4;--board-rule:#26467F;font-family:"IBM Plex Sans","IBM Plex Sans Devanagari",system-ui,sans-serif;font-size:15px;line-height:1.5;color:var(--ink);background:var(--bg);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;box-sizing:border-box;position:relative;overflow:hidden}
+.npl *{box-sizing:border-box}
+.npl p,.npl h1,.npl h2,.npl h3{margin:0}
+.bf{font-family:"Anek Latin","Arial Narrow",sans-serif;font-stretch:75%;font-weight:600;letter-spacing:-.01em}
+.mut{color:var(--ink-2)}.faint{color:var(--ink-3)}.crim{color:var(--crimson)}.blu{color:var(--blue)}.gld{color:var(--gold)}
+.sm{font-size:13px;line-height:19px}.xs{font-size:12px;line-height:16px}
+.h1{font-size:24px;line-height:30px;font-weight:600;letter-spacing:-.01em}.h2{font-size:18px;line-height:24px;font-weight:600}.h3{font-size:15px;line-height:22px;font-weight:600}
+.sec{font-size:12px;line-height:16px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.t-bk{background:#7A3FB0}.t-cr{background:#2E7D4F}.t-jb{background:#D9711A}.t-ky{background:#1F8A9A}.t-kg{background:#8B1E3F}.t-ll{background:#C99512}.t-pa{background:#2B5FD9}.t-sr{background:#C2185B}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:12px}
+.btn{font:inherit;font-size:14px;font-weight:500;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;text-decoration:none}
+.btn-p{background:var(--crimson);border-color:var(--crimson);color:#fff}
+.btn-b{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn-g{border-color:transparent;background:transparent;color:var(--blue)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.chip{font:inherit;font-size:13px;min-height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink-2);display:inline-flex;align-items:center;gap:6px}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.tag{display:inline-flex;align-items:center;font-size:11px;line-height:16px;font-weight:600;padding:1px 7px;border-radius:5px;background:var(--sunk);color:var(--ink-2)}
+.tag.c{background:var(--crimson-soft);color:var(--crimson)}.tag.b{background:var(--blue-soft);color:var(--blue)}.tag.g{background:var(--gold-soft);color:var(--gold)}
+.board{background:var(--board);color:var(--board-ink);border-radius:14px}
+.blbl{font-size:12px;line-height:16px;color:var(--board-ink-2)}
+.top{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--rule)}
+.tabbar{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--surface);border-top:1px solid var(--rule);padding:6px 4px 18px}
+.tabbar a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;line-height:14px;font-weight:500;color:var(--ink-3);text-decoration:none;min-height:48px;justify-content:center;border-radius:10px;position:relative}
+.tabbar a.on{color:var(--crimson)}
+.tabbar svg{width:24px;height:24px}
+.ico{width:20px;height:20px;flex:none}
+.meter{height:6px;border-radius:3px;background:var(--sunk);overflow:hidden}.meter i{display:block;height:100%;background:var(--blue)}
+.ball{width:30px;height:30px;border-radius:50%;border:1px solid var(--rule-strong);display:inline-flex;align-items:center;justify-content:center;font-family:"Anek Latin",sans-serif;font-stretch:75%;font-weight:600;font-size:15px;background:var(--surface)}
+.ball.b4{background:var(--blue-soft);border-color:#9DB4E3;color:var(--blue)}.ball.b6{background:var(--blue);border-color:var(--blue);color:#fff}.ball.bw{background:var(--crimson);border-color:var(--crimson);color:#fff}.ball.nx{border-style:dashed;background:transparent}
+.feed{list-style:none;margin:0;padding:0}
+.feed li{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid var(--rule);font-size:14px;line-height:20px}
+.feed .ov{font-family:"Anek Latin",sans-serif;font-stretch:75%;font-size:15px;color:var(--ink-3)}
+.row{display:flex;align-items:center}
+</style>
+
+</helmet>
+<div class="npl" style="width: 390px; height: 1400px">
+<header class="top" style="justify-content: space-between"><div class="row" style="gap: 6px"><a href="#" class="btn btn-g" style="min-height: 40px; padding: 0 6px" aria-label="Back to Squad"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></a><span class="sm mut">Squad</span></div><span class="sm faint">3 of 22</span></header>
+<div style="padding: 12px 12px 110px; display: flex; flex-direction: column; gap: 14px">
+<section class="board" style="padding: 16px">
+<div class="row" style="gap: 6px; flex-wrap: wrap"><span class="tag" style="background: #26467F; color: #F4F6FA">Captain</span><span class="tag" style="background: #26467F; color: #F4F6FA">In form</span></div>
+<p class="bf" style="font-size: 40px; line-height: 1.05; margin-top: 8px">Rohit Paudel</p>
+<p class="blbl" style="font-size: 14px">Lumbini Lions · Nepal · 24 · batter · right-hand bat, off-spin</p>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 14px; border-top: 1px solid #26467F; padding-top: 12px">
+<div><p class="blbl">Overall</p><p class="bf" style="font-size: 34px">77</p></div><div><p class="blbl">Potential</p><p class="bf" style="font-size: 34px">80–84</p></div><div><p class="blbl">Form</p><p class="bf" style="font-size: 34px">8.1</p></div>
+</div></section>
+<section><div class="row" style="justify-content: space-between; margin-bottom: 6px"><h2 class="h3">Last 5 innings</h2><span class="xs faint">runs</span></div><div class="card" style="padding: 12px 10px; display: flex; align-items: flex-end; gap: 6px; height: 128px"><div style="display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1"><span class="xs" style="font-weight: 600">71</span><i style="width: 100%; max-width: 34px; height: 78px; border-radius: 4px; background: #0B3A8C"></i><span class="xs faint">v KY</span></div><div style="display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1"><span class="xs" style="font-weight: 600">12</span><i style="width: 100%; max-width: 34px; height: 13px; border-radius: 4px; background: #C8C4B9"></i><span class="xs faint">v BK</span></div><div style="display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1"><span class="xs" style="font-weight: 600">48</span><i style="width: 100%; max-width: 34px; height: 52px; border-radius: 4px; background: #0B3A8C"></i><span class="xs faint">v CR</span></div><div style="display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1"><span class="xs" style="font-weight: 600">33</span><i style="width: 100%; max-width: 34px; height: 36px; border-radius: 4px; background: #0B3A8C"></i><span class="xs faint">v SR</span></div><div style="display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1"><span class="xs" style="font-weight: 600">64</span><i style="width: 100%; max-width: 34px; height: 70px; border-radius: 4px; background: #0B3A8C"></i><span class="xs faint">v KG</span></div></div></section>
+<section><h2 class="h3" style="margin-bottom: 8px">This season</h2><div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px"><div class="card" style="padding: 10px 12px"><p class="xs faint">Runs</p><p class="bf" style="font-size: 26px">284</p></div><div class="card" style="padding: 10px 12px"><p class="xs faint">Average</p><p class="bf" style="font-size: 26px">47.3</p></div><div class="card" style="padding: 10px 12px"><p class="xs faint">Strike rate</p><p class="bf" style="font-size: 26px">141.2</p></div><div class="card" style="padding: 10px 12px"><p class="xs faint">Wickets</p><p class="bf" style="font-size: 26px">3</p></div></div></section>
+<section class="card" style="padding: 12px 14px"><h2 class="h3">Attributes</h2><ul style="list-style: none; margin: 4px 0 0; padding: 0"><li style="display: grid; grid-template-columns: 110px minmax(0,1fr) 30px; gap: 10px; align-items: center; padding: 5px 0"><span class="sm">Batting</span><div class="meter" style="height: 8px"><i style="width: 77%"></i></div><span class="sm" style="text-align: right; font-weight: 600">77</span></li><li style="display: grid; grid-template-columns: 110px minmax(0,1fr) 30px; gap: 10px; align-items: center; padding: 5px 0"><span class="sm">Against spin</span><div class="meter" style="height: 8px"><i style="width: 81%"></i></div><span class="sm" style="text-align: right; font-weight: 600">81</span></li><li style="display: grid; grid-template-columns: 110px minmax(0,1fr) 30px; gap: 10px; align-items: center; padding: 5px 0"><span class="sm">Against pace</span><div class="meter" style="height: 8px"><i style="width: 73%"></i></div><span class="sm" style="text-align: right; font-weight: 600">73</span></li><li style="display: grid; grid-template-columns: 110px minmax(0,1fr) 30px; gap: 10px; align-items: center; padding: 5px 0"><span class="sm">Bowling</span><div class="meter" style="height: 8px"><i style="width: 55%"></i></div><span class="sm" style="text-align: right; font-weight: 600">55</span></li><li style="display: grid; grid-template-columns: 110px minmax(0,1fr) 30px; gap: 10px; align-items: center; padding: 5px 0"><span class="sm">Fielding</span><div class="meter" style="height: 8px"><i style="width: 68%"></i></div><span class="sm" style="text-align: right; font-weight: 600">68</span></li><li style="display: grid; grid-template-columns: 110px minmax(0,1fr) 30px; gap: 10px; align-items: center; padding: 5px 0"><span class="sm">Temperament</span><div class="meter" style="height: 8px"><i style="width: 84%"></i></div><span class="sm" style="text-align: right; font-weight: 600">84</span></li></ul></section>
+<section class="card" style="padding: 12px 14px; display: flex; flex-direction: column; gap: 8px"><h2 class="h3">Training focus</h2>
+<div role="radiogroup" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px"><button class="chip" style="justify-content: center; min-height: 40px">Balanced</button><button class="chip on" style="justify-content: center; min-height: 40px">Batting</button><button class="chip" style="justify-content: center; min-height: 40px">Bowling</button><button class="chip" style="justify-content: center; min-height: 40px">Fitness</button></div>
+<p class="xs faint">With your level 3 batting coach: about +3 batting by next season.</p></section>
+<section class="card" style="padding: 12px 14px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px"><div><p class="xs faint">Salary</p><p class="sm" style="font-weight: 600">Rs 12 L / season</p></div><div><p class="xs faint">Contract</p><p class="sm" style="font-weight: 600">Until the 2027 mega auction</p></div><div><p class="xs faint">Market value</p><p class="sm" style="font-weight: 600">Rs 15 L</p></div><div><p class="xs faint">Retirement</p><p class="sm" style="font-weight: 600">Not before 2037</p></div></section>
+<div class="row" style="gap: 8px"><button class="btn" style="flex: 1">Make vice-captain</button><button class="btn btn-g">Release</button></div>
+</div>
+<nav class="tabbar" aria-label="Main">
+<a href="#" class=""><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path><path d="M10 21v-6h4v6"></path></svg>Home</a>
+<a href="#" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"></path><circle cx="17" cy="9" r="2.6"></circle><path d="M16.5 14.6c2.6.2 4.3 1.9 5 4.9"></path></svg>Squad</a>
+<a href="#" class=""><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M7.2 6.2c1.7 1.6 2.6 3.6 2.6 5.8s-.9 4.2-2.6 5.8"></path><path d="M16.8 6.2c-1.7 1.6-2.6 3.6-2.6 5.8s.9 4.2 2.6 5.8"></path></svg>Match</a>
+<a href="#" class=""><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path><path d="M8 14h3M8 17h6"></path></svg>Season</a>
+<a href="#" class=""><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>More</a>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1400}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

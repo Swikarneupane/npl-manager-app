@@ -4,8 +4,13 @@ import {R,ri,rf,pick,clamp,shuffle,isSpin,isPace,fmtL,ovr,calcValue,mkPlayer,Mat
 const SLABS={NEP:[12,9,6],OS:[30,22,15]};
 const OS_CAP=150, DOM_CAP=90, MAX_OS=8, MIN_OS=6, MAX_SQUAD=22, MIN_SQUAD=18;
 const PERSONAS=['Big spender','Balanced','Bargain hunter','Youth builder','Loyalist','Balanced','Big spender','Bargain hunter'];
+const MONTHS={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+// "Nov 3" -> epoch ms for that day; null for labels that are not dates ("Off-season").
+function dayTime(d,y){ const m=/^([A-Z][a-z]{2}) (\d{1,2})$/.exec(d||''); return m&&m[1] in MONTHS? new Date(y,MONTHS[m[1]],+m[2]).getTime() : null; }
 class Game{
-  constructor(s){ this.s=s; if(s&&s.pid) setPID(s.pid); }
+  constructor(s){ this.s=s; if(s&&s.pid) setPID(s.pid); if(s) this.migrate(); }
+  // Defaults for state added after a save was written, so old saves keep loading.
+  migrate(){ const s=this.s; s.inbox??=[]; }
   get players(){return this.s.players;} get teams(){return this.s.teams;} get user(){return this.s.user;} get year(){return this.s.year;}
   P(id){return this.s.players[id];}
   static create(userTeam,opts){
@@ -42,7 +47,10 @@ class Game{
     for(const id of t.squad){const p=this.P(id); if(p.nat==='NEP'){ if(!p.marquee) d+=p.salary; } else o+=p.salary;}
     t.purse=Math.round((DOM_CAP-d)*10)/10; t.osPurse=Math.round((OS_CAP-o)*10)/10;
   }
-  news(text,kind,extra){ this.s.inbox.unshift({id:'n'+Date.now()+ri(0,9999),y:this.year,text,kind:kind||'info',read:false,...(extra||{})}); if(this.s.inbox.length>120) this.s.inbox.length=120; }
+  news(text,kind,extra){ const d=this.dayLabel(); this.s.inbox.unshift({id:'n'+Date.now()+ri(0,9999),y:this.year,d,dt:dayTime(d,this.year),text,kind:kind||'info',read:false,...(extra||{})}); if(this.s.inbox.length>120) this.s.inbox.length=120; }
+  // The in-game "today": the date of the latest match played this season, or the phase outside it.
+  dayLabel(){ const ph=this.s.phase; if(ph==='league'||ph==='playoffs'||ph==='seasonEnd'){ const f=this.s.fixtures.filter(x=>x.res).pop(); if(f) return f.date; }
+    return {preseason:'Pre-season',offseason:'Off-season',retention:'Retention',auction:'Auction'}[ph]||'Pre-season'; }
   genNepali(age,prov){
     prov=prov||pick(PROVINCES); const np=NEP_NAMES[prov]; const bias=PROV_BIAS[prov];
     let name; do{ name=pick(np.f)+' '+pick(np.l);}while(Object.values(this.s.players).some(p=>p.name===name)&&R()<0.9);
@@ -362,7 +370,7 @@ class Game{
     this.teams[ta].squad=this.teams[ta].squad.filter(x=>x!==a.id).concat([b.id]); this.teams[tb].squad=this.teams[tb].squad.filter(x=>x!==b.id).concat([a.id]);
     a.team=tb; b.team=ta; a.hist.push({year:this.year,team:tb}); b.hist.push({year:this.year,team:ta});
     [ta,tb].forEach(t=>{this.recalcPurse(t); const T=this.teams[t]; if(T.xi) T.xi=null;});
-    this.news(`TRADE: ${a.name} joins ${this.teams[tb].name}; ${b.name} joins ${this.teams[ta].name}.`,'league');
+    this.news(`TRADE: ${a.name} joins ${this.teams[tb].name}; ${b.name} joins ${this.teams[ta].name}.`,'signing',{club:ta===this.user||tb===this.user});
   }
   needFor(tid,p){
     const sq=this.teams[tid].squad.map(id=>this.P(id));
@@ -517,7 +525,7 @@ class Game{
     const signed={};
     for(const tid in this.teams){ if(tid===this.user) continue; let g=0; while(this.osCount(tid)<MIN_OS && g++<10){ const c=this.osFreeAgents().filter(p=>p.value<=this.teams[tid].osPurse&&this.canAdd(tid,p)); if(!c.length) break; const p= R()<0.6? c[0]: pick(c.slice(0,6)); this.signFA(p.id,tid); (signed[tid]=signed[tid]||[]).push(`${p.name} (${fmtL(p.value)})`); }
       const pool=()=>Object.values(this.players).filter(p=>!p.team&&!p.retired); this.fillSquad(tid,pool); }
-    const k=Object.keys(signed); if(k.length) this.news(`Overseas signings: ${k.length} franchise${k.length>1?'s':''} strengthen${k.length>1?'':'s'} up`,'league',{detail:k.map(t=>`${this.teams[t].name}: ${signed[t].join(', ')}`).join('. ')+'.',ne:'विदेशी खेलाडी अनुबन्ध'});
+    const k=Object.keys(signed); if(k.length) this.news(`Overseas signings: ${k.length} franchise${k.length>1?'s':''} strengthen${k.length>1?'':'s'} up`,'signing',{detail:k.map(t=>`${this.teams[t].name}: ${signed[t].join(', ')}`).join('. ')+'.',ne:'विदेशी खेलाडी अनुबन्ध'});
   }
 }
 function ordinal(n){const s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);}

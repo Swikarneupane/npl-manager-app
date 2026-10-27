@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>International news (phone)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500&amp;family=IBM+Plex+Sans:wght@400;500;600&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#0B3A8C}a:hover{color:#072a66}
+.npl{--bg:#F6F5F1;--surface:#FFFFFF;--sunk:#EEECE6;--ink:#15171C;--ink-2:#454A54;--ink-3:#5E636C;--rule:#E1DED6;--rule-strong:#C8C4B9;--crimson:#B5122F;--crimson-soft:#FBEAED;--blue:#0B3A8C;--blue-soft:#E8EEF9;--gold:#7E5300;--gold-soft:#F6EDD8;--board:#0D2856;--board-ink:#F4F6FA;--board-ink-2:#B9C7E4;--board-rule:#26467F;font-family:"IBM Plex Sans","IBM Plex Sans Devanagari",system-ui,sans-serif;font-size:15px;line-height:1.5;color:var(--ink);background:var(--bg);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;box-sizing:border-box;position:relative;overflow:hidden}
+.npl *{box-sizing:border-box}
+.npl p,.npl h1,.npl h2,.npl h3{margin:0}
+.bf{font-family:"Anek Latin","Arial Narrow",sans-serif;font-stretch:75%;font-weight:600;letter-spacing:-.01em}
+.mut{color:var(--ink-2)}.faint{color:var(--ink-3)}.crim{color:var(--crimson)}.blu{color:var(--blue)}.gld{color:var(--gold)}
+.sm{font-size:13px;line-height:19px}.xs{font-size:12px;line-height:16px}
+.h1{font-size:24px;line-height:30px;font-weight:600;letter-spacing:-.01em}.h2{font-size:18px;line-height:24px;font-weight:600}.h3{font-size:15px;line-height:22px;font-weight:600}
+.sec{font-size:12px;line-height:16px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.t-bk{background:#7A3FB0}.t-cr{background:#2E7D4F}.t-jb{background:#D9711A}.t-ky{background:#1F8A9A}.t-kg{background:#8B1E3F}.t-ll{background:#C99512}.t-pa{background:#2B5FD9}.t-sr{background:#C2185B}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:12px}
+.btn{font:inherit;font-size:14px;font-weight:500;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;text-decoration:none}
+.btn-p{background:var(--crimson);border-color:var(--crimson);color:#fff}
+.btn-b{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn-g{border-color:transparent;background:transparent;color:var(--blue)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.chip{font:inherit;font-size:13px;min-height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--rule-strong);background:var(--surface);color:var(--ink-2);display:inline-flex;align-items:center;gap:6px}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.tag{display:inline-flex;align-items:center;font-size:11px;line-height:16px;font-weight:600;padding:1px 7px;border-radius:5px;background:var(--sunk);color:var(--ink-2)}
+.tag.c{background:var(--crimson-soft);color:var(--crimson)}.tag.b{background:var(--blue-soft);color:var(--blue)}.tag.g{background:var(--gold-soft);color:var(--gold)}
+.board{background:var(--board);color:var(--board-ink);border-radius:14px}
+.blbl{font-size:12px;line-height:16px;color:var(--board-ink-2)}
+.top{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--rule)}
+.tabbar{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));background:var(--surface);border-top:1px solid var(--rule);padding:6px 4px 18px}
+.tabbar a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;line-height:14px;font-weight:500;color:var(--ink-3);text-decoration:none;min-height:48px;justify-content:center;border-radius:10px;position:relative}
+.tabbar a.on{color:var(--crimson)}
+.tabbar svg{width:24px;height:24px}
+.ico{width:20px;height:20px;flex:none}
+.meter{height:6px;border-radius:3px;background:var(--sunk);overflow:hidden}.meter i{display:block;height:100%;background:var(--blue)}
+.ball{width:30px;height:30px;border-radius:50%;border:1px solid var(--rule-strong);display:inline-flex;align-items:center;justify-content:center;font-family:"Anek Latin",sans-serif;font-stretch:75%;font-weight:600;font-size:15px;background:var(--surface)}
+.ball.b4{background:var(--blue-soft);border-color:#9DB4E3;color:var(--blue)}.ball.b6{background:var(--blue);border-color:var(--blue);color:#fff}.ball.bw{background:var(--crimson);border-color:var(--crimson);color:#fff}.ball.nx{border-style:dashed;background:transparent}
+.feed{list-style:none;margin:0;padding:0}
+.feed li{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid var(--rule);font-size:14px;line-height:20px}
+.feed .ov{font-family:"Anek Latin",sans-serif;font-stretch:75%;font-size:15px;color:var(--ink-3)}
+.row{display:flex;align-items:center}
+</style>
+
+</helmet>
+<div class="npl" style="width: 390px; height: 1150px">
+<header class="top" style="justify-content: space-between"><div class="row" style="gap: 6px"><a href="#" class="btn btn-g" style="min-height: 40px; padding: 0 6px" aria-label="Back to Home"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg></a><h1 class="h2">News</h1></div><span class="xs faint">Off-season · Mar 2027</span></header>
+<div style="padding: 12px 12px 110px; display: flex; flex-direction: column; gap: 12px">
+<div class="row" style="gap: 6px; overflow: hidden"><button class="chip">All</button><button class="chip on">International</button><button class="chip">Your club</button><button class="chip">Results</button></div>
+<p class="xs faint">Results of international matches are simulated in your game. The fixtures are Nepal’s real calendar.</p>
+<ul style="list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px"><li class="card" style="padding: 12px 14px; border-color: #0B3A8C"><div class="row" style="justify-content: space-between"><span class="tag c">First cap</span><span class="xs blu" style="font-weight: 600">Your player</span></div><p class="sm" style="font-weight: 600; margin-top: 6px">Sanjay Rai makes his T20I debut for Nepal</p><p class="xs faint" style="font-family: IBM Plex Sans Devanagari, IBM Plex Sans, sans-serif">सञ्जय राईको अन्तर्राष्ट्रिय डेब्यु</p><p class="xs mut" style="margin-top: 4px">v Bangladesh at Kirtipur, 1st T20I · 4–0–24–2</p><div class="row" style="gap: 4px; flex-wrap: wrap; margin-top: 6px"><span class="tag b">Now capped</span><span class="tag b">Value Rs 6 L → Rs 9 L</span><span class="tag b">Morale +15</span></div></li><li class="card" style="padding: 12px 14px; border-color: #0B3A8C"><div class="row" style="justify-content: space-between"><span class="tag b">Call-up</span><span class="xs blu" style="font-weight: 600">Your player</span></div><p class="sm" style="font-weight: 600; margin-top: 6px">Tilak Bhandari named in Nepal’s squad for the Bangladesh series</p><p class="xs faint" style="font-family: IBM Plex Sans Devanagari, IBM Plex Sans, sans-serif">तिलक भण्डारी राष्ट्रिय टोलीमा</p><p class="xs mut" style="margin-top: 4px">First call-up after 14 NPL wickets at 6.9 an over</p><div class="row" style="gap: 4px; flex-wrap: wrap; margin-top: 6px"><span class="tag b">Morale +8</span></div></li><li class="card" style="padding: 12px 14px; border-color: #0B3A8C"><div class="row" style="justify-content: space-between"><span class="tag g">Milestone</span><span class="xs blu" style="font-weight: 600">Your player</span></div><p class="sm" style="font-weight: 600; margin-top: 6px">Rohit Paudel scores an ODI hundred in the Qualifier Play-Off</p><p class="xs faint" style="font-family: IBM Plex Sans Devanagari, IBM Plex Sans, sans-serif">रोहित पौडेलको शतक</p><p class="xs mut" style="margin-top: 4px">112 off 104 balls · Nepal win by 38 runs</p><div class="row" style="gap: 4px; flex-wrap: wrap; margin-top: 6px"><span class="tag b">Form +2</span></div></li><li class="card" style="padding: 12px 14px; border-color: #0B3A8C"><div class="row" style="justify-content: space-between"><span class="tag ">Contract</span><span class="xs blu" style="font-weight: 600">Your player</span></div><p class="sm" style="font-weight: 400; margin-top: 6px">CAN moves Sher Malla up to Grade B</p><p class="xs faint" style="font-family: IBM Plex Sans Devanagari, IBM Plex Sans, sans-serif">शेर मल्ल ग्रेड बीमा</p><p class="xs mut" style="margin-top: 4px">Mid-year review of central contracts</p><div class="row" style="gap: 4px; flex-wrap: wrap; margin-top: 6px"><span class="tag b">Fans +2</span></div></li><li class="card" style="padding: 12px 14px; border-color: #0B3A8C"><div class="row" style="justify-content: space-between"><span class="tag c">Dropped</span><span class="xs blu" style="font-weight: 600">Your player</span></div><p class="sm" style="font-weight: 400; margin-top: 6px">Sundeep Jora left out of the Nepal squad</p><p class="xs faint" style="font-family: IBM Plex Sans Devanagari, IBM Plex Sans, sans-serif">सुन्दीप जोरा टोलीबाट बाहिर</p><p class="xs mut" style="margin-top: 4px">Selectors want more runs in the middle order</p><div class="row" style="gap: 4px; flex-wrap: wrap; margin-top: 6px"><span class="tag c">Morale −6</span></div></li></ul>
+</div>
+<nav class="tabbar" aria-label="Main">
+<a href="#" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path><path d="M10 21v-6h4v6"></path></svg>Home</a>
+<a href="#" class=""><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"></circle><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"></path><circle cx="17" cy="9" r="2.6"></circle><path d="M16.5 14.6c2.6.2 4.3 1.9 5 4.9"></path></svg>Squad</a>
+<a href="#" class=""><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"></circle><path d="M7.2 6.2c1.7 1.6 2.6 3.6 2.6 5.8s-.9 4.2-2.6 5.8"></path><path d="M16.8 6.2c-1.7 1.6-2.6 3.6-2.6 5.8s.9 4.2 2.6 5.8"></path></svg>Match</a>
+<a href="#" class=""><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path><path d="M8 14h3M8 17h6"></path></svg>Season</a>
+<a href="#" class=""><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>More</a>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":1150}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

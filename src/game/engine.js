@@ -168,12 +168,14 @@ class Match{
     return inn;
   }
   score(inn){ const o=Math.floor(inn.balls/6)+'.'+(inn.balls%6); return `${this.G.teams[inn.bat].id} ${inn.runs}/${inn.wkts} (${o})`; }
-  bowlerOptions(inn){
+  // need: legal balls the bowler must still be able to bowl inside the 4-over limit
+  // (a full over, or the rest of an over when a bowler is injured mid-over).
+  bowlerOptions(inn,need=6){
     const lu=this.lineups[inn.bowl];
-    return lu.xi.filter(id=>{const p=this.P(id); const s=inn.bw[id]; return (!s||s.balls<24) && id!==inn.last && !(s&&s.injured);});
+    return lu.xi.filter(id=>{const s=inn.bw[id]; return (!s||s.balls+need<=24) && id!==inn.last && !(s&&s.injured);});
   }
-  aiBowler(inn){
-    const opts=this.bowlerOptions(inn); const o=Math.floor(inn.balls/6); const ph=o<6?'pp':o>=15?'death':'mid';
+  aiBowler(inn,need=6){
+    const opts=this.bowlerOptions(inn,need); const o=Math.floor(inn.balls/6); const ph=o<6?'pp':o>=15?'death':'mid';
     const oversLeft=this.overs-o;
     let best=null,bs=-1e9;
     const capable=opts.filter(id=>this.P(id).bowl>=45);
@@ -357,7 +359,7 @@ class Match{
     // injuries
     if(R()<0.0009){ const p=this.P(inn.cur); if(bw.balls%6!==0){ bw.injured=true; p.inj=ri(1,3); this.say(`${p.name} pulls up holding his hamstring and leaves the field. He cannot bowl again today.`,'info inj'); inn.injSwap=true; } }
     if(this.hooks.afterBall) await this.hooks.afterBall(inn,this,{ev:String(runs)});
-    if(inn.injSwap && inn.balls%6!==0){ inn.injSwap=false; const nb=this.aiBowler(inn); inn.cur=nb; if(!inn.bw[nb]) inn.bw[nb]={balls:0,r:0,w:0,dots:0,wd:0,nb:0}; this.say(`${this.P(nb).name} will finish the over.`,'info'); }
+    if(inn.injSwap && inn.balls%6!==0){ inn.injSwap=false; const nb=this.aiBowler(inn,6-inn.balls%6); inn.cur=nb; if(!inn.bw[nb]) inn.bw[nb]={balls:0,r:0,w:0,dots:0,wd:0,nb:0}; this.say(`${this.P(nb).name} will finish the over.`,'info'); }
   }
   ovStr(inn){ return Math.floor(inn.balls/6)+'.'+(inn.balls%6); }
   ballLbl(inn,legal){ const b=inn.balls; if(legal===false) return Math.floor(b/6)+'.'+(b%6+1); return b>0&&b%6===0? (b/6-1)+'.6' : Math.floor(b/6)+'.'+(b%6); }

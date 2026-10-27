@@ -28,7 +28,7 @@ export default function Scorecard() {
   const mom = res && res.mom ? G.P(res.mom) : null;
   return (
     <div style={{ maxWidth: 1000 }}>
-      <Link to="/fixtures" className="t-small">← Fixtures</Link>
+      <Link to="/season?tab=results" className="t-small">← Results</Link>
       <p className="faint t-small" style={{ marginTop: 12 }}>{stageName(f)} · {f.date} · Kirtipur</p>
       <h1 className="t-h1" style={{ marginTop: 6 }}>{res ? res.text : 'In progress'}</h1>
       <div className="row" style={{ gap: 28, marginTop: 14, alignItems: 'flex-end' }}>
