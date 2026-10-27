@@ -518,3 +518,16 @@ i.pp{background:var(--blue-solid)} i.mid{background:var(--gold)} i.death{backgro
 .sc-r{font-size:18px;font-weight:600}
 .sc-tbl td,.sc-tbl th{padding-left:8px;padding-right:8px}
 @media (max-width:760px){ .pb-name{font-size:32px} .ob-title{font-size:24px} .sc-head{font-size:22px} .cb-v{font-size:36px} }
+
+/* ===== round 2 · phase 8: international layer ===== */
+.nepalpg,.ospg{max-width:1100px}
+.nboard{padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.nb-title{font-size:30px;line-height:1.1;font-weight:600}
+.nt-caps{font-size:30px;line-height:1.1;font-weight:600}
+.nt-plus{font-size:18px;color:var(--blue)}
+.oslist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.oslist li{padding:12px 14px;border-radius:12px}
+.avail{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.avail i{display:block;height:8px;border-radius:2px;background:var(--rule)}
+.avail i.ok{background:var(--blue-solid)} .avail i.duty,.avail i.noc{background:var(--crimson-solid)} .avail i.inj{background:var(--gold)}
+@media (max-width:760px){ .nb-title{font-size:24px} }

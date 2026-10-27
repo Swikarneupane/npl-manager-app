@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { nn } from '../lib/util.js';
 
 // Shared by the Home news portal and the News page.
-export const KINDS = { match: 'Result', injury: 'Injury · Physio', board: 'Board', league: 'League', event: 'Decision', signing: 'Signing' };
+export const KINDS = { match: 'Result', injury: 'Injury · Physio', board: 'Board', league: 'League', event: 'Decision', signing: 'Signing', intl: 'International' };
 const OLD_SIGNING = /^(Overseas signings|TRADE:)/;
 export const kindOf = (n) => (n.kind === 'league' && OLD_SIGNING.test(n.text) ? 'signing' : n.kind);
 export const isPending = (n) => !!(n.choices && !n.done);
@@ -18,6 +18,7 @@ export const FILTERS = [
   ['injury', 'Injuries', (n) => n.kind === 'injury'],
   ['signing', 'Signings', (n) => kindOf(n) === 'signing'],
   ['board', 'Board', (n) => n.kind === 'board'],
+  ['intl', 'International', (n) => n.kind === 'intl'],
 ];
 
 // The in-game "today" is the stamp on the newest item.
@@ -34,7 +35,7 @@ export function ageOf(G, n, now = today(G)) {
 function title(G, n) {
   const lang = G.s.lang;
   if (lang === 'np' && n.ne) return <span className="ne">{nn(G, n.ne)}</span>;
-  return <>{n.text}{lang === 'both' && n.ne && <span className="ne nrow-ne">{nn(G, n.ne)}</span>}</>;
+  return <>{n.text}{(lang === 'both' || n.kind === 'intl') && n.ne && <span className="ne nrow-ne">{nn(G, n.ne)}</span>}</>;
 }
 
 // One row: unread dot, kind, title, and a muted second line.
@@ -43,9 +44,10 @@ export function NewsRow({ G, n, sub, to = n.fix ? `/scorecard/${n.fix}` : null, 
     <>
       <span className={`nrow-dot${n.read ? '' : ' on'}`} aria-hidden="true" />
       <span className="nrow-body">
-        <span className="t-micro faint">{KINDS[kindOf(n)] || 'News'}{isClub(n) && n.kind !== 'match' && n.kind !== 'event' && <span className="ntag">Your club</span>}</span>
+        <span className="t-micro faint">{n.kind === 'intl' && n.sub ? <span className={`ptag ${n.sub === 'First cap' || n.sub === 'Dropped' || n.sub === 'Called away' ? 'c' : n.sub === 'Milestone' ? 'g' : 'b'}`} style={{ marginRight: 6 }}>{n.sub}</span> : (KINDS[kindOf(n)] || 'News')}{isClub(n) && n.kind !== 'match' && n.kind !== 'event' && <span className="ntag">{n.kind === 'intl' ? 'Your player' : 'Your club'}</span>}</span>
         <span className={`nrow-ttl${n.read ? '' : ' unread'}`}>{title(G, n)}</span>
         {sub && <span className="t-micro mut">{sub}</span>}
+        {n.tags && n.tags.length > 0 && <span className="row" style={{ gap: 4, marginTop: 4 }}>{n.tags.map((x) => <span key={x} className={`ptag ${/−/.test(x) ? 'c' : 'b'}`}>{x}</span>)}</span>}
         {children}
       </span>
     </>

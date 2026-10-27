@@ -15,7 +15,7 @@ const PHASES = [['pp', 'Powerplay'], ['mid', 'Middle'], ['death', 'Death']];
 const FILTERS = [['all', 'All', () => true], ['bat', 'Batters', (p) => p.bat >= 50], ['bowl', 'Bowlers', (p) => p.bowl >= 50], ['os', 'Overseas', (p) => p.nat !== 'NEP']];
 const sur = (p) => p.name.split(' ').slice(-1)[0];
 const where = (p) => (p.bat >= 65 ? 'bats 1–3' : p.bat >= 55 ? 'bats 4–5' : p.bat >= 45 ? 'bats 6–7' : 'bats 8–11');
-const avail = (p) => (p.inj ? `Injured · ${p.inj}` : p.rest ? 'Rested' : p.fit < 80 ? `Fitness ${Math.round(p.fit)}%` : 'Fit');
+const avail = (p) => (p.inj ? `Injured · ${p.inj}` : p.rest ? 'Rested' : p.nocStatus === 'pending' ? 'NOC pending' : p.duty && p.duty.started ? `National duty · ${p.duty.left}` : p.fit < 80 ? `Fitness ${Math.round(p.fit)}%` : 'Fit');
 const sign = (v) => (v > 0 ? `+${v}` : v < 0 ? `−${-v}` : '±0');
 
 function FormBars({ G, p }) {
@@ -44,6 +44,8 @@ function swapEffect(G, t, order, outId, inP) {
   let why = null;
   if (inP.inj) why = `Injured for ${inP.inj} more match${inP.inj > 1 ? 'es' : ''}.`;
   else if (inP.rest) why = 'Rested for this match.';
+  else if (inP.nocStatus === 'pending') why = 'His NOC has not arrived yet.';
+  else if (inP.duty && inP.duty.started) why = `Away on national duty for ${inP.duty.left} more match${inP.duty.left > 1 ? 'es' : ''}.`;
   else if (os > 4) why = `Would make ${os} overseas. Swap him for an overseas player instead.`;
   else if (os < 4 && out.nat !== 'NEP' && t.squad.filter((id) => G.P(id).nat !== 'NEP' && !G.P(id).inj).length >= 4) why = 'Would leave 3 overseas. Swap him for another overseas player.';
   const wkLost = out.role === 'WK' && inP.role !== 'WK' && !next.some((id) => G.P(id).role === 'WK');
@@ -194,7 +196,7 @@ export default function TeamSheet() {
       <ul className="bench">{benchShown.map((p) => (
         <li key={p.id} draggable={!p.inj} onDragStart={(e) => { hdrag.current = { from: 'bench', id: p.id }; e.dataTransfer.setData('text/plain', JSON.stringify({ from: 'bench', id: p.id })); setDrag({ from: 'bench', id: p.id }); }} onDragEnd={() => { hdrag.current = null; setDrag(null); setOver(null); }}>
           <span className="t-small">{p.name}{p.nat !== 'NEP' && <span className="ptag b" style={{ marginLeft: 6 }}>OS</span>}<br /><span className={`t-micro ${p.inj ? 'crim' : 'faint'}`}>{p.role} · {ovr(p)} · {avail(p)}</span></span>
-          <button type="button" className="btn btn-ghost btn-sm" disabled={!!p.inj || !!p.rest} aria-label={`Add ${p.name} to the XI`} onClick={() => { setBenchOpen(false); setSwap({ benchIn: p.id }); }}>Add</button></li>))}
+          <button type="button" className="btn btn-ghost btn-sm" disabled={!G.available(p)} aria-label={`Add ${p.name} to the XI`} onClick={() => { setBenchOpen(false); setSwap({ benchIn: p.id }); }}>Add</button></li>))}
         {!benchShown.length && <li className="faint t-small">Nobody here.</li>}</ul>
     </>
   );
@@ -248,7 +250,7 @@ export default function TeamSheet() {
       {swap && <SwapSheet G={G} t={t} order={order} slot={swap.slot} benchIn={swap.benchIn} apply={apply} onClose={() => setSwap(null)} />}
       {planOpen && <PlanEditor G={G} t={t} order={order} update={update} onClose={() => setPlanOpen(false)} />}
       {benchOpen && <Sheet title={`Bench · ${bench.length}`} onClose={() => setBenchOpen(false)}>{benchList}</Sheet>}
-      <p className="t-micro faint" style={{ marginTop: 12 }}>Ratings are out of 100. <Link to="/squad?tab=list">Squad list</Link> has training, wages and contracts.</p>
+      <p className="t-micro faint" style={{ marginTop: 12 }}>Ratings are out of 100. <Link to="/squad?tab=list">Squad list</Link> has training, wages and contracts. <Link to="/squad/overseas">Overseas players</Link> shows NOCs and national duty.</p>
     </div>
   );
 }

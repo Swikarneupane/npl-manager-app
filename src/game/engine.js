@@ -172,7 +172,9 @@ class Match{
   // (a full over, or the rest of an over when a bowler is injured mid-over).
   bowlerOptions(inn,need=6){
     const lu=this.lineups[inn.bowl];
-    return lu.xi.filter(id=>{const s=inn.bw[id]; return (!s||s.balls+need<=24) && id!==inn.last && !(s&&s.injured);});
+    // a fifth of the innings per bowler: 4 overs in T20, 10 in an ODI
+    const cap=this.overs>20?Math.ceil(this.overs/5)*6:24;
+    return lu.xi.filter(id=>{const s=inn.bw[id]; return (!s||s.balls+need<=cap) && id!==inn.last && !(s&&s.injured);});
   }
   aiBowler(inn,need=6){
     const opts=this.bowlerOptions(inn,need); const o=Math.floor(inn.balls/6); const ph=o<6?'pp':o>=15?'death':'mid';

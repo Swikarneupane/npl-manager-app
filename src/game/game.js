@@ -1,4 +1,5 @@
-import {NE_TEAM,TEAMS,SQUADS,FREE_NEP,FREE_OS,HISTORY,FIX2026,PLAYOFF_DATES2026,NEP_NAMES,PROV_BIAS,OS_NAMES,COUNTRY_NAMES,PROVINCES} from './data.js';
+import {NE_TEAM,TEAMS,SQUADS,FREE_NEP,FREE_OS,HISTORY,FIX2026,PLAYOFF_DATES2026,NEP_NAMES,PROV_BIAS,OS_NAMES,COUNTRY_NAMES,PROVINCES,INTL_CALENDAR,INTL_OPPONENTS} from './data.js';
+import {NEP_INTL,OS_INTL_STATUS,CONTRACTS_2026} from './intl-data.js';
 import {R,ri,rf,pick,clamp,shuffle,isSpin,isPace,TYPE_LABEL,fmtL,ovr,calcValue,mkPlayer,Match,setPID,getPID} from './engine.js';
 // ===== Game state & league logic =====
 const SLABS={NEP:[12,9,6],OS:[30,22,15]};
@@ -11,6 +12,8 @@ function needRoles(p){ const r=[]; if(p.role==='WK') r.push('wk'); if((p.role===
 const STAFF_POSTS=[['bat','Batting coach'],['bowl','Bowling coach'],['physio','Physio']];
 const STAFF_WAGE=[0,3,5,8,10,12];
 const STAFF_NAT=['NEP','NEP','NEP','IND','ENG','AUS','SA','NZ','SL','PAK'];
+// International layer: contract bonuses in Nepal selection, and the size of each grade (CAN 2026).
+const GRADE_BONUS={'A+':6,A:4,B:3,C:2,D:1}; const GRADES=['A+','A','B','C','D']; const GRADE_SIZES=[['A+',3],['A',4],['B',5],['C',11],['D',15]];
 const roundL=(x)=>x<10?Math.round(x*2)/2:Math.round(x);
 const OS_CAP=150, DOM_CAP=90, MAX_OS=8, MIN_OS=6, MAX_SQUAD=22, MIN_SQUAD=18;
 const PERSONAS=['Big spender','Balanced','Bargain hunter','Youth builder','Loyalist','Balanced','Big spender','Bargain hunter'];
@@ -51,6 +54,8 @@ class Game{
     if(s.auction&&s.auction.prep===undefined) s.auction.prep=false;
     // staff: every team gets a backroom team on load if the save predates it
     s.staff??={}; s.staffPool??={}; if(s.teams) for(const tid in s.teams) if(!s.staff[tid]) s.staff[tid]=this.genStaffTeam(tid);
+    // international data: real caps and contracts for real Nepali players, NOC and duty fields for overseas
+    s.nepal??={}; if(s.players) for(const p of Object.values(s.players)) this.initIntl(p);
     // decisions from older saves: give them a title, a deadline (the user's next match) and a cautious choice
     const nf=s.fixtures&&s.user?this.userNext():null;
     for(const n of s.inbox) if(n.choices&&!n.done){ n.title??=n.text; if(n.due===undefined) n.due=nf?nf.n:null; n.safe??=cautiousIndex(n); }
@@ -74,6 +79,7 @@ class Game{
     // salaries
     for(const tid in s.teams){ G.initSalaries(tid); }
     s.pid=getPID();
+    for(const p of Object.values(s.players)) G.initIntl(p);
     for(const tid in s.teams) s.staff[tid]=G.genStaffTeam(tid);
     G.setObjectives(); G.makeFixtures2026();
     G.news(`Welcome to ${s.teams[userTeam].name}. The 2026 season (NPL Season 3) starts on October 26 at Kirtipur.`,'board');
@@ -89,7 +95,7 @@ class Game{
   }
   recalcPurse(tid){
     const t=this.teams[tid]; let d=0,o=0;
-    for(const id of t.squad){const p=this.P(id); if(p.nat==='NEP'){ if(!p.marquee) d+=p.salary; } else o+=p.salary;}
+    for(const id of t.squad){const p=this.P(id); if(p.temp) continue; if(p.nat==='NEP'){ if(!p.marquee) d+=p.salary; } else o+=p.salary;}
     t.purse=Math.round((DOM_CAP-d)*10)/10; t.osPurse=Math.round((OS_CAP-o)*10)/10;
   }
   news(text,kind,extra){ const d=this.dayLabel(); this.s.inbox.unshift({id:'n'+Date.now()+ri(0,9999),y:this.year,d,dt:dayTime(d,this.year),text,kind:kind||'info',read:false,...(extra||{})}); if(this.s.inbox.length>120) this.s.inbox.length=120; }
@@ -106,7 +112,7 @@ class Game{
     const bat= role==='BOWL'?ri(20,35): base+bias.bat+ri(-2,4);
     const bowl= role==='BAT'?0: role==='WK'?0: base+(isSpin(type)?bias.spin:bias.pace)+ri(-2,4);
     const p=mkPlayer([name,'NEP',age,role,clamp(bat,15,70),clamp(bowl,0,70),type,R()<0.25?'L':'R'],null,this.s?this.year:2026);
-    p.prov=prov; p.real=false; p.pot=clamp(ovr(p)+ri(8,32),ovr(p)+5,92); p.value=calcValue(p); p.uncapped=true;
+    p.prov=prov; p.real=false; p.pot=clamp(ovr(p)+ri(8,32),ovr(p)+5,92); p.value=calcValue(p); p.uncapped=true; this.initIntl(p);
     return p;
   }
   genOverseas(){
@@ -115,12 +121,12 @@ class Game{
     const type= role==='BOWL'||role==='AR'? pick(['RF','RFM','LFM','OB','LB','SLA','RF','LF']):'';
     const lvl=ri(56,76); const ar=role==='AR'?8:0;
     const p=mkPlayer([name,nat,age,role, role==='BOWL'?ri(20,40):lvl-ar+ri(-3,3), role==='BAT'||role==='WK'?0:lvl-ar+ri(-3,3), type, R()<0.3?'L':'R'],null,this.year);
-    p.real=false; p.pot=clamp(ovr(p)+ri(0,12),ovr(p),92); p.value=calcValue(p); return p;
+    p.real=false; p.pot=clamp(ovr(p)+ri(0,12),ovr(p),92); p.value=calcValue(p); this.initIntl(p); return p;
   }
   osCount(tid){return this.teams[tid].squad.filter(id=>this.P(id).nat!=='NEP').length;}
   // ===== Lineups =====
   autoXI(tid){
-    const t=this.teams[tid]; const av=t.squad.map(id=>this.P(id)).filter(p=>!p.inj && !p.rest);
+    const t=this.teams[tid]; const av=t.squad.map(id=>this.P(id)).filter(p=>this.available(p));
     const os=av.filter(p=>p.nat!=='NEP'), nep=av.filter(p=>p.nat==='NEP');
     const osMax=Math.min(4,os.length), nepMax=11-osMax;
     const xi=[]; let osN=0,nepN=0;
@@ -188,6 +194,122 @@ class Game{
     this.s.staffPool={}; }
   // Injury length after the physio: L/2 matches shorter (rounded, at least 1); a match longer with no physio.
   injuryLength(tid,base){ const L=this.staffLevel(tid,'physio'); return L? Math.max(1,base-Math.round(L/2)) : base+1; }
+  // ===== International layer =====
+  // p.intl = {t20i, odi, debut, grade, gradeYear, real}: caps at game start (null = not verified), from intl-data.js.
+  // p.intlG = caps won in this game; p.intlLog = Nepal games played in this game.
+  initIntl(p){
+    if(p.nat==='NEP'){ if(!p.intl){ const r=p.real!==false?NEP_INTL[p.name]:null;
+        p.intl=r?{t20i:r.t20i,odi:r.odi,debut:r.debut||null,grade:r.grade||null,gradeYear:r.grade?CONTRACTS_2026.year:null,real:true}:{t20i:0,odi:0,debut:null,grade:null,gradeYear:null,real:false}; }
+      p.intlG??={t20i:0,odi:0}; p.intlLog??=[]; if(p.capBonus===undefined) p.capBonus=false; }
+    else { if(p.intlStatus===undefined) p.intlStatus=p.real!==false?(OS_INTL_STATUS[p.name]||null):null; p.nocStatus??='received'; p.duty??=null; }
+  }
+  // Total caps in a format: real at game start plus in-game; null if the real figure is not verified.
+  intlCaps(p,fmt){ if(!p.intl) return 0; if(!fmt) return (this.intlCaps(p,'t20i')||0)+(this.intlCaps(p,'odi')||0); const r=p.intl[fmt]; return r==null&&!(p.intlG&&p.intlG[fmt])?null:(r||0)+((p.intlG&&p.intlG[fmt])||0); }
+  // Unavailable: injured, rested, waiting for an NOC, or away on national duty.
+  available(p){ return !p.inj && !p.rest && p.nocStatus!=='pending' && !(p.duty&&p.duty.started&&p.duty.left>0); }
+  // NOC: overseas players signed between seasons sometimes wait 1-2 matches for their board's certificate.
+  nocOnSigning(p){ if(p.nat==='NEP') return; if(this.s.phase!=='league'&&this.s.phase!=='playoffs'&&R()<0.2){ p.nocStatus='pending'; p.nocWait=ri(1,2); } else p.nocStatus='received'; }
+  // National duty: an active international may be called away for 1-3 NPL matches during the season.
+  drawNationalDuty(){ for(const p of Object.values(this.players)){ if(p.nat==='NEP'||!p.team) { if(p.nat!=='NEP') p.duty=null; continue; }
+      p.duty= p.intlStatus==='active'&&R()<0.15 ? {nation:COUNTRY_NAMES[p.nat]||p.nat,at:ri(1,9),len:ri(1,3),left:0,started:false} : null; } }
+  overseasTick(tid){ const t=this.teams[tid];
+    for(const id of t.squad.slice()){ const p=this.P(id); if(p.nat==='NEP') continue;
+      if(p.nocStatus==='pending'&&--p.nocWait<=0){ p.nocStatus='received'; if(tid===this.user) this.news(`${p.name}'s NOC has arrived. He is available for selection.`,'board'); }
+      const d=p.duty; if(!d) continue;
+      if(!d.started){ if(--d.at<=0){ d.started=true; d.left=d.len; if(tid===this.user) this.news(`${d.nation} call ${p.name} up for national duty. He misses the next ${d.len} match${d.len>1?'es':''}.`,'intl',{sub:'Called away',tags:[`Misses ${d.len}`],club:true}); } }
+      else if(--d.left<=0){ p.duty=null; if(tid===this.user){ this.news(`${p.name} is back from national duty.`,'board'); this.releaseTemps(false,p.id); } } } }
+  // Temporary replacement for a player who is away: a free agent whose salary does not count against the purse.
+  canSignTemp(forId){ const f=this.P(forId); return f&&f.team===this.user&&f.nat!=='NEP'&&(f.nocStatus==='pending'||(f.duty&&(f.duty.started||f.duty.at<=1)))&&!this.teams[this.user].squad.some(id=>this.P(id).temp&&this.P(id).temp.for===forId); }
+  signTemp(pid,forId){ const p=this.P(pid); if(!p||p.team||p.nat==='NEP') return 'Pick an overseas free agent.'; if(!this.canSignTemp(forId)) return 'No replacement is allowed for him.';
+    const t=this.teams[this.user]; p.team=this.user; p.salary=0; p.temp={for:forId}; t.squad.push(p.id); this.recalcPurse(this.user);
+    this.news(`${p.name} joins as a temporary replacement for ${this.P(forId).name}. His salary does not count against the purse.`,'signing',{club:true}); return null; }
+  releaseTemps(all,forId){ for(const t of Object.values(this.teams)) for(const id of t.squad.slice()){ const p=this.P(id); if(!p.temp||(!all&&p.temp.for!==forId)) continue;
+      t.squad=t.squad.filter(x=>x!==id); if(t.xi) t.xi=t.xi.filter(x=>x!==id); if(t.order) t.order=t.order.filter(x=>x!==id); p.team=null; p.temp=null; p.salary=0; this.recalcPurse(t.id); } }
+  // Nepal selection: rating, NPL form and season, and the central contract.
+  nepalScore(p){ const st=p.stats[this.year]||p.stats[this.year-1]; const perf=st?Math.min(8,st.r/45+st.w/2):0;
+    return ovr(p)+((p.form+10)/2-5)*1.2+perf+(GRADE_BONUS[p.intl&&p.intl.grade]||0); }
+  // 15-player squad: best by score with at least one keeper and five bowlers; ranks 16-18 are "on the fringe".
+  pickNepal(){ const pool=Object.values(this.players).filter(p=>p.nat==='NEP'&&!p.retired&&!p.inj).sort((a,b)=>this.nepalScore(b)-this.nepalScore(a));
+    const sq=[]; const add=p=>{ if(p&&!sq.includes(p)) sq.push(p); };
+    add(pool.find(p=>p.role==='WK')); pool.filter(p=>p.bowl>=55).slice(0,5).forEach(add);
+    for(const p of pool){ if(sq.length>=15) break; add(p); }
+    const rest=pool.filter(p=>!sq.includes(p)); sq.sort((a,b)=>this.nepalScore(b)-this.nepalScore(a));
+    return {squad:sq.map(p=>p.id),fringe:rest.slice(0,3).map(p=>p.id),ranked:sq.concat(rest).map(p=>p.id)}; }
+  // A winter's events: the real 2026-27 calendar, then one ODI event and two T20I series a year, generated.
+  winterEvents(w){ const real=INTL_CALENDAR.filter(e=>e.winter===w); if(real.length) return real;
+    const C=(this.s.nepal.cal??={}); if(C[w]) return C[w];
+    const o=pick(INTL_OPPONENTS.odi), t=shuffle(INTL_OPPONENTS.t20i.slice()).slice(0,2);
+    return C[w]=[{id:`odi-${w}`,winter:w,name:`Nepal v ${o[0]}, ODI series`,short:`v ${o[0]}`,fmt:'ODI',official:true,dates:`Dec ${w}`,month:`Dec ${w}`,venue:'Kirtipur',squadDate:'Nov 28',matches:3,opp:o[0],strength:o[1],real:false},
+      {id:`t1-${w}`,winter:w,name:`Nepal v ${t[0][0]}, 3 T20Is`,short:`v ${t[0][0]}`,fmt:'T20I',official:true,dates:`Feb ${w+1}`,month:`Feb ${w+1}`,venue:'Kirtipur',squadDate:'Feb 1',matches:3,opp:t[0][0],strength:t[0][1],real:false},
+      {id:`t2-${w}`,winter:w,name:`Nepal v ${t[1][0]}, 3 T20Is`,short:`v ${t[1][0]}`,fmt:'T20I',official:true,dates:`Mar ${w+1}`,month:`Mar ${w+1}`,venue:'Mulpani',squadDate:'Mar 1',matches:3,opp:t[1][0],strength:t[1][1],real:false}]; }
+  // Opponent XI generated at a strength level; these players exist only for the match.
+  genOppXI(name,strength){ const L=[]; const roles=['WK','BAT','BAT','BAT','BAT','AR','AR','BOWL','BOWL','BOWL','BOWL'];
+    roles.forEach((role,i)=>{ const lv=strength+ri(-6,6); const type=role==='BOWL'||role==='AR'?pick(['RFM','RF','LFM','OB','LB','SLA']):'';
+      const p=mkPlayer([`${name} ${i+1}`,'OPP',ri(21,33),role,role==='BOWL'?ri(18,35):lv,role==='BAT'||role==='WK'?0:lv,type,'R'],null,this.year); p.id='opp'+i; p.form=0; p.fit=100; L.push(p); }); return L; }
+  intlLineup(ids,P){ const ps=ids.map(id=>P[id]).filter(p=>!p.inj); const sc=p=>ovr(p)+p.form*0.6; const xi=[];
+    const wk=ps.filter(p=>p.role==='WK').sort((a,b)=>sc(b)-sc(a))[0]; if(wk) xi.push(wk);
+    ps.filter(p=>p.bowl>=55&&!xi.includes(p)).sort((a,b)=>sc(b)-sc(a)).slice(0,5).forEach(p=>xi.push(p));
+    ps.filter(p=>!xi.includes(p)).sort((a,b)=>sc(b)-sc(a)).forEach(p=>{ if(xi.length<11) xi.push(p); });
+    const top=xi.filter(p=>p.role!=='BOWL'||p.bat>=50).sort((a,b)=>b.bat-a.bat), tail=xi.filter(p=>!top.includes(p)).sort((a,b)=>b.bat-a.bat);
+    const order=top.concat(tail).map(p=>p.id); const keeper=(wk||xi.slice().sort((a,b)=>b.field-a.field)[0]).id;
+    return {xi:xi.map(p=>p.id),order,keeper,captain:xi.slice().sort((a,b)=>ovr(b)-ovr(a))[0].id}; }
+  // Plays one Nepal match with the real engine against a generated XI; the league is untouched.
+  async intlMatch(evt,squad){ const opp=this.genOppXI(evt.opp,evt.strength); const P={}; for(const id of squad) P[id]=this.P(id); for(const p of opp) P[p.id]=p;
+    const G=this; const proxy={user:null,players:P,teams:{NEP:{id:'NEP',name:'Nepal',squad},OPP:{id:'OPP',name:evt.opp,squad:opp.map(p=>p.id)}},
+      lineup:(tid)=>G.intlLineup(tid==='NEP'?squad:opp.map(p=>p.id),P),staffLevel:()=>0,injuryLength:(t,b)=>b};
+    const home=R()<0.5; const m=new Match(proxy,home?'NEP':'OPP',home?'OPP':'NEP',{lang:'en',overs:evt.fmt==='ODI'?50:20,noRain:true,night:false,dew:false});
+    // the engine marks mid-match injuries on the players; Nepal games do not carry injuries into the NPL
+    const inj0=squad.map(id=>[id,this.P(id).inj]); await m.run({}); for(const [id,v] of inj0){ const p=this.P(id); p.inj=v; p.injCounted=false; } return m; }
+  // Nepal's winter: name squads, play every event, apply call-up / dropped / experience / first-cap effects.
+  async runIntlWinter(){
+    const w=this.year-1; const evts=this.winterEvents(w); const N=this.s.nepal; const u=this.user;
+    const prev=new Set(N.lastSquad||[]); const duty={}; const results=[]; let last=null;
+    const mine=(p)=>p.team===u; const tag=(p)=>({club:mine(p)});
+    for(const e of evts){
+      const sel=this.pickNepal(); const squad=sel.squad; const sset=new Set(squad); const before=last?new Set(last):prev;
+      for(const id of squad){ const p=this.P(id); if(!before.has(id)){ p.morale=clamp(p.morale+8,0,100); if(mine(p)) this.news(`${p.name} named in Nepal's squad for ${e.short}`,'intl',{...tag(p),sub:'Call-up',ne:`${p.name} राष्ट्रिय टोलीमा`,detail:`${e.name} · ${e.dates}`,tags:['Morale +8']}); } }
+      for(const id of before){ if(sset.has(id)) continue; const p=this.P(id); if(!p||p.retired) continue; p.morale=clamp(p.morale-6,0,100); if(mine(p)) this.news(`${p.name} left out of the Nepal squad for ${e.short}`,'intl',{...tag(p),sub:'Dropped',ne:`${p.name} टोलीबाट बाहिर`,detail:'Selectors went with form and contracts.',tags:['Morale −6']}); }
+      const played=new Set(); const rec={id:e.id,name:e.name,short:e.short,fmt:e.fmt,month:e.month,official:e.official,w:0,l:0,nr:0,games:[]};
+      for(let k=0;k<e.matches;k++){
+        // rotation: from the second match, rest one of the regulars in turn so squad players get games
+        const base=this.intlLineup(squad,Object.fromEntries(squad.map(id=>[id,this.P(id)]))).xi;
+        const rest=k>0?base.filter(id=>this.P(id).role!=='WK').sort((a,b)=>this.nepalScore(this.P(a))-this.nepalScore(this.P(b)))[(k-1)%5]:null;
+        const m=await this.intlMatch(e,rest?squad.filter(id=>id!==rest):squad); const res=m.result; const nepWon=res.winner==='NEP', oppWon=res.winner==='OPP';
+        if(nepWon) rec.w++; else if(oppWon) rec.l++; else rec.nr++;
+        const ni=m.inns.find(i=>i.bat==='NEP'), oi=m.inns.find(i=>i.bat==='OPP');
+        rec.games.push({r:nepWon?'W':oppWon?'L':'–',nep:ni?`${ni.runs}/${ni.wkts}`:'',opp:oi?`${oi.runs}/${oi.wkts}`:''});
+        for(const id of m.lineups.NEP.xi){ const p=this.P(id); played.add(id);
+          const bs=(ni&&ni.bs[id])||{r:0,b:0}, bw=(oi&&oi.bw[id])||{w:0,r:0,balls:0}; const d=(duty[id]??={games:0,r:0,w:0,dev:0,caps:0,firstCap:false,events:[]}); d.games++; d.r+=bs.r||0; d.w+=bw.w||0;
+          if(e.official){ const fmt=e.fmt==='ODI'?'odi':'t20i'; const before0=this.intlCaps(p)||0; p.intlG[fmt]++; d.caps++;
+            if(!before0&&!(p.intl&&(p.intl.t20i==null||p.intl.odi==null))){ p.capped=true; p.uncapped=false; p.capBonus=true; const v0=p.value; p.value=Math.round(p.value*1.5*2)/2; d.firstCap=true;
+              if(!p.intl.debut) p.intl.debut={fmt:e.fmt==='ODI'?'ODI':'T20I',year:w,v:e.opp,game:true};
+              this.news(`${p.name} makes his ${e.fmt} debut for Nepal`,'intl',{...tag(p),sub:'First cap',ne:`${p.name}को अन्तर्राष्ट्रिय डेब्यु`,detail:`${e.short} · ${bs.r||0} runs${bw.balls?`, ${bw.w}/${bw.r}`:''}`,tags:['Now capped',`Value ${fmtL(v0)} → ${fmtL(p.value)}`]}); }
+            const tot=this.intlCaps(p); if([25,50,100].includes(tot)) this.news(`${p.name} wins his ${tot}th cap for Nepal`,'intl',{...tag(p),sub:'Milestone',ne:`${p.name}को ${tot}औँ खेल`,tags:[`${tot} caps`]}); }
+          if((bs.r||0)>=100) this.news(`${p.name} scores a hundred for Nepal ${e.short}`,'intl',{...tag(p),sub:'Milestone',ne:`${p.name}को शतक`,detail:`${bs.r} off ${bs.b} balls · ${nepWon?'Nepal win':oppWon?'Nepal lose':'No result'}`,tags:['Form +2']}), p.form=clamp(p.form+2,-10,10);
+          else if((bs.r||0)>=50&&mine(p)) this.news(`${p.name} hits a fifty for Nepal ${e.short}`,'intl',{...tag(p),sub:'Milestone',detail:`${bs.r} off ${bs.b} balls`,tags:['Form +1']}), p.form=clamp(p.form+1,-10,10);
+          if((bw.w||0)>=5) this.news(`${p.name} takes five wickets for Nepal ${e.short}`,'intl',{...tag(p),sub:'Milestone',ne:`${p.name}को पाँच विकेट`,detail:`${bw.w}/${bw.r}`,tags:['Form +2']}), p.form=clamp(p.form+2,-10,10);
+          p.intlLog.push({y:w,month:e.month,evt:e.short,fmt:e.fmt,r:bs.r||0,w:bw.w||0});
+        }
+      }
+      // every series played: +1 to +2 rating (up to potential) and 10 fitness
+      for(const id of played){ const p=this.P(id); const d=duty[id]; d.events.push(e.short); const add=Math.min(ri(1,2),Math.max(0,p.pot-ovr(p)));
+        if(add){ if(p.role==='BOWL') p.bowl=clamp(p.bowl+add,10,96); else if(p.role==='AR'){ if(p.bat>=p.bowl) p.bat=clamp(p.bat+add,10,96); else p.bowl=clamp(p.bowl+add,10,96); } else p.bat=clamp(p.bat+add,10,96); }
+        d.dev+=add; p.fit=clamp(p.fit-10,30,100); }
+      rec.squad=squad; rec.fringe=sel.fringe; results.push(rec); last=squad;
+    }
+    N.winter=w; N.results=results; N.duty=duty; N.lastSquad=last||[];
+    // CAN re-grades contracts for the coming year from the same ranking (in the game; 2026 is the real list)
+    this.regradeContracts(this.year);
+    return results; }
+  regradeContracts(year){ if(year<=CONTRACTS_2026.year) return; const ranked=this.pickNepal().ranked.map(id=>this.P(id)); let i=0; const next={};
+    for(const [g,n] of GRADE_SIZES) for(let k=0;k<n&&i<ranked.length;k++,i++) next[ranked[i].id]=g;
+    for(const p of Object.values(this.players)){ if(p.nat!=='NEP'||!p.intl) continue; const old=p.intl.grade, g=next[p.id]||null; if(old===g&&p.intl.gradeYear) { p.intl.gradeYear=year; continue; }
+      p.intl.grade=g; p.intl.gradeYear=year;
+      if(p.team===this.user&&(old||g)){ const up=g&&(!old||GRADES.indexOf(g)<GRADES.indexOf(old));
+        const text=!g?`${p.name} loses his CAN central contract`:!old?`CAN awards ${p.name} a Grade ${g} contract`:`CAN moves ${p.name} ${up?'up':'down'} to Grade ${g}`;
+        this.news(text,'intl',{club:true,sub:'Contract',ne:g?`${p.name} ग्रेड ${g}मा`:`${p.name} केन्द्रीय अनुबन्धबाट बाहिर`,detail:`Central contracts for ${year}, in your game`,tags:up?['Fans +2']:[]}); if(up) this.teams[this.user].fans=clamp(this.teams[this.user].fans+2,0,100); }
+    }
+    this.s.nepal.contractYear=year; }
   // ===== Team sheet =====
   // Batting: the top seven in the order; bowling: the best five bowlers; fielding: all eleven.
   teamStrength(xi,order){
@@ -251,9 +373,9 @@ class Game{
   }
   validXI(tid,xi){
     const t=this.teams[tid]; if(!xi||xi.length!==11) return false;
-    const os=xi.filter(id=>this.P(id).nat!=='NEP').length; const osAvail=t.squad.filter(id=>this.P(id).nat!=='NEP'&&!this.P(id).inj).length;
+    const os=xi.filter(id=>this.P(id).nat!=='NEP').length; const osAvail=t.squad.filter(id=>this.P(id).nat!=='NEP'&&this.available(this.P(id))).length;
     if(os>4) return false; if(os<Math.min(4,osAvail)) return false;
-    return xi.every(id=>t.squad.includes(id)&&!this.P(id).inj);
+    return xi.every(id=>t.squad.includes(id)&&this.available(this.P(id)));
   }
   lineup(tid){
     const t=this.teams[tid]; let xi, order;
@@ -322,6 +444,7 @@ class Game{
       const t=this.teams[side];
       // coaches speed form recovery 10% x L for their players; the physio adds L fitness after every match
       const Lb=this.staffLevel(side,'bat'), Lw=this.staffLevel(side,'bowl'), Lp=this.staffLevel(side,'physio');
+      this.overseasTick(side);
       for(const id of t.squad){ const p=this.P(id); if(!m.lineups[side].xi.includes(id)){ p.fit=clamp(p.fit+(t.training==='Light'?10:7),0,100); if(p.inj>0 && !p.injNew) p.inj--; p.rest=false; }
         const L=Math.max(p.role==='BOWL'?0:Lb, p.role==='BAT'||p.role==='WK'?0:Lw); p.form*= p.form<0&&L ? 1-0.03*(1+0.1*L) : 0.97;
         if(Lp) p.fit=clamp(p.fit+Lp,0,100); p.injNew=false; }
@@ -433,13 +556,13 @@ class Game{
     this.s.promises.push({id:'pr'+Date.now()+ri(0,999),pid,kind,dueFixture:ups[left-1].n,matchesLeft:left});
   }
   // After each user match: kept if the player was in the XI; otherwise one match fewer left, broken at 0.
-  // An injured player does not use up a match; a player who has left the club voids the promise.
+  // A player who cannot play (injured, NOC, national duty) does not use up a match; one who left voids it.
   checkPromises(xi){
     const keep=[];
     for(const pr of this.s.promises){
       const p=this.P(pr.pid); if(!p||p.team!==this.user||p.retired) continue;
       if(xi.includes(pr.pid)){ this.news(`Promise kept: ${p.name} ${pr.kind==='debut'?'made his NPL debut':'started, as you promised'}.`,'board'); continue; }
-      if(p.inj){ const nx=this.userNext(); if(nx) pr.dueFixture=Math.max(pr.dueFixture,nx.n); keep.push(pr); continue; }
+      if(!this.available(p)){ const nx=this.userNext(); if(nx) pr.dueFixture=Math.max(pr.dueFixture,nx.n); keep.push(pr); continue; } // injured, NOC or national duty: not his manager's fault
       pr.matchesLeft--;
       if(pr.matchesLeft<=0){ const t=this.teams[this.user]; p.morale=clamp(p.morale-20,0,100); t.board=clamp(t.board-4,0,100);
         this.news(`Promise broken: ${p.name} ${pr.kind==='debut'?'is still waiting for his debut':'did not start'}. His morale −20, board confidence −4.`,'board'); continue; }
@@ -541,7 +664,7 @@ class Game{
     if(retired.length) this.news(`${retired.length} players have retired`,'league',{ne:`${retired.length} खेलाडीले संन्यास लिए`,detail:`${retired.slice(0,14).map(p=>`${p.name} (${p.age})`).join(', ')}${retired.length>14?` and ${retired.length-14} more`:''}.`});
     if(userRet.length) this.news(`From your squad, ${userRet.map(p=>p.name).join(', ')} ${userRet.length>1?'have':'has'} retired. Thank you for everything.`,'board');
     // ageing & development
-    for(const p of Object.values(this.players)){ if(p.retired) continue; p.prevOvr=ovr(p); p.refusedBy=null; p.mood=null; this.develop(p); p.age++; p.form=p.form*0.3; p.fit=100; p.inj=0; p.morale=clamp(p.morale*0.7+21,0,100); p.value=calcValue(p); p.uncapped=p.uncapped&&!Object.keys(p.stats).length; }
+    for(const p of Object.values(this.players)){ if(p.retired) continue; p.prevOvr=ovr(p); p.refusedBy=null; p.mood=null; this.develop(p); p.age++; p.form=p.form*0.3; p.fit=100; p.inj=0; p.morale=clamp(p.morale*0.7+21,0,100); p.value=calcValue(p)*(p.capBonus?1.5:1); p.uncapped=p.uncapped&&!Object.keys(p.stats).length&&!this.intlCaps(p); }
     // new players
     const nNep=Math.max(14,nep.length+10), nOs=Math.max(6,os.length+4);
     const newNames=[];
@@ -550,7 +673,9 @@ class Game{
     const gems=newNames.filter(p=>p.pot>=80);
     this.news(`${nNep} young Nepali players and ${nOs} new overseas players have entered the player pool.${gems.length?` Scouts are excited about ${gems.length} high-potential youngster${gems.length>1?'s':''}.`:''}`,'league');
     this.s.year++; this.s.pid=getPID();
+    for(const tid in this.teams) this.recalcPurse(tid); // retirements left the squads; purses must match
     this.staffTurnover();
+    this.releaseTemps(true);
     this.s.mega = this.year===this.s.settings.nextMega;
     this.s.newPlayers=newNames.map(p=>p.id); this.s.lastRetired=retired.map(p=>p.id);
     this.s.phase='offseason';
@@ -704,12 +829,15 @@ class Game{
     const score=(p,lp)=>ovr(p)-25*((lp[0]+lp[1])/2)/Math.max(10,cap[kind(p)]);
     const take=(p,lp)=>{ left[kind(p)]-=lp[1]; taken.add(p.id); this.s.shortlist.push({pid:p.id,max:lp[1],priority:added.length<2?'A':'B'}); added.push(p.id); };
     // money kept back for the minimum-squad slots still uncovered after this pick, priced at the cheapest
-    // likely (max-bid) prices among players not yet targeted and not the candidate himself
+    // likely prices among players not yet targeted and not the candidate himself
     const LP=new Map(pool.map(p=>[p.id,this.likelyPrice(p)]));
-    const reserve=(k,cand)=>{ const os=this.osCount(this.user)+live().filter(x=>x.p.nat!=='NEP').length, sq=t.squad.length+live().length;
+    const reserve=(k,cand,lowP)=>{ const os=this.osCount(this.user)+live().filter(x=>x.p.nat!=='NEP').length, sq=t.squad.length+live().length;
       const osLeft=Math.max(0,MIN_OS-os), domLeft=Math.max(0,MIN_SQUAD-sq-osLeft); const n=(k==='os'?osLeft:domLeft)-1; if(n<=0) return 0;
-      return pool.filter(p=>kind(p)===k&&!taken.has(p.id)&&p.id!==cand).map(p=>LP.get(p.id)[1]).sort((a,b)=>a-b).slice(0,n).reduce((a,b)=>a+b,0); };
-    const best=(filter)=>pool.filter(p=>!taken.has(p.id)&&filter(p)).map(p=>({p,lp:LP.get(p.id)})).filter(x=>x.lp[1]+reserve(kind(x.p),x.p.id)<=left[kind(x.p)]).map(x=>({...x,v:score(x.p,x.lp)})).sort((a,b)=>b.v-a.v);
+      return pool.filter(p=>kind(p)===k&&!taken.has(p.id)&&p.id!==cand).map(p=>LP.get(p.id)[lowP?0:1]).sort((a,b)=>a-b).slice(0,n).reduce((a,b)=>a+b,0); };
+    // strict: keep the reserve at likely high prices; if nothing fits, fall back to low prices (unsold
+    // players can still be signed at base in the accelerated round), so a tight purse gets a target, not none
+    const fits=(filter,lowP)=>pool.filter(p=>!taken.has(p.id)&&filter(p)).map(p=>({p,lp:LP.get(p.id)})).filter(x=>x.lp[1]+reserve(kind(x.p),x.p.id,lowP)<=left[kind(x.p)]).map(x=>({...x,v:score(x.p,x.lp)})).sort((a,b)=>b.v-a.v);
+    const best=(filter)=>{ const a=fits(filter,false); return a.length?a:fits(filter,true); };
     for(const nd of needs){ let want=nd.left-live().filter(x=>needRoles(x.p).includes(nd.k)).length;
       while(want>0){ const c=best(p=>needRoles(p).includes(nd.k))[0]; if(!c) break; take(c.p,c.lp); want--; } }
     let osWant=Math.max(0,MIN_OS-this.osCount(this.user)-live().filter(x=>x.p.nat!=='NEP').length);
@@ -740,7 +868,7 @@ class Game{
     if(!pt||pt===c.leader||!this.teams[pt].rtm||!this.canAdd(pt,p)) return null; if(this.budgetOf(pt,p)<c.bid) return null; return pt;
   }
   useRTM(pt){ const c=this.s.auction.cur; this.teams[pt].rtm--; c.leader=pt; c.hist.push([pt,c.bid,'RTM']); }
-  signPlayer(p,tid,price){ const t=this.teams[tid]; p.team=tid; p.salary=price; p.contractTo=this.s.settings.nextMega-1; t.squad.push(p.id); p.hist.push({year:this.year,team:tid}); this.recalcPurse(tid); }
+  signPlayer(p,tid,price){ const t=this.teams[tid]; p.team=tid; this.nocOnSigning(p); p.salary=price; p.contractTo=this.s.settings.nextMega-1; t.squad.push(p.id); p.hist.push({year:this.year,team:tid}); this.recalcPurse(tid); }
   simLot(userIsAI){ // instant resolution of current lot
     const c=this.s.auction.cur; let guard=0;
     while(guard++<400){ const r=this.aiStep(userIsAI); if(r.type==='none') break; }
@@ -785,6 +913,7 @@ class Game{
       t.balance+=t.ledger.sponsor+t.ledger.central+t.ledger.wages-sw; }
     for(const tid in this.teams){ const t=this.teams[tid]; if(!t.captainId||!t.squad.includes(t.captainId)) t.captainId=t.squad.slice().sort((a,b)=>ovr(this.P(b))-ovr(this.P(a)))[0]; this.recalcPurse(tid); }
     if(this.year>2026) this.makeFixtures();
+    this.drawNationalDuty();
     this.setObjectives(); this.s.phase='league';
     const t=this.teams[this.user]; this.news(`Season ${this.year} begins. The board's objective: ${t.objective.txt}.`,'board');
   }

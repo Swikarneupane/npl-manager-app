@@ -27,6 +27,7 @@ export default function MoreSheet({ onClose }) {
   const unread = unreadCount(G); const auc = auctionLink(G);
   const tiles = [
     ['news', '/news', 'News', unread ? `${unread} unread` : 'All read', true],
+    ['nepal', '/nepal', 'Nepal', 'National team'],
     ['stats', '/stats', 'Stats', 'Cap races'],
     ['history', '/history', 'History', 'Records'],
     ['auction', auc.to, 'Auction', auc.sub],

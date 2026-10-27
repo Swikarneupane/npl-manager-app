@@ -19,7 +19,7 @@ export const tshort = (G, id) => G.teams[id].name.split(' ')[0];
 export const userNextFixture = (G) => G.s.fixtures.find((f) => !f.res && (f.home === G.user || f.away === G.user));
 export const nextUnplayed = (G) => G.s.fixtures.find((f) => !f.res);
 export function boardMood(bc) { return bc >= 75 ? 'Delighted' : bc >= 60 ? 'Satisfied' : bc >= 45 ? 'Uneasy' : bc >= 30 ? 'Concerned' : 'Losing patience'; }
-export const NP_UI = { Home: 'गृह', Squad: 'टोली', Match: 'खेल', Fixtures: 'तालिका', Table: 'अंकतालिका', Auction: 'लिलामी', Stats: 'तथ्यांक', History: 'इतिहास', Club: 'क्लब', Settings: 'सेटिङ', Signings: 'अनुबन्ध', 'Off-season': 'अफ-सिजन', Season: 'सिजन', News: 'समाचार', More: 'थप' };
+export const NP_UI = { Home: 'गृह', Squad: 'टोली', Match: 'खेल', Fixtures: 'तालिका', Table: 'अंकतालिका', Auction: 'लिलामी', Stats: 'तथ्यांक', History: 'इतिहास', Club: 'क्लब', Settings: 'सेटिङ', Signings: 'अनुबन्ध', 'Off-season': 'अफ-सिजन', Season: 'सिजन', News: 'समाचार', More: 'थप', Nepal: 'नेपाल' };
 export const tr = (G, k) => (G && G.s.lang === 'np' && NP_UI[k] ? NP_UI[k] : k);
 
 // True on phone widths (the same 760px breakpoint as the CSS), for layouts that differ too much for CSS alone.

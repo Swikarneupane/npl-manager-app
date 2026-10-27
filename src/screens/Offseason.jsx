@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useGame } from '../lib/store.jsx';
 import { Dot, Role } from '../components/bits.jsx';
 import { ovr, fmtL } from '../game/engine.js';
 import { potRange, seasonNo, tname } from '../lib/util.js';
 import { autosave } from '../lib/save.js';
+import { gradeLabel } from './Nepal.jsx';
 
-// The off-season as steps. Phase 8 inserts "Nepal" after Growth.
-export const OFF_STEPS = [['retire', 'Retirements'], ['growth', 'Growth'], ['talent', 'New talent'], ['trades', 'Trades'], ['retain', 'Retention']];
+// The off-season as steps: Retire → Growth → Nepal → Talent → Trades → Retain.
+export const OFF_STEPS = [['retire', 'Retirements'], ['growth', 'Growth'], ['nepal', 'Nepal'], ['talent', 'New talent'], ['trades', 'Trades'], ['retain', 'Retention']];
 const avg11 = (ps, f) => { const top = ps.map(f).sort((a, b) => b - a).slice(0, 11); return top.length ? Math.round(top.reduce((a, b) => a + b, 0) / top.length) : 0; };
 
 function Steps({ steps, cur }) {
@@ -23,7 +24,9 @@ const Note = ({ children }) => <section className="panel coachnote"><p className
 
 export default function Offseason() {
   const { G, ui, update, toast } = useGame(); const nav = useNavigate(); const s = G.s, t = G.teams[G.user];
-  const [allGrowth, setAllGrowth] = useState(false);
+  const [allGrowth, setAllGrowth] = useState(false); const [running, setRunning] = useState(false);
+  // saves from before the international layer reach the off-season without Nepal's winter: play it now
+  useEffect(() => { if (s.phase === 'offseason' && s.nepal.winter !== G.year - 1 && !running) { setRunning(true); G.runIntlWinter().then(() => { autosave(G); setRunning(false); update(); }); } }, [s.phase, s.nepal.winter]); // eslint-disable-line react-hooks/exhaustive-deps
   const steps = OFF_STEPS; const key = s.offStep && steps.some(([k]) => k === s.offStep) ? s.offStep : 'retire'; const cur = steps.findIndex(([k]) => k === key);
   const open = s.phase === 'offseason';
   const setStep = (i) => update(() => { s.offStep = steps[Math.max(0, Math.min(steps.length - 1, i))][0]; autosave(G); window.scrollTo(0, 0); });
@@ -57,6 +60,23 @@ export default function Offseason() {
       <section><div className="sechead"><h2 className="t-h3">Biggest changes</h2>{list.length > 6 && <button type="button" className="linkbtn t-small" onClick={() => setAllGrowth(!allGrowth)}>{allGrowth ? 'Top 6' : `All ${list.length}`}</button>}</div>
         <ul className="olist">{(allGrowth ? list : list.slice(0, 6)).map((p) => { const d = delta(p); return <li key={p.id}><span><Link to={`/player/${p.id}`} className="t-small b6" style={{ color: 'var(--ink)', textDecoration: 'none' }}>{p.name}</Link> <span className="t-micro faint">{p.age}</span><br /><span className="t-micro mut">{why(p)}</span></span><span className="board-f ob-chg">{p.prevOvr} → {ovr(p)}</span><span className={`ptag ${d > 0 ? 'b' : d < 0 ? 'c' : ''}`}>{d > 0 ? `▲ ${d}` : d < 0 ? `▼ ${-d}` : '–'}</span></li>; })}</ul></section>
       <Note>{best && delta(best) > 0 ? `${best.name} took the biggest step (+${delta(best)}). ` : ''}{fading.length ? `${fading.map((p) => p.name).join(' and ')} ${fading.length > 1 ? 'are' : 'is'} fading, so think about ${fading.length > 1 ? 'them' : 'him'} before retention.` : 'No big declines to worry about.'}</Note>
+    </>;
+  } else if (key === 'nepal') {
+    const N = s.nepal; const res = N.winter === G.year - 1 ? N.results || [] : []; const duty = N.duty || {};
+    const mine = Object.entries(duty).map(([id, d]) => ({ p: G.P(id), d })).filter((x) => x.p && x.p.team === G.user).sort((a, b) => b.d.games - a.d.games);
+    const tired = mine.filter((x) => x.d.events.length >= 2).length; const first = mine.filter((x) => x.d.firstCap);
+    const sum = (r) => (r.fmt === 'ODI' ? `W ${r.w} · L ${r.l}` : `${r.w}–${r.l}`);
+    const verdict = (r) => (r.w > r.l ? (r.fmt === 'ODI' ? 'A winning campaign' : 'Nepal win the series') : r.w < r.l ? (r.fmt === 'ODI' ? 'A tough campaign' : `${r.short.replace(/^v /, '')} win the series`) : 'Series drawn');
+    body = <>
+      <section className="board offboard"><p className="blbl">Step {cur + 1} of {total} · Nepal's winter</p><p className="bf ob-title">{running ? 'Nepal are playing…' : mine.length ? `${mine.length} of your player${mine.length > 1 ? 's' : ''} wore the Nepal shirt` : 'None of your players were picked for Nepal'}</p>
+        <p className="blbl">{mine.length ? `They come back more experienced.${tired ? ` ${tired} played more than one series: rest ${tired > 1 ? 'them' : 'him'} early in the season.` : ''}` : 'Strong NPL form and a central contract are the way in.'}</p></section>
+      <section><h2 className="t-h3" style={{ marginBottom: 6 }}>Nepal's results</h2>
+        <ul className="olist">{res.map((r) => <li key={r.id}><span><span className="t-small b6">{r.name}</span><br /><span className="t-micro faint">{r.month} · {r.fmt}{r.official ? '' : ' · not a full international'}</span><br /><span className="t-micro mut">{verdict(r)}</span></span><span className="board-f ob-chg">{sum(r)}</span><span /></li>)}
+          {!res.length && <li className="t-small faint">{running ? 'Simulating…' : 'No international results recorded this winter.'}</li>}</ul>
+        <p className="t-micro faint" style={{ marginTop: 6 }}>{res.length && G.winterEvents(G.year - 1).some((e) => e.real) ? 'Real fixtures, results simulated in your game.' : 'Fixtures generated by the game; results simulated.'}</p></section>
+      {mine.length > 0 && <section><h2 className="t-h3" style={{ marginBottom: 6 }}>Your players on duty</h2>
+        <ul className="olist">{mine.map(({ p, d }) => <li key={p.id}><span><Link to={`/player/${p.id}?tab=nepal`} className="t-small b6" style={{ color: 'var(--ink)', textDecoration: 'none' }}>{p.name}</Link><br /><span className="t-micro mut">{d.games} game{d.games > 1 ? 's' : ''} · {p.role === 'BOWL' ? `${d.w} wkts` : `${d.r} runs${d.w ? ` · ${d.w} wkts` : ''}`}</span>{(d.firstCap || (p.intl && p.intl.grade)) && <><br /><span className="t-micro gld">{d.firstCap ? 'First cap' : `Grade ${gradeLabel(p.intl.grade)} contract`}</span></>}</span><span className={`ptag ${d.dev ? 'b' : ''}`}>{d.dev ? `▲ +${d.dev}` : '–'}</span><span /></li>)}</ul></section>}
+      <Note>{first.length ? `${first.map((x) => x.p.name).join(' and ')} ${first.length > 1 ? 'are' : 'is'} now capped and leave${first.length > 1 ? '' : 's'} the uncapped set, so keep ${first.length > 1 ? 'them' : 'him'} if you want ${first.length > 1 ? 'them' : 'him'} cheaply.` : mine.length ? `${mine[0].p.name} got the most game time. Watch his fitness early in the season.` : 'Give your young Nepali players NPL minutes: that is how the selectors notice them.'}</Note>
     </>;
   } else if (key === 'talent') {
     const nep = np.filter((p) => p.nat === 'NEP'), os = np.filter((p) => p.nat !== 'NEP'), gems = np.filter((p) => p.pot >= 80);
@@ -96,7 +116,7 @@ export default function Offseason() {
   const last = cur === steps.length - 1;
   return (
     <div className="offpg stack" style={{ gap: 14 }}>
-      <div><h1 className="t-h1">Off-season</h1><p className="t-small faint">Before Season {seasonNo(G.year)} · {G.year}</p></div>
+      <div><h1 className="t-h1">Off-season</h1><p className="t-small faint">Before Season {seasonNo(G.year)} · {G.year} · Dec {G.year - 1} – Mar {G.year}</p></div>
       <Steps steps={steps} cur={cur} />
       {body}
       <div className="stepbar"><button type="button" className="btn" disabled={cur === 0} onClick={() => setStep(cur - 1)}>Back</button>

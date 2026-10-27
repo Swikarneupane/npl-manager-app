@@ -11,7 +11,7 @@ import { seasonNo, tr, userNextFixture, nextUnplayed } from '../lib/util.js';
 import { savedMatchFor } from '../lib/flow.js';
 
 const PHASES = { preseason: 'Pre-season', league: 'League', playoffs: 'Playoffs', seasonEnd: 'Season over', offseason: 'Off-season', retention: 'Retention', auction: 'Auction' };
-const MORE_ROUTES = ['/news', '/stats', '/history', '/club', '/staff', '/settings', '/auction', '/retention', '/offseason', '/signings'];
+const MORE_ROUTES = ['/news', '/nepal', '/stats', '/history', '/club', '/staff', '/settings', '/auction', '/retention', '/offseason', '/signings'];
 
 // A match is live while it is being played, or part-played and saved.
 export function isLive(G, ui) { return !!((ui.live && ui.live.started && !ui.live.done) || savedMatchFor(G, userNextFixture(G))); }
@@ -68,7 +68,7 @@ export default function Shell({ children }) {
       </header>
       <div className="shell">
         <nav className="nav" aria-label="Main">
-          {L('/', 'Home', null, true)}{L('/squad', 'Squad')}{L('/match', 'Match', matchSmall)}{L('/season', 'Season')}{L('/news', 'News', unread ? String(unread) : null)}
+          {L('/', 'Home', null, true)}{L('/squad', 'Squad')}{L('/match', 'Match', matchSmall)}{L('/season', 'Season')}{L('/news', 'News', unread ? String(unread) : null)}{L('/nepal', 'Nepal')}
           <hr />
           {auc.to ? L(auc.to, 'Auction', auc.sub) : <span className="off" aria-disabled="true">{tr(G, 'Auction')} <small>Off-season</small></span>}
           {ph === 'offseason' && L('/offseason', 'Off-season')}{ph === 'preseason' && L('/signings', 'Signings')}

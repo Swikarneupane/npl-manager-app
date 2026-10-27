@@ -26,7 +26,7 @@ for (let s = 0; s < seasons; s++) {
   const h = G.seasonAwards(champ);
   if (G.s.sacked) G.takeJob(G.s.offers[0]);
   console.log(`${h.year}: champions ${h.champion}, player of the tournament ${h.pot}, Platinum Cap ${h.runs[0][0]} (${h.runs[0][2]})`);
-  G.startOffseason(); G.beginRetention(); G.applyRetention(); G.setupAuction();
+  G.startOffseason(); await G.runIntlWinter(); G.beginRetention(); G.applyRetention(); G.setupAuction();
   while (G.lotStart()) G.simLot(true);
   G.finishAuction();
 }

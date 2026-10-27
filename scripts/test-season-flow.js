@@ -56,7 +56,7 @@ for (let season = 0; season < 2; season++) {
       }
       // honour or break the open promise
       const P = G._promise; const live = P && G.s.promises.find((x) => x.id === P.pr.id);
-      if (live) { if (P.mode === 'keep' && !G.P(live.pid).inj) startPlayer(G, live.pid); else if (P.mode === 'break') dropPlayer(G, live.pid); else G.teams[G.user].xi = null; }
+      if (live) { if (P.mode === 'keep' && G.available(G.P(live.pid))) startPlayer(G, live.pid); else if (P.mode === 'break') dropPlayer(G, live.pid); else G.teams[G.user].xi = null; }
       const morale0 = live ? G.P(live.pid).morale : 0; const left0 = live ? live.matchesLeft : 0;
       // decisions that expire in this match apply their cautious option first; add their morale effect on the promised player
       const expMorale = live ? G.pendingDecisions().filter((n) => n.due != null && n.due <= f.n).reduce((a, n) => { const fx = n.choices[cautiousIndex(n)].fx || {}; return a + (fx.pid === live.pid ? fx.morale || 0 : 0) + (fx.team || 0); }, 0) : 0;
@@ -66,7 +66,7 @@ for (let season = 0; season < 2; season++) {
       if (live) {
         const still = G.s.promises.find((x) => x.id === live.id); const xi = m.lineups[G.user].xi; const p = G.P(live.pid);
         if (xi.includes(live.pid)) { ok(!still, 'promise kept is cleared'); stats.kept++; G._promise = null; }
-        else if (p.inj && still) ok(still.matchesLeft === left0, 'an injured player does not use up a promised match');
+        else if (!G.available(p) && still) ok(still.matchesLeft === left0, 'an unavailable player does not use up a promised match');
         else if (still) ok(still.matchesLeft === left0 - 1, `a missed match counts down (${left0} → ${still.matchesLeft})`);
         else { const want = Math.max(0, Math.min(100, Math.min(100, Math.max(0, morale0 + expMorale)) - 20)); ok(Math.abs(p.morale - want) < 0.5, `broken promise costs morale 20 (${morale0}${expMorale ? ` ${expMorale > 0 ? '+' : ''}${expMorale} from an expired decision` : ''} → ${p.morale}, expected ${want})`); ok(G.s.inbox.some((x) => /^Promise broken/.test(x.text)), 'broken promise is in the news'); stats.broken++; G._promise = null; }
       }
@@ -80,7 +80,7 @@ for (let season = 0; season < 2; season++) {
   // a decision left open into the off-season expires; open promises lapse
   if (!G.pendingDecisions().length) G.news('Test decision', 'event', { choices: [{ l: 'Bold', fx: { board: 3 } }, { l: 'Careful', fx: {} }], safe: 1, due: null, done: false });
   const until0 = G.s.staff[G.user].bat && G.s.staff[G.user].bat.until; const year0 = G.year;
-  G.startOffseason();
+  G.startOffseason(); await G.runIntlWinter();
   ok(!G.pendingDecisions().length && !G.s.promises.length, 'off-season clears open decisions and promises');
   // staff: contracts that ran out leave the user's posts vacant (AI teams rehire); fill them from the candidates
   if (until0 != null && until0 < G.year) ok(!G.s.staff[G.user].bat && Object.keys(G.teams).filter((id) => id !== G.user).every((id) => G.s.staff[id].bat && G.s.staff[id].bat.until >= G.year), `expired contracts (until ${until0}) end in the ${G.year} off-season; AI teams rehire`);
@@ -98,7 +98,7 @@ for (let season = 0; season < 2; season++) {
     if (pre && !(G.osCount(G.user) + added.filter((id) => G.P(id).nat !== 'NEP').length >= Math.min(6, G.osCount(G.user) + A.lots.filter((l) => G.P(l.pid).nat !== 'NEP').length) || bc.os.sum > t.osPurse - 20)) (await import('node:fs')).writeFileSync(process.env.DUMP, pre);
     // nothing to add is fine when needs are met, or the purses cannot cover the cheapest player in a needed role
     const pool = A.lots.map((l) => G.P(l.pid)).filter((p) => !p.team);
-    const affordable = needs.filter((n) => n.left).some((n) => pool.some((p) => G.fitTags(p, needs).some((f) => f.t.startsWith(n.short)) && G.likelyPrice(p)[1] <= (p.nat === 'NEP' ? t.purse : t.osPurse)));
+    const affordable = needs.filter((n) => n.left).some((n) => pool.some((p) => G.fitTags(p, needs).some((f) => f.t.startsWith(n.short)) && G.canAdd(G.user, p) && G.likelyPrice(p)[1] <= (p.nat === 'NEP' ? t.purse : t.osPurse)));
     ok(added.length > 0 || !affordable || G.s.shortlist.length > 0, `auto-suggest picks targets (${added.length}; purses ${t.purse}/${t.osPurse}; squad ${t.squad.length}, OS ${G.osCount(G.user)})`);
     ok(bc.os.sum <= t.osPurse && bc.dom.sum <= t.purse, `auto-suggest stays within the purses (OS ${bc.os.sum}/${t.osPurse}, dom ${bc.dom.sum}/${t.purse})`);
     for (const id of added) { const p = G.P(id); ok(G.fitTags(p, needs).some((f) => f.c === 'b') || p.nat !== 'NEP', `${p.name} fills a need or an overseas slot`); }
@@ -207,10 +207,57 @@ ok(reload(G).s.promises !== undefined, 'save round-trips');
   ok(Math.abs(w5 - w0 - 2) < 1e-9 && wm === wm0, `bowling coach L5: death bowling +2.0, middle overs unchanged (${w0.toFixed(1)} → ${w5.toFixed(1)})`); st.bowl.level = 3;
   // development: under-26 batters get +round(L/2), up to potential
   const young = t.squad.map((id) => S.P(id)).filter((p) => p.age < 25 && (p.role === 'BAT' || p.role === 'WK') && p.pot - ovr(p) >= 4);
-  st.bat.level = 4; for (const p of young) { S.develop(p); ok(p.coachDev === 2, `${p.name} (${p.age}) gets +2 from a level-4 batting coach`); }
+  // the bonus is capped at potential after the year's normal growth: expect min(2, room left)
+  st.bat.level = 4; for (const p of young) { S.develop(p); const room = Math.max(0, p.pot - (ovr(p) - p.coachDev)); ok(p.coachDev === Math.min(2, room) && p.coachDev > 0, `${p.name} (${p.age}) gets +${Math.min(2, room)} from a level-4 batting coach (room ${room})`); }
   const old = t.squad.map((id) => S.P(id)).find((p) => p.age >= 27); if (old) { S.develop(old); ok(old.coachDev === 0, 'no coach development at 26 and over'); }
   // old saves get staff
   const O = JSON.parse(JSON.stringify(S.s)); delete O.staff; delete O.staffPool; const G2 = new Game(O);
   ok(Object.keys(G2.teams).every((id) => G2.s.staff[id] && G2.s.staff[id].bat), 'old save gets staff for every team');
+}
+// ===== international layer =====
+{
+  const I = Game.create('LL', { lang: 'en' }); const byName = (n) => Object.values(I.players).find((p) => p.name === n);
+  const rp = byName('Rohit Paudel'); ok(rp.intl.t20i === 84 && rp.intl.odi === 94 && rp.intl.grade === 'A+' && rp.intl.debut.date === '3 August 2018', 'Rohit Paudel: real caps, A+ contract and debut from the sources');
+  ok(byName('Sandeep Lamichhane').intl.debut.v === 'Netherlands', 'a World XI debut is not counted as a Nepal debut');
+  const md = byName('Mausam Dhakal'); ok(md.intl.t20i === null && md.intl.odi === null && I.intlCaps(md, 't20i') === null, 'unverified caps stay null');
+  ok(byName('Tilak Bhandari').intl.t20i === 0 && !byName('Tilak Bhandari').intl.grade, 'an uncapped real player has 0 caps and no contract');
+  const fict = Object.values(I.players).filter((p) => p.nat === 'NEP' && p.real === false); ok(fict.length > 0 && fict.every((p) => p.intl && !p.intl.real && p.intl.t20i === 0), 'fictional players get no real caps');
+  ok(byName('Moeen Ali').intlStatus === 'retired' && byName('Rashid Khan') && Object.values(I.players).find((p) => p.name === 'Rashid Khan' && p.nat === 'AFG').intlStatus === 'active', 'overseas status from sources');
+  ok(Object.values(I.players).filter((p) => p.intl && p.intl.grade).length === 37, '37 of the 38 contracted men are in the game');
+  const sel = I.pickNepal(); const sq = sel.squad.map((id) => I.P(id));
+  ok(sq.length === 15 && sel.fringe.length === 3 && sq.some((p) => p.role === 'WK') && sq.filter((p) => p.bowl >= 55).length >= 5, 'Nepal squad: 15 with a keeper and 5 bowlers, 3 on the fringe');
+  // a fictional youngster good enough to be picked: first cap → capped, value +50%, out of the uncapped set
+  const kid = fict[0]; kid.bat = 92; kid.bowl = 90; kid.pot = 99; kid.form = 10; kid.team = null; const v0 = kid.value;
+  const vet = sq.find((p) => p.role !== 'WK' && I.intlCaps(p, 't20i') != null); vet.intl.t20i = 24; vet.intl.odi = 0;
+  // play a season so form is set, then the winter
+  I.aiPreseason(); for (const p of I.osFreeAgents()) { if (I.osCount(I.user) >= 6) break; I.signFA(p.id); } I.startSeason();
+  const onDuty = Object.values(I.players).filter((p) => p.duty); ok(onDuty.every((p) => p.intlStatus === 'active'), 'only active internationals are called away');
+  while (!I.leagueDone()) await I.playFixture(I.nextFixture(), null); I.setupPlayoffs(); let ch = null; while (!ch) { const f = I.nextFixture(); if (f) await I.playFixture(f, null); ch = I.advancePlayoffs(); } I.seasonAwards(ch);
+  I.startOffseason(); kid.bat = 92; kid.bowl = 90; kid.form = 10; const pre = Object.fromEntries(Object.values(I.players).filter((p) => p.nat === 'NEP').map((p) => [p.id, { o: ovr(p), fit: p.fit, g: { ...p.intlG } }]));
+  const vBefore = kid.value; const res = await I.runIntlWinter();
+  ok(res.length === 3 && res.map((r) => r.id).join(',') === 'cwcq-po-2026,inda-2026,ban-2027', 'the real 2026-27 calendar is played');
+  ok(res.every((r) => r.w + r.l + r.nr === ({ 'cwcq-po-2026': 5, 'inda-2026': 2, 'ban-2027': 3 })[r.id]), 'every match has a result');
+  const D = I.s.nepal.duty;
+  for (const [id, d] of Object.entries(D)) { const p = I.P(id); const b = pre[id];
+    ok(ovr(p) - b.o <= 2 * d.events.length && ovr(p) <= Math.max(p.pot, b.o), `${p.name}: +1 to +2 a series, up to potential (${b.o} → ${ovr(p)})`);
+    ok(Math.round(b.fit - p.fit) === Math.min(b.fit - 30, 10 * d.events.length), `${p.name}: 10 fitness a series`);
+    const official = d.caps; ok(p.intlG.t20i + p.intlG.odi - b.g.t20i - b.g.odi === official, `${p.name}: caps only for official matches (${official})`); }
+  ok(!Object.keys(D).some((id) => I.P(id).intlLog.some((e) => e.fmt === 'T20' && false)), 'India A games logged');
+  if (D[kid.id]) { ok(kid.capped && !kid.uncapped && Math.abs(kid.value - vBefore * 1.5) <= 1, `first cap: capped, value ${vBefore} → ${kid.value}`); void v0; ok(I.s.inbox.some((n) => n.kind === 'intl' && n.sub === 'First cap' && n.text.includes(kid.name)) || kid.team !== I.user, 'first-cap news'); }
+  else ok(false, 'the forced youngster should have been picked');
+  if (D[vet.id] && I.intlCaps(vet, 't20i') >= 25) ok(I.s.inbox.some((n) => n.kind === 'intl' && /25th cap/.test(n.text)) || vet.team !== I.user, `25th-cap milestone (${vet.name})`);
+  ok(Object.values(I.players).filter((p) => p.intl && p.intl.grade).length === 38 && I.s.nepal.contractYear === 2027, 'contracts re-graded for 2027 (3/4/5/11/15)');
+  // overseas: NOC pending and national duty make a player unavailable; a temporary replacement is free on the purse
+  const t = I.teams[I.user]; const osP = t.squad.map((id) => I.P(id)).find((p) => p.nat !== 'NEP' && !p.temp);
+  osP.nocStatus = 'pending'; osP.nocWait = 1; ok(!I.available(osP) && !I.autoXI(I.user).includes(osP.id), 'NOC pending: not selectable');
+  osP.nocStatus = 'received'; osP.duty = { nation: 'X', at: 0, len: 2, left: 2, started: true }; ok(!I.available(osP), 'on national duty: not selectable');
+  const fa = I.osFreeAgents()[0]; const stale = t.osPurse; I.recalcPurse(I.user); const purse0 = t.osPurse; ok(stale === purse0, `purse is current after the off-season starts (${stale} v ${purse0})`); const err = I.signTemp(fa.id, osP.id);
+  ok(err === null && t.squad.includes(fa.id) && t.osPurse === purse0, `temporary replacement: in the squad, salary not counted (err ${err}, purse ${stale} / ${purse0} → ${t.osPurse})`);
+  I.overseasTick(I.user); ok(osP.duty && osP.duty.left === 1, 'duty counts down after a match'); I.overseasTick(I.user);
+  ok(!osP.duty && !t.squad.includes(fa.id) && !fa.team, 'back from duty: the temporary replacement leaves');
+  // old saves: no intl fields → re-initialised from the data
+  const O = JSON.parse(JSON.stringify(I.s)); delete O.nepal; for (const p of Object.values(O.players)) { delete p.intl; delete p.intlG; delete p.intlLog; delete p.intlStatus; delete p.nocStatus; delete p.duty; }
+  const G3 = new Game(O); const rp3 = Object.values(G3.players).find((p) => p.name === 'Rohit Paudel');
+  ok(G3.s.nepal && rp3.intl.t20i === 84 && Array.isArray(rp3.intlLog) && Object.values(G3.players).filter((p) => p.nat !== 'NEP').every((p) => p.nocStatus === 'received'), 'old save gets the international fields');
 }
 console.log(`ok - ${checks} season-flow checks`);

@@ -33,6 +33,9 @@ export function startSeason(G) {
   return added;
 }
 
+// Start the off-season and play Nepal's winter (international matches are simulated with the real engine).
+export async function startOffseason(G) { G.startOffseason(); await G.runIntlWinter(); }
+
 export function savedMatchFor(G, f) { const L = G.s.liveMatch; return L && f && L.n === f.n && L.year === G.year && !f.res ? L : null; }
 // Quick-sim the user's next match, continuing a saved part-played match if there is one.
 export async function quickSimUserMatch(G, f) {

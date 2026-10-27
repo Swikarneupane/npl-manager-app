@@ -8,7 +8,7 @@ import { ovr } from '../game/engine.js';
 import { ordinal } from '../game/game.js';
 import { seasonNo, fmtNRR, formDisp, stageName, tname, tshort, userNextFixture, nextUnplayed, boardMood } from '../lib/util.js';
 import { autosave } from '../lib/save.js';
-import { simUntilUser, simFixture, simToSeasonEnd, completeSquad, startSeason, savedMatchFor, quickSimUserMatch } from '../lib/flow.js';
+import { simUntilUser, simFixture, simToSeasonEnd, completeSquad, startSeason, savedMatchFor, quickSimUserMatch, startOffseason } from '../lib/flow.js';
 
 export function xiStatus(G) {
   const t = G.teams[G.user]; if (!t.xi || t.xi.length !== 11) return 'auto-pick';
@@ -111,7 +111,7 @@ function Hero() {
         <table className="tbl plain compact"><tbody>
           <KV k="Platinum Cap"><td className="wrapcell">{h.runs[0][0]} · {h.runs[0][2]} runs</td></KV><KV k="Golden Cap"><td className="wrapcell">{h.wkts[0][0]} · {h.wkts[0][2]} wickets</td></KV>
           {h.emerging && <KV k="Emerging player"><td className="wrapcell">{h.emerging}</td></KV>}</tbody></table>
-        <div className="acts"><button className="btn btn-primary btn-lg" onClick={() => { G.startOffseason(); autosave(G); update(); nav('/offseason'); }}>Start the off-season</button>{s.offers && s.offers.length > 0 && <button className="btn btn-lg" onClick={() => nav('/club')}>Job offers</button>}</div></Card>);
+        <div className="acts"><button className="btn btn-primary btn-lg" onClick={async () => { toast('Nepal play their winter internationals…'); await startOffseason(G); autosave(G); update(); nav('/offseason'); }}>Start the off-season</button>{s.offers && s.offers.length > 0 && <button className="btn btn-lg" onClick={() => nav('/club')}>Job offers</button>}</div></Card>);
   }
   const simple = (title, text, label, to) => <Card><H1>{title}</H1><p className="mut">{text}</p><div className="acts"><button className="btn btn-primary btn-lg" onClick={() => nav(to)}>{label}</button></div></Card>;
   if (s.phase === 'offseason') return simple('Off-season', `Players have aged a year. Review the changes, make trades, then move on to ${s.mega ? 'retention for the mega auction' : 'releases for the mini auction'}.`, 'Off-season summary', '/offseason');
