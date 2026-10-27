@@ -1,5 +1,6 @@
 import {NE_TEAM,TEAMS,SQUADS,FREE_NEP,FREE_OS,HISTORY,FIX2026,PLAYOFF_DATES2026,NEP_NAMES,PROV_BIAS,OS_NAMES,COUNTRY_NAMES,PROVINCES,INTL_CALENDAR,INTL_OPPONENTS} from './data.js';
 import {NEP_INTL,OS_INTL_STATUS,CONTRACTS_2026} from './intl-data.js';
+import {FREE_OS_2,OS_INTL_STATUS_2} from './os-extra.js';
 import {R,ri,rf,pick,clamp,shuffle,isSpin,isPace,TYPE_LABEL,fmtL,ovr,calcValue,mkPlayer,Match,setPID,getPID} from './engine.js';
 // ===== Game state & league logic =====
 const SLABS={NEP:[12,9,6],OS:[30,22,15]};
@@ -55,6 +56,11 @@ class Game{
     // staff: every team gets a backroom team on load if the save predates it
     s.staff??={}; s.staffPool??={}; if(s.teams) for(const tid in s.teams) if(!s.staff[tid]) s.staff[tid]=this.genStaffTeam(tid);
     // international data: real caps and contracts for real Nepali players, NOC and duty fields for overseas
+    // older saves: the Phase 9 overseas players join the free-agent pool (anyone not already in the game)
+    if(s.players&&!s.osPool2){ const have=new Set(Object.values(s.players).map(p=>p.name)); setPID(s.pid||getPID());
+      for(const a of FREE_OS_2) if(!have.has(a[0])){ const p=mkPlayer(a,null,s.year); p.age=a[2]+Math.max(0,(s.year||2026)-2026); s.players[p.id]=p; }
+      s.pid=getPID(); }
+    s.osPool2=true;
     s.nepal??={}; if(s.players) for(const p of Object.values(s.players)) this.initIntl(p);
     // decisions from older saves: give them a title, a deadline (the user's next match) and a cautious choice
     const nf=s.fixtures&&s.user?this.userNext():null;
@@ -66,7 +72,7 @@ class Game{
     setPID(1);
     const s={v:1,year:2026,phase:'preseason',user:userTeam,lang:opts.lang||'en',manager:{name:opts.manager||'Manager',rep:40,career:[]},
       settings:{mode:opts.mode||'key',speed:2,megaEvery:3,nextMega:2027,retain:3,autoXI:false,theme:'auto',nepNum:false,pauseDRS:true,animate:true,autosave:true},
-      teams:{},players:{},fixtures:[],table:{},history:JSON.parse(JSON.stringify(HISTORY)),records:{},inbox:[],retiredList:[],hof:[],news:[],seasonDone:false};
+      teams:{},players:{},fixtures:[],table:{},history:JSON.parse(JSON.stringify(HISTORY)),records:{},inbox:[],retiredList:[],hof:[],news:[],seasonDone:false,osPool2:true};
     const personas=shuffle(PERSONAS.slice());
     TEAMS.forEach((t,i)=>{ s.teams[t.id]={...t,squad:[],purse:DOM_CAP,osPurse:OS_CAP,balance:200,fans:55+ri(0,20),ticket:500,board:60,objective:null,
       xi:null,order:null,captainId:null,training:'Normal',persona:personas[i],rtm:0,results:[]}; });
@@ -201,7 +207,7 @@ class Game{
     if(p.nat==='NEP'){ if(!p.intl){ const r=p.real!==false?NEP_INTL[p.name]:null;
         p.intl=r?{t20i:r.t20i,odi:r.odi,debut:r.debut||null,grade:r.grade||null,gradeYear:r.grade?CONTRACTS_2026.year:null,real:true}:{t20i:0,odi:0,debut:null,grade:null,gradeYear:null,real:false}; }
       p.intlG??={t20i:0,odi:0}; p.intlLog??=[]; if(p.capBonus===undefined) p.capBonus=false; }
-    else { if(p.intlStatus===undefined) p.intlStatus=p.real!==false?(OS_INTL_STATUS[p.name]||null):null; p.nocStatus??='received'; p.duty??=null; }
+    else { if(p.intlStatus===undefined) p.intlStatus=p.real!==false?(OS_INTL_STATUS[p.name]||OS_INTL_STATUS_2[p.name]||null):null; p.nocStatus??='received'; p.duty??=null; }
   }
   // Total caps in a format: real at game start plus in-game; null if the real figure is not verified.
   intlCaps(p,fmt){ if(!p.intl) return 0; if(!fmt) return (this.intlCaps(p,'t20i')||0)+(this.intlCaps(p,'odi')||0); const r=p.intl[fmt]; return r==null&&!(p.intlG&&p.intlG[fmt])?null:(r||0)+((p.intlG&&p.intlG[fmt])||0); }
@@ -666,7 +672,7 @@ class Game{
     // ageing & development
     for(const p of Object.values(this.players)){ if(p.retired) continue; p.prevOvr=ovr(p); p.refusedBy=null; p.mood=null; this.develop(p); p.age++; p.form=p.form*0.3; p.fit=100; p.inj=0; p.morale=clamp(p.morale*0.7+21,0,100); p.value=calcValue(p)*(p.capBonus?1.5:1); p.uncapped=p.uncapped&&!Object.keys(p.stats).length&&!this.intlCaps(p); }
     // new players
-    const nNep=Math.max(14,nep.length+10), nOs=Math.max(6,os.length+4);
+    const nNep=Math.max(14,nep.length+10), nOs=clamp(os.length+4,8,12); // 8-12 new overseas players a year
     const newNames=[];
     for(let i=0;i<nNep;i++){ const p=this.genNepali(ri(17,21)); this.players[p.id]=p; newNames.push(p); }
     for(let i=0;i<nOs;i++){ const p=this.genOverseas(); this.players[p.id]=p; }
@@ -831,17 +837,23 @@ class Game{
     // money kept back for the minimum-squad slots still uncovered after this pick, priced at the cheapest
     // likely prices among players not yet targeted and not the candidate himself
     const LP=new Map(pool.map(p=>[p.id,this.likelyPrice(p)]));
+    // slots can also be filled after the auction: overseas free agents who are not lots sign at their value in
+    // the pre-season window, Nepali ones at base price, so they count towards the cheapest way to fill a slot
+    const inLots=new Set(pool.map(p=>p.id)); const later=Object.values(this.players).filter(p=>!p.team&&!p.retired&&!inLots.has(p.id)&&this.canAdd(this.user,p));
+    for(const p of later){ const pr=p.nat==='NEP'?this.basePrice(p):p.value; LP.set(p.id,[pr,pr]); }
+    const fillers=pool.concat(later);
     const reserve=(k,cand,lowP)=>{ const os=this.osCount(this.user)+live().filter(x=>x.p.nat!=='NEP').length, sq=t.squad.length+live().length;
       const osLeft=Math.max(0,MIN_OS-os), domLeft=Math.max(0,MIN_SQUAD-sq-osLeft); const n=(k==='os'?osLeft:domLeft)-1; if(n<=0) return 0;
-      return pool.filter(p=>kind(p)===k&&!taken.has(p.id)&&p.id!==cand).map(p=>LP.get(p.id)[lowP?0:1]).sort((a,b)=>a-b).slice(0,n).reduce((a,b)=>a+b,0); };
+      return fillers.filter(p=>kind(p)===k&&!taken.has(p.id)&&p.id!==cand).map(p=>LP.get(p.id)[lowP?0:1]).sort((a,b)=>a-b).slice(0,n).reduce((a,b)=>a+b,0); };
     // strict: keep the reserve at likely high prices; if nothing fits, fall back to low prices (unsold
     // players can still be signed at base in the accelerated round), so a tight purse gets a target, not none
     const fits=(filter,lowP)=>pool.filter(p=>!taken.has(p.id)&&filter(p)).map(p=>({p,lp:LP.get(p.id)})).filter(x=>x.lp[1]+reserve(kind(x.p),x.p.id,lowP)<=left[kind(x.p)]).map(x=>({...x,v:score(x.p,x.lp)})).sort((a,b)=>b.v-a.v);
-    const best=(filter)=>{ const a=fits(filter,false); return a.length?a:fits(filter,true); };
+    // role needs stay strict; only the overseas-minimum top-up may fall back to low prices
+    const best=(filter,relax)=>{ const a=fits(filter,false); return a.length||!relax?a:fits(filter,true); };
     for(const nd of needs){ let want=nd.left-live().filter(x=>needRoles(x.p).includes(nd.k)).length;
       while(want>0){ const c=best(p=>needRoles(p).includes(nd.k))[0]; if(!c) break; take(c.p,c.lp); want--; } }
     let osWant=Math.max(0,MIN_OS-this.osCount(this.user)-live().filter(x=>x.p.nat!=='NEP').length);
-    while(osWant>0){ const c=best(p=>p.nat!=='NEP')[0]; if(!c) break; take(c.p,c.lp); osWant--; }
+    while(osWant>0){ const c=best(p=>p.nat!=='NEP',true)[0]; if(!c) break; take(c.p,c.lp); osWant--; }
     return added; }
   // "Jump to": two increments above the current bid (a normal bid is one).
   jumpBidAmount(){ const c=this.s.auction.cur; const p=this.P(c.pid); const a=this.nextBidAmount(); return Math.round((a+this.incr(p,a))*10)/10; }

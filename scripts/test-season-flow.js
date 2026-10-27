@@ -102,7 +102,12 @@ for (let season = 0; season < 2; season++) {
     ok(added.length > 0 || !affordable || G.s.shortlist.length > 0, `auto-suggest picks targets (${added.length}; purses ${t.purse}/${t.osPurse}; squad ${t.squad.length}, OS ${G.osCount(G.user)})`);
     ok(bc.os.sum <= t.osPurse && bc.dom.sum <= t.purse, `auto-suggest stays within the purses (OS ${bc.os.sum}/${t.osPurse}, dom ${bc.dom.sum}/${t.purse})`);
     for (const id of added) { const p = G.P(id); ok(G.fitTags(p, needs).some((f) => f.c === 'b') || p.nat !== 'NEP', `${p.name} fills a need or an overseas slot`); }
-    ok(G.osCount(G.user) + added.filter((id) => G.P(id).nat !== 'NEP').length >= Math.min(6, G.osCount(G.user) + A.lots.filter((l) => G.P(l.pid).nat !== 'NEP').length) || bc.os.sum > t.osPurse - 20, `auto-suggest aims for the 6-overseas minimum (OS now ${G.osCount(G.user)}, OS targets ${added.filter((id) => G.P(id).nat !== 'NEP').length}, OS max bids ${bc.os.sum} of ${t.osPurse}, cheapest OS likely ${Math.min(...A.lots.map((l) => G.P(l.pid)).filter((p) => p.nat !== 'NEP' && !p.team).map((p) => G.likelyPrice(p)[1]))})`);
+    // the plan must stay feasible: after the targets' max bids, the overseas purse still covers the remaining
+    // overseas slots at the cheapest prices available (auction lots, or free agents in the pre-season window)
+    { const osT = added.filter((id) => G.P(id).nat !== 'NEP').length; const gap = Math.max(0, 6 - G.osCount(G.user) - osT);
+      const lotIds = new Set(A.lots.map((l) => l.pid)); const cheap = Object.values(G.players).filter((p) => p.nat !== 'NEP' && !p.team && !p.retired && !G.slEntry(p.id)).map((p) => (lotIds.has(p.id) ? G.likelyPrice(p)[0] : p.value)).sort((a, b) => a - b);
+      const need = cheap.slice(0, gap).reduce((a, b) => a + b, 0);
+      ok(t.osPurse - bc.os.sum >= need - 1e-9 || osT === 0 && t.osPurse < (cheap[0] || 0), `auto-suggest keeps the overseas minimum affordable (OS ${G.osCount(G.user)} + ${osT} targets, max bids ${bc.os.sum} of ${t.osPurse}, ${gap} more cost at least ${need})`); }
     const room = new AuctionRoom(G, () => {}); room.enter(); room.stop(); ok(!A.prep && A.cur, 'entering the room opens lot 1');
     let stops = 0, won = 0;
     while (A.lots[A.i] || (A.cur && !A.cur.done)) {
@@ -259,5 +264,25 @@ ok(reload(G).s.promises !== undefined, 'save round-trips');
   const O = JSON.parse(JSON.stringify(I.s)); delete O.nepal; for (const p of Object.values(O.players)) { delete p.intl; delete p.intlG; delete p.intlLog; delete p.intlStatus; delete p.nocStatus; delete p.duty; }
   const G3 = new Game(O); const rp3 = Object.values(G3.players).find((p) => p.name === 'Rohit Paudel');
   ok(G3.s.nepal && rp3.intl.t20i === 84 && Array.isArray(rp3.intlLog) && Object.values(G3.players).filter((p) => p.nat !== 'NEP').every((p) => p.nocStatus === 'received'), 'old save gets the international fields');
+}
+// ===== more overseas players =====
+{
+  const { FREE_OS, COUNTRY_NAMES } = await import('../src/game/data.js'); const { calcValue } = await import('../src/game/engine.js');
+  ok(FREE_OS.length >= 115 && FREE_OS.length <= 130, `about 120 overseas free agents (${FREE_OS.length})`);
+  ok(new Set(FREE_OS.map((a) => a[0])).size === FREE_OS.length, 'no duplicate overseas names');
+  ok(FREE_OS.every((a) => COUNTRY_NAMES[a[1]] && a[2] >= 18 && a[2] <= 42 && ['BAT', 'BOWL', 'AR', 'WK'].includes(a[3]) && (a[3] === 'BAT' || a[3] === 'WK' || a[6])), 'every row has a country, a sane age, a role and a bowling type where he bowls');
+  const N = Game.create('LL', { lang: 'en' }); const fas = N.osFreeAgents();
+  ok(fas.length === FREE_OS.length && fas.every((p) => p.value === calcValue(p)), 'values come from calcValue');
+  // 8-12 new overseas players each off-season
+  N.aiPreseason(); for (const p of N.osFreeAgents()) { if (N.osCount(N.user) >= 6) break; N.signFA(p.id); } N.startSeason();
+  while (!N.leagueDone()) await N.playFixture(N.nextFixture(), null); N.setupPlayoffs(); let ch = null; while (!ch) { const f = N.nextFixture(); if (f) await N.playFixture(f, null); ch = N.advancePlayoffs(); } N.seasonAwards(ch);
+  const os0 = new Set(Object.values(N.players).filter((p) => p.nat !== 'NEP').map((p) => p.id)); N.startOffseason();
+  const fresh = Object.values(N.players).filter((p) => p.nat !== 'NEP' && !os0.has(p.id)).length; ok(fresh >= 8 && fresh <= 12, `8-12 new overseas players in the off-season (${fresh})`);
+  // older saves get the new players once
+  const O = JSON.parse(JSON.stringify(N.s)); delete O.osPool2; const n0 = Object.keys(O.players).length;
+  for (const id of Object.keys(O.players)) if (O.players[id].name === 'Josh Little' || O.players[id].name === 'Paul Stirling') delete O.players[id];
+  const G4 = new Game(O); const added = Object.keys(G4.s.players).length - (n0 - 2);
+  ok(added === 2 && Object.values(G4.players).some((p) => p.name === 'Josh Little' && !p.team), `old save gains the missing players as free agents (${added})`);
+  const G5 = new Game(JSON.parse(JSON.stringify(G4.s))); ok(Object.keys(G5.s.players).length === Object.keys(G4.s.players).length, 'and only once');
 }
 console.log(`ok - ${checks} season-flow checks`);
