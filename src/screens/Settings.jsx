@@ -6,6 +6,7 @@ import { seasonNo, tr } from '../lib/util.js';
 import { clearLocal, exportFile, isSave, saveLocal } from '../lib/save.js';
 import { cloudStatus, downloadSave, uploadSave } from '../lib/cloud.js';
 import { isNativeApp } from '../lib/platform.js';
+import { DIFF_TEXT } from './NewGame.jsx';
 
 export default function Settings() {
   const { G, setG, update, toast, ui, setModal } = useGame(); const S = G.s.settings;
@@ -32,6 +33,10 @@ export default function Settings() {
         <div className="field"><span className="lbl">Default control mode</span><Seg options={[['ball', 'Every ball'], ['over', 'Every over'], ['key', 'Key moments'], ['quick', 'Quick sim']]} value={S.mode} onChange={(v) => set('mode', v)} label="Default control mode" /></div>
         <div className="field"><span className="lbl">Default playback speed</span><Seg options={[['0.5', '0.5×'], ['1', '1×'], ['2', '2×'], ['4', '4×']]} value={String(S.speed)} onChange={(v) => set('speed', +v)} label="Speed" /></div>
         <Chk k="pauseDRS" l="Always pause for DRS decisions" /><Chk k="animate" l="Animate commentary ball by ball" /></section>
+      <hr className="hr" />
+      <section className="stack" style={{ gap: 12 }}><h2 className="t-h3">Difficulty</h2>
+        <Seg options={[['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']]} value={S.difficulty || 'normal'} onChange={(v) => set('difficulty', v)} label="Difficulty" />
+        <p className="faint t-small">{DIFF_TEXT[S.difficulty || 'normal']} Changes apply from the next bid, ball and board review.</p></section>
       <hr className="hr" />
       <section className="stack" style={{ gap: 12 }}><h2 className="t-h3">League rules</h2>
         <div className="field"><label htmlFor="mega">Mega auction cycle</label><select id="mega" className="input" style={{ width: 'auto', height: 44 }} value={S.megaEvery} onChange={(e) => update(() => { const n = +e.target.value; const prev = S.nextMega - S.megaEvery; S.megaEvery = n; S.nextMega = Math.max(G.year + 1, prev + n); })}>{[2, 3, 4, 5].map((n) => <option key={n} value={n}>Every {n} seasons{n === 3 ? ' (default)' : ''}</option>)}</select></div>

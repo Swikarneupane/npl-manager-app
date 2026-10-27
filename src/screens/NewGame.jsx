@@ -9,11 +9,15 @@ import { downloadSave } from '../lib/cloud.js';
 
 const MODES = [['ball', 'Every ball', 'You call each delivery.'], ['over', 'Every over', 'Pause at the end of each over.'], ['key', 'Key moments', 'Plays on, pauses for wickets, DRS and the death overs.'], ['quick', 'Quick sim', 'Straight to the result.']];
 
+// What each difficulty changes, for the New game and Settings screens.
+export const DIFF_TEXT = { easy: 'Rival owners bid less, rival sides play 2 below their ratings against you, and the board only sacks you below 20.', normal: 'Everything as rated. The board sacks you below 30 at the end-of-season review.', hard: 'Rival owners bid more, rival sides play 2 above their ratings against you, and the board sacks you below 40.' };
+
 export default function NewGame() {
   const { setG, toast, ui } = useGame();
   const nav = useNavigate();
   const [team, setTeam] = useState('LL');
   const [name, setName] = useState('');
+  const [difficulty, setDifficulty] = useState('normal');
   const [lang, setLang] = useState('en');
   const [mode, setMode] = useState('key');
   const [code, setCode] = useState('');
@@ -25,8 +29,9 @@ export default function NewGame() {
   const stars = tt.squad.map((id) => preview.P(id)).sort((a, b) => (b.bat + b.bowl) - (a.bat + a.bowl)).slice(0, 4).map((p) => p.name).join(', ');
 
   const start = () => {
-    const G = Game.create(team, { lang, manager: name || 'Manager', mode });
-    G.aiPreseason(); ui.live = null; saveLocal(G); setG(G); nav('/');
+    // pre-season fairness: the AI teams sign their overseas players when you start the season, not before
+    const G = Game.create(team, { lang, manager: name || 'Manager', mode, difficulty });
+    ui.live = null; saveLocal(G); setG(G); nav('/');
   };
   const loadCode = async () => {
     try { const s = await downloadSave(code); const G = new Game(s); ui.live = null; saveLocal(G); setG(G); nav('/'); toast('Career loaded from the cloud.'); }
@@ -59,6 +64,7 @@ export default function NewGame() {
           <section style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
             <div className="field"><label htmlFor="mgr">Manager name</label><input id="mgr" className="input" value={name} placeholder="Your name" onChange={(e) => setName(e.target.value)} /></div>
             <div className="field"><span className="lbl">Language</span><Seg options={[['en', 'English'], ['np', 'नेपाली'], ['both', 'Both']]} value={lang} onChange={setLang} label="Language" /><p className="faint t-small">Commentary, news and menus.</p></div>
+            <div className="field"><span className="lbl">Difficulty</span><Seg options={[['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']]} value={difficulty} onChange={setDifficulty} label="Difficulty" /><p className="faint t-small">{DIFF_TEXT[difficulty]} You can change it later in Settings.</p></div>
             <div className="field"><span className="lbl">Default match control</span>
               <div className="stack" style={{ gap: 8 }}>{MODES.map(([k, l, d]) => (
                 <label key={k} className="chk"><input type="radio" name="mode" checked={mode === k} onChange={() => setMode(k)} /><span><b style={{ fontWeight: 600 }}>{l}</b> <span className="faint t-small">{d}</span></span></label>))}</div></div>

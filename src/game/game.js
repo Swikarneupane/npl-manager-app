@@ -15,6 +15,8 @@ const STAFF_WAGE=[0,3,5,8,10,12];
 const STAFF_NAT=['NEP','NEP','NEP','IND','ENG','AUS','SA','NZ','SL','PAK'];
 // International layer: contract bonuses in Nepal selection, and the size of each grade (CAN 2026).
 const GRADE_BONUS={'A+':6,A:4,B:3,C:2,D:1}; const GRADES=['A+','A','B','C','D']; const GRADE_SIZES=[['A+',3],['A',4],['B',5],['C',11],['D',15]];
+// Difficulty: AI bidding, AI ratings in matches, and how low board confidence can fall before the sack.
+const DIFFICULTY={easy:{label:'Easy',bid:0.85,rate:-2,sack:20},normal:{label:'Normal',bid:1,rate:0,sack:30},hard:{label:'Hard',bid:1.15,rate:2,sack:40}};
 const roundL=(x)=>x<10?Math.round(x*2)/2:Math.round(x);
 const OS_CAP=150, DOM_CAP=90, MAX_OS=8, MIN_OS=6, MAX_SQUAD=22, MIN_SQUAD=18;
 const PERSONAS=['Big spender','Balanced','Bargain hunter','Youth builder','Loyalist','Balanced','Big spender','Bargain hunter'];
@@ -49,7 +51,7 @@ function effectLines(G,n,ci){
 class Game{
   constructor(s){ this.s=s; if(s&&s.pid) setPID(s.pid); if(s) this.migrate(); }
   // Defaults for state added after a save was written, so old saves keep loading.
-  migrate(){ const s=this.s; s.inbox??=[]; s.promises??=[]; s.phaseEco??={};
+  migrate(){ const s=this.s; s.inbox??=[]; s.promises??=[]; s.phaseEco??={}; if(s.settings) s.settings.difficulty??='normal';
     // shortlist: older saves kept a list of ids and a max-bid map on the auction
     if(!s.shortlist){ const A=s.auction||{}; s.shortlist=(A.shortlist||[]).map(pid=>({pid,max:(A.maxBid&&A.maxBid[pid])||0,priority:'B'})); }
     if(s.auction&&s.auction.prep===undefined) s.auction.prep=false;
@@ -68,10 +70,11 @@ class Game{
   }
   get players(){return this.s.players;} get teams(){return this.s.teams;} get user(){return this.s.user;} get year(){return this.s.year;}
   P(id){return this.s.players[id];}
+  diff(){ return DIFFICULTY[this.s.settings&&this.s.settings.difficulty]||DIFFICULTY.normal; }
   static create(userTeam,opts){
     setPID(1);
     const s={v:1,year:2026,phase:'preseason',user:userTeam,lang:opts.lang||'en',manager:{name:opts.manager||'Manager',rep:40,career:[]},
-      settings:{mode:opts.mode||'key',speed:2,megaEvery:3,nextMega:2027,retain:3,autoXI:false,theme:'auto',nepNum:false,pauseDRS:true,animate:true,autosave:true},
+      settings:{difficulty:DIFFICULTY[opts.difficulty]?opts.difficulty:'normal',mode:opts.mode||'key',speed:2,megaEvery:3,nextMega:2027,retain:3,autoXI:false,theme:'auto',nepNum:false,pauseDRS:true,animate:true,autosave:true},
       teams:{},players:{},fixtures:[],table:{},history:JSON.parse(JSON.stringify(HISTORY)),records:{},inbox:[],retiredList:[],hof:[],news:[],seasonDone:false,osPool2:true};
     const personas=shuffle(PERSONAS.slice());
     TEAMS.forEach((t,i)=>{ s.teams[t.id]={...t,squad:[],purse:DOM_CAP,osPurse:OS_CAP,balance:200,fans:55+ri(0,20),ticket:500,board:60,objective:null,
@@ -637,7 +640,7 @@ class Game{
     const M=this.s.manager; M.rep=clamp(M.rep+(champ===u?15:madeFinal?8:madePO?4:-3),0,100);
     M.career.push({year:this.year,team:u,pos,champ:champ===u,runner:runner===u});
     this.news(`Board review: you finished ${ordinal(pos)}${champ===u?' and won the title':runner===u?' and reached the final':''}. Objective was "${obj.txt}". Board confidence is now ${t.board}%.`,'board');
-    if(t.board<30){ this.s.sacked=true; this.s.offers=this.jobOffers(true); this.news('The board has decided to relieve you of your duties. Other franchises have been in touch.','board'); }
+    if(t.board<this.diff().sack){ this.s.sacked=true; this.s.offers=this.jobOffers(true); this.news('The board has decided to relieve you of your duties. Other franchises have been in touch.','board'); }
     else if(M.rep>=60 && R()<0.5){ this.s.offers=this.jobOffers(false); if(this.s.offers.length) this.news(`Your reputation is growing. ${this.s.offers.map(id=>this.teams[id].name).join(' and ')} would like to talk about their head-coach role.`,'board'); }
   }
   jobOffers(sacked){
@@ -790,7 +793,7 @@ class Game{
     if(p.age<=21&&p.pot>=78) v*=1+(p.pot-78)/40;
     const key=p.id; t.maxBids=t.maxBids||{}; if(t.maxBids[key]==null) t.maxBids[key]=v*rf(0.8,1.3);
     const cap=this.budgetOf(tid,p)-this.reserveFor(tid,p);
-    return Math.max(0,Math.min(t.maxBids[key],cap));
+    return Math.max(0,Math.min(t.maxBids[key]*this.diff().bid,cap));
   }
   lotStart(){
     const A=this.s.auction; const lot=A.lots[A.i]; if(!lot) return null;
@@ -942,4 +945,4 @@ class Game{
 }
 function ordinal(n){const s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);}
 function careerOf(p){ const c={m:0,inn:0,r:0,b:0,no:0,f:0,s:0,hs:0,ff:0,h:0,bb:0,rc:0,w:0,bw:0,br:999,ct:0,mom:0}; for(const y in p.stats){const s=p.stats[y]; for(const k of ['m','inn','r','b','no','f','s','ff','h','bb','rc','w','ct','mom']) c[k]+=s[k]; if(s.hs>c.hs)c.hs=s.hs; if(s.bw>c.bw||(s.bw===c.bw&&s.br<c.br)){c.bw=s.bw;c.br=s.br;}} return c; }
-export {Game,STAFF_POSTS,STAFF_WAGE,careerOf,ordinal,effectLines,cautiousIndex,BOWL_PHASES,PHASE_CAP,NEEDS,needRoles,OS_CAP,DOM_CAP,MAX_OS,MIN_OS,SLABS,MAX_SQUAD,MIN_SQUAD};
+export {Game,DIFFICULTY,STAFF_POSTS,STAFF_WAGE,careerOf,ordinal,effectLines,cautiousIndex,BOWL_PHASES,PHASE_CAP,NEEDS,needRoles,OS_CAP,DOM_CAP,MAX_OS,MIN_OS,SLABS,MAX_SQUAD,MIN_SQUAD};

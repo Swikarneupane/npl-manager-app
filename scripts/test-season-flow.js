@@ -285,4 +285,28 @@ ok(reload(G).s.promises !== undefined, 'save round-trips');
   ok(added === 2 && Object.values(G4.players).some((p) => p.name === 'Josh Little' && !p.team), `old save gains the missing players as free agents (${added})`);
   const G5 = new Game(JSON.parse(JSON.stringify(G4.s))); ok(Object.keys(G5.s.players).length === Object.keys(G4.s.players).length, 'and only once');
 }
+// ===== difficulty =====
+{
+  const { DIFFICULTY } = await import('../src/game/game.js');
+  ok(Game.create('LL', {}).s.settings.difficulty === 'normal' && Game.create('LL', { difficulty: 'hard' }).s.settings.difficulty === 'hard', 'difficulty defaults to Normal and is set at New game');
+  ok(DIFFICULTY.easy.bid === 0.85 && DIFFICULTY.normal.bid === 1 && DIFFICULTY.hard.bid === 1.15 && DIFFICULTY.easy.rate === -2 && DIFFICULTY.hard.rate === 2 && [20, 30, 40].join() === [DIFFICULTY.easy.sack, DIFFICULTY.normal.sack, DIFFICULTY.hard.sack].join(), 'difficulty values from the brief');
+  const H = Game.create('LL', {});
+  // AI bidding: the same AI max for the same player, scaled
+  const p = H.osFreeAgents().slice(-1)[0]; const tid = Object.keys(H.teams).find((x) => x !== H.user && H.canAdd(x, p));
+  const mx = {}; for (const d of ['easy', 'normal', 'hard']) { H.s.settings.difficulty = d; mx[d] = H.aiMax(tid, p); }
+  ok(mx.normal > 0 && Math.abs(mx.easy / mx.normal - 0.85) < 1e-9 && Math.abs(mx.hard / mx.normal - 1.15) < 1e-9, `AI bidding ×0.85 / ×1 / ×1.15 (${mx.easy.toFixed(1)} / ${mx.normal.toFixed(1)} / ${mx.hard.toFixed(1)})`);
+  // AI ratings in matches: AI batters and bowlers ±2 against the user; the user's players unchanged
+  const f = H.s.fixtures.find((x) => x.home === H.user || x.away === H.user); const m = H.newMatch(f); const opp = f.home === H.user ? f.away : f.home;
+  const ub = H.P(H.autoXI(H.user)[0]), ob = H.P(H.autoXI(opp)[0]), ubw = H.P(H.autoXI(H.user).find((id) => H.P(id).bowl >= 50)), obw = H.P(H.autoXI(opp).find((id) => H.P(id).bowl >= 50));
+  const sx = (d, inn, bat, bowl) => { H.s.settings.difficulty = d; return m.strengths(inn, bat, bowl, 'mid'); };
+  const aiBats = { bat: opp, bowl: H.user }, youBat = { bat: H.user, bowl: opp };
+  ok(sx('hard', aiBats, ob, ubw).b - sx('normal', aiBats, ob, ubw).b === 2 && sx('easy', aiBats, ob, ubw).b - sx('normal', aiBats, ob, ubw).b === -2, 'AI batters +2 on Hard, −2 on Easy');
+  ok(sx('hard', youBat, ub, obw).w - sx('normal', youBat, ub, obw).w === 2 && sx('hard', youBat, ub, obw).b === sx('normal', youBat, ub, obw).b, 'AI bowlers +2 on Hard; your batters unchanged');
+  // board patience: the sack threshold
+  const review = (d, board) => { const G = Game.create('LL', { difficulty: d }); const t = G.teams[G.user]; t.objective = { rank: 8, txt: 'test' }; t.balance = 10; t.board = board - 14;
+    const st = G.standings(); const others = st.filter((x) => x.id !== G.user); G.boardReview(others[0].id, others[1].id, st); return { sacked: !!G.s.sacked, board: t.board }; };
+  ok(review('hard', 35).sacked && !review('normal', 35).sacked, 'board 35: sacked on Hard (below 40), kept on Normal');
+  ok(review('normal', 25).sacked && !review('easy', 25).sacked, 'board 25: sacked on Normal (below 30), kept on Easy (20)');
+  const O = JSON.parse(JSON.stringify(H.s)); delete O.settings.difficulty; ok(new Game(O).s.settings.difficulty === 'normal', 'old saves default to Normal');
+}
 console.log(`ok - ${checks} season-flow checks`);

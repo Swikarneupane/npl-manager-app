@@ -239,7 +239,7 @@ function BoardPortal() {
       <div className="panel stack" style={{ gap: 8, padding: '12px 14px' }}>
         <div className="sechead" style={{ margin: 0 }}><span className="t-small b6">{(t.objective || { txt: '—' }).txt}</span><span className="t-small mut num">{bc} · {boardMood(bc)}</span></div>
         <Meter pct={bc} blue />
-        <p className="faint t-micro">Below 30 at the end-of-season review puts your job at risk.</p>
+        <p className="faint t-micro">Below {G.diff().sack} at the end-of-season review puts your job at risk.</p>
       </div>
     </section>
   );

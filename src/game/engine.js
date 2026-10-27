@@ -210,6 +210,8 @@ class Match{
     // bowling coach: +0.4 x level at the death
     if(ph==='death'&&this.G.staffLevel) w+=0.4*this.G.staffLevel(inn.bowl,'bowl');
     if(bat.bat<30) b-=8;
+    // difficulty: AI sides play a little above or below their ratings against you
+    const adj=this.G.diff?this.G.diff().rate:0; if(adj&&this.G.user){ if(inn.bat!==this.G.user) b+=adj; if(inn.bowl!==this.G.user) w+=adj; }
     return {b,w};
   }
   // Outcome probabilities of the next ball for the current striker, without bowling it.
