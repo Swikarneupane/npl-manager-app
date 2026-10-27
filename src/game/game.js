@@ -519,6 +519,7 @@ class Game{
   takeJob(tid){ const old=this.user; this.s.user=tid; this.teams[tid].board=55; this.teams[tid].xi=null; this.teams[tid].order=null; this.s.sacked=false; this.s.offers=null; this.news(`You are the new head coach of ${this.teams[tid].name}. Good luck!`,'board'); this.setObjectives(); }
   // ===== Off-season =====
   startOffseason(){
+    this.s.offStep='retire';
     this.expireDecisions(Infinity);
     if(this.s.promises.length){ this.news(`The season ended with ${this.s.promises.length} promise${this.s.promises.length>1?'s':''} still open. They lapse without penalty.`,'board'); this.s.promises=[]; }
     const y=this.year; const retired=[]; const nep=[], os=[];
@@ -702,14 +703,13 @@ class Game{
     const kind=p=>p.nat==='NEP'?'dom':'os';
     const score=(p,lp)=>ovr(p)-25*((lp[0]+lp[1])/2)/Math.max(10,cap[kind(p)]);
     const take=(p,lp)=>{ left[kind(p)]-=lp[1]; taken.add(p.id); this.s.shortlist.push({pid:p.id,max:lp[1],priority:added.length<2?'A':'B'}); added.push(p.id); };
-    // money kept back for minimum-squad slots not yet covered by a target, after this pick, priced at the
-    // cheapest likely prices actually in the pool
-    const cheap={os:[],dom:[]}; for(const p of pool) cheap[kind(p)].push(this.likelyPrice(p)[1]); cheap.os.sort((a,b)=>a-b); cheap.dom.sort((a,b)=>a-b);
-    const sumLow=(k,n)=>cheap[k].slice(0,Math.max(0,n)).reduce((a,b)=>a+b,0);
-    const reserve=(k)=>{ const os=this.osCount(this.user)+live().filter(x=>x.p.nat!=='NEP').length, sq=t.squad.length+live().length;
-      const osLeft=Math.max(0,MIN_OS-os), domLeft=Math.max(0,MIN_SQUAD-sq-osLeft);
-      return k==='os'? sumLow('os',osLeft-1) : sumLow('dom',domLeft-1); };
-    const best=(filter)=>pool.filter(p=>!taken.has(p.id)&&filter(p)).map(p=>({p,lp:this.likelyPrice(p)})).filter(x=>x.lp[1]+reserve(kind(x.p))<=left[kind(x.p)]).map(x=>({...x,v:score(x.p,x.lp)})).sort((a,b)=>b.v-a.v);
+    // money kept back for the minimum-squad slots still uncovered after this pick, priced at the cheapest
+    // likely (max-bid) prices among players not yet targeted and not the candidate himself
+    const LP=new Map(pool.map(p=>[p.id,this.likelyPrice(p)]));
+    const reserve=(k,cand)=>{ const os=this.osCount(this.user)+live().filter(x=>x.p.nat!=='NEP').length, sq=t.squad.length+live().length;
+      const osLeft=Math.max(0,MIN_OS-os), domLeft=Math.max(0,MIN_SQUAD-sq-osLeft); const n=(k==='os'?osLeft:domLeft)-1; if(n<=0) return 0;
+      return pool.filter(p=>kind(p)===k&&!taken.has(p.id)&&p.id!==cand).map(p=>LP.get(p.id)[1]).sort((a,b)=>a-b).slice(0,n).reduce((a,b)=>a+b,0); };
+    const best=(filter)=>pool.filter(p=>!taken.has(p.id)&&filter(p)).map(p=>({p,lp:LP.get(p.id)})).filter(x=>x.lp[1]+reserve(kind(x.p),x.p.id)<=left[kind(x.p)]).map(x=>({...x,v:score(x.p,x.lp)})).sort((a,b)=>b.v-a.v);
     for(const nd of needs){ let want=nd.left-live().filter(x=>needRoles(x.p).includes(nd.k)).length;
       while(want>0){ const c=best(p=>needRoles(p).includes(nd.k))[0]; if(!c) break; take(c.p,c.lp); want--; } }
     let osWant=Math.max(0,MIN_OS-this.osCount(this.user)-live().filter(x=>x.p.nat!=='NEP').length);

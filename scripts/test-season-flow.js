@@ -93,14 +93,16 @@ for (let season = 0; season < 2; season++) {
     ok(A.prep === true && Array.isArray(G.s.shortlist), 'auction opens on the shortlist screen');
     for (const l of A.lots.slice(0, 30)) { const p = G.P(l.pid); const [lo, hi] = G.likelyPrice(p); ok(lo >= G.basePrice(p) && hi > lo, `likely price ${lo}–${hi} is a range above base for ${p.name}`); }
     const needs = G.userNeeds(); ok(needs.length === 5 && needs.every((n) => n.left === Math.max(0, n.target - n.have)), 'needs coverage by role');
+    const pre = process.env.DUMP ? JSON.stringify(G.s) : null;
     const added = G.autoSuggest(); const bc = G.budgetCheck();
+    if (pre && !(G.osCount(G.user) + added.filter((id) => G.P(id).nat !== 'NEP').length >= Math.min(6, G.osCount(G.user) + A.lots.filter((l) => G.P(l.pid).nat !== 'NEP').length) || bc.os.sum > t.osPurse - 20)) (await import('node:fs')).writeFileSync(process.env.DUMP, pre);
     // nothing to add is fine when needs are met, or the purses cannot cover the cheapest player in a needed role
     const pool = A.lots.map((l) => G.P(l.pid)).filter((p) => !p.team);
     const affordable = needs.filter((n) => n.left).some((n) => pool.some((p) => G.fitTags(p, needs).some((f) => f.t.startsWith(n.short)) && G.likelyPrice(p)[1] <= (p.nat === 'NEP' ? t.purse : t.osPurse)));
     ok(added.length > 0 || !affordable || G.s.shortlist.length > 0, `auto-suggest picks targets (${added.length}; purses ${t.purse}/${t.osPurse}; squad ${t.squad.length}, OS ${G.osCount(G.user)})`);
     ok(bc.os.sum <= t.osPurse && bc.dom.sum <= t.purse, `auto-suggest stays within the purses (OS ${bc.os.sum}/${t.osPurse}, dom ${bc.dom.sum}/${t.purse})`);
     for (const id of added) { const p = G.P(id); ok(G.fitTags(p, needs).some((f) => f.c === 'b') || p.nat !== 'NEP', `${p.name} fills a need or an overseas slot`); }
-    ok(G.osCount(G.user) + added.filter((id) => G.P(id).nat !== 'NEP').length >= Math.min(6, G.osCount(G.user) + A.lots.filter((l) => G.P(l.pid).nat !== 'NEP').length) || bc.os.sum > t.osPurse - 20, 'auto-suggest aims for the 6-overseas minimum');
+    ok(G.osCount(G.user) + added.filter((id) => G.P(id).nat !== 'NEP').length >= Math.min(6, G.osCount(G.user) + A.lots.filter((l) => G.P(l.pid).nat !== 'NEP').length) || bc.os.sum > t.osPurse - 20, `auto-suggest aims for the 6-overseas minimum (OS now ${G.osCount(G.user)}, OS targets ${added.filter((id) => G.P(id).nat !== 'NEP').length}, OS max bids ${bc.os.sum} of ${t.osPurse}, cheapest OS likely ${Math.min(...A.lots.map((l) => G.P(l.pid)).filter((p) => p.nat !== 'NEP' && !p.team).map((p) => G.likelyPrice(p)[1]))})`);
     const room = new AuctionRoom(G, () => {}); room.enter(); room.stop(); ok(!A.prep && A.cur, 'entering the room opens lot 1');
     let stops = 0, won = 0;
     while (A.lots[A.i] || (A.cur && !A.cur.done)) {

@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useGame } from '../lib/store.jsx';
 import { Dot, Meter, PageHead } from '../components/bits.jsx';
+import { Icon } from '../components/icons.jsx';
 import { fmtL } from '../game/engine.js';
 import { ordinal, STAFF_POSTS } from '../game/game.js';
 import { boardMood, seasonNo, tname, tshort, tr } from '../lib/util.js';
@@ -11,43 +12,40 @@ const attendance = (t, price) => Math.min(15000, Math.round((6000 + t.fans * 110
 export default function Club() {
   const { G, ui, update, setG } = useGame(); const nav = useNavigate(); const s = G.s, t = G.teams[G.user];
   const L0 = t.ledger || { gate: 0, sponsor: 0, central: 0, prize: 0, wages: 0, staff: 0 };
-  const net = Object.values(L0).reduce((a, b) => a + b, 0);
+  const net = ['gate', 'sponsor', 'central', 'prize', 'wages', 'staff'].reduce((a, k) => a + (L0[k] || 0), 0);
   const price = t.ticket, att = attendance(t, price), gate = att * price / 1e5 * 0.3;
   const fanEff = price < 400 ? 'Rises slowly' : price > 900 ? 'Falls slowly' : 'Steady';
   const fm = t.fans >= 75 ? 'Passionate' : t.fans >= 60 ? 'Warm' : t.fans >= 45 ? 'Lukewarm' : 'Cool';
   const st = G.standings();
   const mc = s.manager.career.filter((x) => x.team === G.user); const bestFin = mc.slice().sort((a, b) => a.pos - b.pos)[0];
+  const vacant = STAFF_POSTS.filter(([k]) => !G.s.staff[G.user][k]);
   const R = ({ k, v }) => <tr><td style={{ paddingLeft: 0 }}>{k}</td><td className="r">{v}</td></tr>;
   return (
     <div style={{ maxWidth: 1100 }}>
-      <PageHead title={tr(G, 'Club')} sub="Finance, fans and the board" />
+      <PageHead title={tr(G, 'Club')} sub={t.name} />
       {s.sacked && <section className="panel stack" style={{ gap: 10, marginBottom: 28, borderColor: 'var(--crimson)' }}><h2 className="t-h2">You have been dismissed.</h2><p className="mut">The {t.name} board has ended your contract. Board confidence fell to {t.board}.</p>
         <table className="tbl plain compact"><tbody><R k={`Your time at ${tshort(G, G.user)}`} v={`${mc.length} season${mc.length === 1 ? '' : 's'}`} />{bestFin && <R k="Best finish" v={`${bestFin.champ ? 'Champions' : bestFin.runner ? 'Runners-up' : ordinal(bestFin.pos)}, ${bestFin.year}`} />}</tbody></table>
         <div className="row"><button className="btn btn-lg" onClick={() => setG(null)}>Start a new game</button></div></section>}
-      <div className="cols">
-        <section className="panel stack" style={{ gap: 10 }}><h2 className="sec" style={{ margin: 0 }}>Balance</h2><p className="t-display">{fmtL(t.balance)}</p>
-          <table className="tbl plain compact"><tbody><tr><td style={{ paddingLeft: 0 }} colSpan={2} className="faint">Season {seasonNo(G.year)} so far</td></tr>
-            <R k="Gate receipts" v={fmtL(L0.gate)} /><R k="Sponsorship" v={fmtL(L0.sponsor)} /><R k="Central pool" v={fmtL(L0.central)} /><R k="Prize money" v={fmtL(L0.prize)} />
-            <R k="Wages" v={`− ${fmtL(-L0.wages)}`} /><R k={L0.staffFees ? `Staff wages (incl. ${fmtL(L0.staffFees)} release fees)` : 'Staff wages'} v={`− ${fmtL(-L0.staff)}`} /><R k={<b>Net</b>} v={<b>{net < 0 ? '− ' : ''}{fmtL(Math.abs(net))}</b>} /></tbody></table>
-          <p className="faint t-small">Prize money is paid after the final: Rs 1 cr to the champions, Rs 50 L to the runners-up.</p></section>
-        <section className="stack" style={{ gap: 20 }}>
-          <div className="panel stack" style={{ gap: 10 }}><h2 className="sec" style={{ margin: 0 }}>Ticket price</h2><p className="t-display" style={{ fontSize: 36 }}>Rs {price}</p>
-            <input type="range" min="200" max="1500" step="50" value={price} onChange={(e) => update(() => { t.ticket = +e.target.value; })} aria-label="Ticket price" />
-            <div style={{ display: 'flex', justifyContent: 'space-between' }} className="faint t-micro"><span>Rs 200</span><span>Rs 1,500</span></div>
-            <table className="tbl plain compact"><tbody><R k="Projected crowd" v={att.toLocaleString()} /><R k="Gate per home match" v={fmtL(gate)} /><R k="Effect on fan support" v={fanEff} /></tbody></table></div>
-          <div className="panel stack" style={{ gap: 8 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }} className="t-small"><span className="mut">Board confidence</span><span className="num">{t.board} · {boardMood(t.board)}</span></div><Meter pct={t.board} blue />
-            <p className="faint t-micro">Objective: {(t.objective || {}).txt || '—'}. Below 30 at the end-of-season review and you are dismissed.</p>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }} className="t-small"><span className="mut">Fan support</span><span className="num">{Math.round(t.fans)} · {fm}</span></div><Meter pct={t.fans} />
-            <p className="faint t-micro">Rises with wins and fair ticket prices.</p></div>
-        </section>
+      <div className="clubgrid">
+        <section className="board cboard"><p className="blbl">Club balance</p><p className="bf cb-v">{fmtL(t.balance)}</p><p className="blbl">{net >= 0 ? '+' : '−'} {fmtL(Math.abs(net))} this season so far</p></section>
+        <div className="two">
+          <section className="panel stack" style={{ gap: 4 }}><p className="t-micro faint">Board confidence</p><p className="board-f cb-n">{t.board}</p><Meter pct={t.board} blue /><p className="t-micro mut">{boardMood(t.board)} · {((t.objective || {}).txt || '—').replace(/^\w/, (x) => x.toLowerCase())}</p></section>
+          <section className="panel stack" style={{ gap: 4 }}><p className="t-micro faint">Fan support</p><p className="board-f cb-n">{Math.round(t.fans)}</p><Meter pct={t.fans} blue /><p className="t-micro mut">{fm} · {fanEff.toLowerCase()}</p></section>
+        </div>
+        <Link to="/staff" className="panel staff-link" style={{ marginTop: 0 }}><span><span className="t-small b6">Backroom staff</span><br />{vacant.length ? <span className="t-micro crim">{vacant.map((x) => x[1]).join(' and ')} post{vacant.length > 1 ? 's are' : ' is'} vacant</span> : <span className="t-micro faint">{STAFF_POSTS.map(([k, l]) => `${l} L${G.s.staff[G.user][k].level}`).join(' · ')}</span>}</span><span className="t-micro faint">{3 - vacant.length} of 3 hired · {fmtL(G.staffWages(G.user))}</span><Icon name="chevron" size={18} /></Link>
+        <section className="panel stack" style={{ gap: 10 }}><div className="sechead" style={{ margin: 0, alignItems: 'center' }}><h2 className="t-h3">Ticket price</h2><span className="board-f cb-n">Rs {price}</span></div>
+          <input type="range" min="200" max="1500" step="50" value={price} onChange={(e) => update(() => { t.ticket = +e.target.value; })} aria-label="Ticket price" />
+          <div className="three"><div><p className="t-micro faint">Crowd</p><p className="t-small">{att.toLocaleString()}</p></div><div><p className="t-micro faint">Gate / match</p><p className="t-small">{fmtL(gate)}</p></div><div><p className="t-micro faint">Fans</p><p className="t-small">{fanEff}</p></div></div></section>
+        <section className="panel"><div className="sechead" style={{ margin: 0 }}><h2 className="t-h3">This season's money</h2><span className="t-micro faint">Season {seasonNo(G.year)}</span></div>
+          <ul className="rules">{[['Gate receipts', L0.gate], ['Sponsorship', L0.sponsor], ['Central pool', L0.central], ['Prize money', L0.prize], ['Player wages', L0.wages], [L0.staffFees ? `Staff wages (incl. ${fmtL(L0.staffFees)} release fees)` : 'Staff wages', L0.staff]].filter(([k, v]) => v || k !== 'Prize money').map(([k, v]) => <li key={k}><span className="t-small">{k}</span><span className={`t-small ${v < 0 ? '' : 'b6'}`}>{v < 0 ? '−' : '+'} {fmtL(Math.abs(v))}</span></li>)}
+            <li><span className="t-small b6">Net</span><span className="t-small b6">{net < 0 ? '−' : '+'} {fmtL(Math.abs(net))}</span></li></ul>
+          <p className="t-micro faint" style={{ marginTop: 6 }}>Prize money after the final: Rs 1 cr champions, Rs 50 L runners-up.</p></section>
       </div>
-      <Link to="/staff" className="panel staff-link"><span><span className="t-small b6">Backroom staff</span><br /><span className="t-micro faint">{STAFF_POSTS.map(([k, l]) => { const x = G.s.staff[G.user][k]; return x ? `${l} L${x.level}` : `${l} vacant`; }).join(' · ')} · {fmtL(G.staffWages(G.user))} a season</span></span><span className="t-small blu b6">Open</span></Link>
-      <section style={{ marginTop: 28 }}><h2 className="t-h3" style={{ marginBottom: 10 }}>Job offers</h2>
+      <section className="panel" style={{ marginTop: 16 }}><div className="sechead" style={{ margin: 0 }}><h2 className="t-h3">Job offers</h2><span className="t-micro faint">Reputation {s.manager.rep}</span></div>
         {(s.offers || []).length ? <table className="tbl plain compact"><tbody>{s.offers.map((id) => { const o = G.teams[id]; return (
           <tr key={id}><td style={{ paddingLeft: 0 }}><Dot id={id} />{o.name}</td><td className="mut t-small">Finished {ordinal(st.findIndex((x) => x.id === id) + 1)} · purse {fmtL(o.purse)} · {o.persona.toLowerCase()} owners</td>
             <td className="r"><button className="btn btn-sm" onClick={() => { update(() => { G.takeJob(id); ui.live = null; autosave(G); }); nav('/'); }}>Take the job</button></td></tr>); })}</tbody></table>
-          : <p className="faint">No offers right now. Win, and they will come.</p>}</section>
+          : <p className="t-small mut">No offers right now. Win, and they will come.</p>}</section>
       <section style={{ marginTop: 28 }}><h2 className="t-h3" style={{ marginBottom: 10 }}>Your career</h2><table className="tbl plain compact"><tbody>
         {s.manager.career.length ? s.manager.career.slice().reverse().map((c) => <tr key={c.year}><td style={{ paddingLeft: 0 }}>{seasonNo(c.year)} · {c.year}</td><td><Dot id={c.team} />{tname(G, c.team)}</td><td>{c.champ ? <b className="gld">Champions</b> : c.runner ? 'Runners-up' : ordinal(c.pos)}</td></tr>) : <tr><td className="faint" style={{ paddingLeft: 0 }}>First season in charge.</td></tr>}</tbody></table></section>
     </div>

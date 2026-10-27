@@ -7,6 +7,7 @@ import Sheet from './Sheet.jsx';
 import { ovr, TYPE_LABEL } from '../game/engine.js';
 import { BOWL_PHASES, PHASE_CAP } from '../game/game.js';
 import { formDisp, tname, tshort, userNextFixture } from '../lib/util.js';
+import { lastFive } from '../lib/form.js';
 
 // Batting bands: the slot order is the batting order.
 const BANDS = [[0, 'Openers', '1–2'], [2, 'Top order', '3'], [3, 'Middle', '4–5'], [5, 'Finishers', '6–7'], [7, 'Bowlers', '8–11']];
@@ -17,18 +18,8 @@ const where = (p) => (p.bat >= 65 ? 'bats 1–3' : p.bat >= 55 ? 'bats 4–5' : 
 const avail = (p) => (p.inj ? `Injured · ${p.inj}` : p.rest ? 'Rested' : p.fit < 80 ? `Fitness ${Math.round(p.fit)}%` : 'Fit');
 const sign = (v) => (v > 0 ? `+${v}` : v < 0 ? `−${-v}` : '±0');
 
-// The last five appearances this season from stored scorecards: runs plus 20 a wicket.
-function lastFive(G, p) {
-  const out = [];
-  for (const f of G.s.fixtures) {
-    if (!f.card) continue; let v = null;
-    for (const c of f.card) { const b = c.bat.find((x) => x[0] === p.name); if (b) v = (v || 0) + b[1]; const w = c.bowl.find((x) => x[0] === p.name); if (w) v = (v || 0) + w[3] * 20; }
-    if (v != null) out.push(v);
-  }
-  return out.slice(-5);
-}
 function FormBars({ G, p }) {
-  const v = lastFive(G, p);
+  const v = lastFive(G, p).map((e) => e.v);
   return <span className="f5" aria-label={v.length ? `Last ${v.length}: ${v.join(', ')}` : 'No matches yet'}>{v.map((x, i) => <i key={i} className={x >= 25 ? 'g' : ''} style={{ height: Math.max(4, Math.min(16, 4 + x / 4)) }} />)}</span>;
 }
 
