@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Training week</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl" data-theme="{{theme}}" style="min-height: 1100px">
+  <header class="top">
+    <span class="brand">NPL Manager</span>
+    <span class="tm"><i class="dot t-ll"></i>Lumbini Lions</span>
+    <span class="kv"><span>Season</span><span>3 · 2026</span></span>
+    <span class="phase"><b>League</b> · Week 6</span>
+    <span class="spacer"></span>
+    <span class="kv"><span>Domestic purse</span><span class="num">Rs 18 L</span></span>
+    <span class="kv"><span>Overseas purse</span><span class="num">Rs 9 L</span></span>
+  </header>
+  <div class="shell">
+    <nav class="nav" aria-label="Main">
+      <a href="Home.dc.html">Home</a>
+      <a href="Squad.dc.html" class="on">Squad <small>Training</small></a>
+      <a href="Prematch.dc.html">Match</a>
+      <a href="Table.dc.html">Fixtures</a>
+      <a href="Table.dc.html">Table</a>
+      <span class="off" aria-disabled="true">Auction <small>Off-season</small></span>
+      <hr>
+      <a href="History.dc.html">Stats</a>
+      <a href="History.dc.html">History</a>
+      <a href="Finance.dc.html">Club</a>
+      <a href="Settings.dc.html">Settings</a>
+    </nav>
+    <main class="main">
+      <div style="max-width: 1220px">
+        <div class="pagehead">
+          <div class="stack" style="gap: 4px">
+            <h1 class="t-h1">Training week</h1>
+            <p class="mut">Tue 27 Oct to Mon 2 Nov · two matches · plan each session or let the coaches do it</p>
+          </div>
+          <div class="row" style="gap: 8px"><button type="button" class="btn">Coaches' plan</button><button type="button" class="btn btn-primary">Confirm the week</button></div>
+        </div>
+
+        <div class="cal" aria-label="Week calendar">
+          <sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+            <div class="day {{d.cls}}">
+              <div style="display: flex; justify-content: space-between; align-items: baseline"><span style="font-weight: 600">{{d.name}}</span><span class="faint t-micro">{{d.date}}</span></div>
+              <sc-if value="{{d.isMatch}}" hint-placeholder-val="{{ false }}">
+                <span class="slot mt">{{d.match}}</span>
+                <span class="faint t-micro">{{d.note}}</span>
+              </sc-if>
+              <sc-if value="{{d.isTrain}}" hint-placeholder-val="{{ true }}">
+                <label class="faint t-micro" for="{{d.amId}}">Morning</label>
+                <select id="{{d.amId}}" class="input" style="width: 100%; height: 34px; font-size: 12.5px" onChange="{{d.setAm}}"><sc-for list="{{d.amOpts}}" as="o" hint-placeholder-count="6"><option selected="{{o.sel}}">{{o.label}}</option></sc-for></select>
+                <label class="faint t-micro" for="{{d.pmId}}">Afternoon</label>
+                <select id="{{d.pmId}}" class="input" style="width: 100%; height: 34px; font-size: 12.5px" onChange="{{d.setPm}}"><sc-for list="{{d.pmOpts}}" as="o" hint-placeholder-count="6"><option selected="{{o.sel}}">{{o.label}}</option></sc-for></select>
+                <span class="faint t-micro">Load {{d.load}}</span>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+
+        <div class="cols" style="margin-top: 32px; grid-template-columns: repeat(auto-fit, minmax(min(340px,100%),1fr)); gap: 32px">
+          <section class="stack" style="gap: 12px">
+            <h2 class="t-h3">Effect of this plan</h2>
+            <div class="stack" style="gap: 4px"><div style="display: flex; justify-content: space-between" class="t-small"><span class="mut">Freshness on Thursday</span><span class="{{freshCls}}">{{fresh}}</span></div><div class="meter blue"><i style="width: {{freshW}}"></i></div></div>
+            <div class="stack" style="gap: 4px"><div style="display: flex; justify-content: space-between" class="t-small"><span class="mut">Sharpness</span><span>{{sharp}}</span></div><div class="meter"><i style="width: {{sharpW}}"></i></div></div>
+            <div class="stack" style="gap: 4px"><div style="display: flex; justify-content: space-between" class="t-small"><span class="mut">Development this week</span><span>{{dev}}</span></div><div class="meter"><i style="width: {{devW}}"></i></div></div>
+            <p class="faint t-small">{{advice}}</p>
+          </section>
+
+          <section>
+            <h2 class="t-h3" style="margin-bottom: 6px">Bowling workload · last 7 days</h2>
+            <table class="tbl compact plain">
+              <thead><tr><th style="padding-left: 0">Bowler</th><th class="r">Overs</th><th class="r">Days rest</th><th>Injury risk</th></tr></thead>
+              <tbody>
+                <tr><td style="padding-left: 0">Ruben Trumpelmann</td><td class="r">12</td><td class="r">1</td><td class="crim">High · rest Wednesday</td></tr>
+                <tr><td style="padding-left: 0">Lalit Rajbanshi</td><td class="r">8</td><td class="r">2</td><td>Low</td></tr>
+                <tr><td style="padding-left: 0">Sushant Rai</td><td class="r">8</td><td class="r">2</td><td>Medium</td></tr>
+                <tr><td style="padding-left: 0">Jimmy Neesham</td><td class="r">6</td><td class="r">2</td><td>Medium · age 36</td></tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section>
+            <h2 class="t-h3" style="margin-bottom: 6px">Today's tasks · 3</h2>
+            <ul class="mlist">
+              <li><span class="grow">One-to-one with Hemant Dhami<br><span class="l2">Dropped 3 games, happiness 41</span></span><a href="Dressing.dc.html" class="btn btn-sm">Meet</a></li>
+              <li><span class="grow">Scout report: Sunil Bhatta, 18<br><span class="l2">Chitwan · leg-spin · potential 70–86</span></span><a href="Scouting.dc.html" class="btn btn-sm">Read</a></li>
+              <li><span class="grow">Sponsor's school clinic on Saturday<br><span class="l2">Send 2 players · fans +3 · lose a training slot</span></span><button type="button" class="btn btn-sm">Choose</button></li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { plan: { tue:['Recovery','Analysis'], wed:['Nets','Fielding'], fri:['Recovery','Rest'], sat:['Nets','Match simulation'], mon:['Rest','Rest'] } }; }
+  renderVals() {
+    const LOAD = { 'Rest':0, 'Recovery':1, 'Analysis':1, 'Fielding':2, 'Nets':3, 'Match simulation':4 };
+    const OPTS = Object.keys(LOAD);
+    const p = this.state.plan;
+    const set = (k, i) => (e) => { const plan = Object.assign({}, p); const pair = plan[k].slice(); pair[i] = e.target.value; plan[k] = pair; this.setState({ plan }); };
+    const D = [['tue','Tue','27 Oct'],['wed','Wed','28 Oct'],['thu','Thu','29 Oct','v Kathmandu Gorkhas','7:15 pm · they have lost 2 in a row'],['fri','Fri','30 Oct'],['sat','Sat','31 Oct'],['sun','Sun','1 Nov','v Sudurpaschim Royals','3:00 pm · top of the table'],['mon','Mon','2 Nov']];
+    const days = D.map(d => {
+      const isMatch = !!d[3];
+      const pair = p[d[0]] || ['Rest','Rest'];
+      return { name:d[1], date:d[2], isMatch, isTrain: !isMatch, match:d[3] || '', note:d[4] || '', cls: (isMatch ? 'match' : '') + (d[0] === 'tue' ? ' today' : ''),
+        amId:'am-' + d[0], pmId:'pm-' + d[0], setAm: set(d[0], 0), setPm: set(d[0], 1), load: isMatch ? '' : LOAD[pair[0]] + LOAD[pair[1]],
+        amOpts: OPTS.map(o => ({ label:o, sel: o === pair[0] })), pmOpts: OPTS.map(o => ({ label:o, sel: o === pair[1] })) };
+    });
+    const pre = LOAD[p.tue[0]] + LOAD[p.tue[1]] + LOAD[p.wed[0]] * 1.5 + LOAD[p.wed[1]] * 1.5;
+    const total = Object.keys(p).reduce((a, k) => a + LOAD[p[k][0]] + LOAD[p[k][1]], 0);
+    const fresh = Math.max(40, Math.min(98, Math.round(100 - pre * 4)));
+    const sharp = Math.max(30, Math.min(95, 50 + total * 2));
+    const dev = Math.min(100, total * 4);
+    const advice = fresh < 70 ? 'Heavy Wednesday: expect tired legs on Thursday. Move nets to Tuesday or add recovery.' : (sharp < 60 ? 'Very light week: players stay fresh but lose sharpness and grow slowly.' : 'Good balance: fresh for Thursday, sharp for Sunday.');
+    return { theme: this.props.theme ?? 'light', days, fresh: fresh + '%', freshW: fresh + '%', freshCls: fresh < 70 ? 'crim t-small' : 'blu t-small',
+      sharp: sharp + '%', sharpW: sharp + '%', dev: dev >= 60 ? 'Good' : (dev >= 35 ? 'Steady' : 'Slow'), devW: dev + '%', advice };
+  }
+}
+</script>
+</body>
+</html>

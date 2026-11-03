@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Story event, mobile</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl m-root" data-theme="{{theme}}">
+  <header class="m-top">
+    <span class="team"><i class="dot t-ll"></i>Story</span>
+    <span class="faint t-small">Decide by Friday</span>
+  </header>
+  <div class="m-scroll" style="padding-top: 16px">
+    <p class="faint t-small">Week 4 · two days before the Chitwan game</p>
+    <h1 class="t-h2" style="margin-top: 4px">Four players want to go home for Dashain Tika</h1>
+    <p class="ne t-small faint" style="margin-top: 2px">चार खेलाडी दशैंको टीकाका लागि घर जान चाहन्छन्</p>
+    <p class="t-small mut" style="margin-top: 8px">Roshan Karki, Sushant Rai, Suman Tamang and Bibek Thapa Magar ask for two days. Their families are in the eastern hills and Gandaki. The bus alone is a day each way.</p>
+    <p class="mhead">Your call</p>
+    <div class="stack" style="gap: 8px">
+      <sc-for list="{{opts}}" as="o" hint-placeholder-count="4">
+        <button type="button" class="choice {{o.cls}}" onClick="{{o.pick}}" style="padding: 10px 12px"><span style="font-weight: 600">{{o.label}}</span><span class="fx">{{o.fx}}</span></button>
+      </sc-for>
+    </div>
+    <sc-if value="{{has}}" hint-placeholder-val="{{ false }}">
+      <div class="panel stack ev-new" style="gap: 4px; margin-top: 12px; padding: 12px 14px">
+        <p class="faint t-micro">What happens</p>
+        <p class="t-small">{{out}}</p>
+      </div>
+    </sc-if>
+  </div>
+  <div class="m-actions">
+    <button type="button" class="btn btn-primary" style="flex: 1 1 auto" disabled="{{none}}">Confirm</button>
+  </div>
+  <nav class="bnav" aria-label="Main">
+    <a href="MHome.dc.html" class="on" aria-current="page">Home</a>
+    <a href="MSquad.dc.html">Squad</a>
+    <a href="MMatch.dc.html">Match</a>
+    <a href="MLeague.dc.html">League</a>
+    <a href="Settings.dc.html">More</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { pick:null }; }
+  renderVals() {
+    const O = [
+      ['all','Let all four go','Morale up across the squad · they miss one session; tired legs on matchday','They come back with tika on their foreheads and sweets for everyone. Two look tired on Sunday.'],
+      ['camp','Bring Dashain to the camp','Rs 1.5 L · invite families to Kirtipur, tika at the team hotel','Twelve family members arrive. The overseas players get tika too. Unity +10, the best week of the season.'],
+      ['two','Let the two from nearby go','Fair to some, unfair to others','Rai and Tamang go. Karki says nothing, but the senior core notices.'],
+      ['no','Refuse: the match comes first','Training intact · four unhappy players, fans unimpressed','The four stay. Karki trains well but skips the team dinner. A fan post: “Even Dashain?”']
+    ];
+    const s = this.state;
+    const opts = O.map(o => ({ label:o[1], fx:o[2], cls: s.pick === o[0] ? 'on' : '', pick: () => this.setState({ pick:o[0] }) }));
+    const sel = O.find(o => o[0] === s.pick);
+    return { theme: this.props.theme ?? 'light', opts, has: !!sel, out: sel ? sel[3] : '', none: !sel };
+  }
+}
+</script>
+</body>
+</html>

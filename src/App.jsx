@@ -4,6 +4,7 @@ import { saveLocal } from './lib/save.js';
 import { useGame } from './lib/store.jsx';
 import Shell from './components/Shell.jsx';
 import Home from './screens/Home.jsx';
+import { useNarrow } from './lib/util.js';
 
 // Screens load on demand so the first paint only ships what it needs.
 const NewGame = lazy(() => import('./screens/NewGame.jsx'));
@@ -24,6 +25,28 @@ const Signings = lazy(() => import('./screens/Signings.jsx'));
 const Retention = lazy(() => import('./screens/Retention.jsx'));
 const Auction = lazy(() => import('./screens/Auction.jsx'));
 const Offseason = lazy(() => import('./screens/Offseason.jsx'));
+// Phase 2: matchday, between matches, the club office, the living league and world cricket.
+const Prematch = lazy(() => import('./screens/Prematch.jsx'));
+const Press = lazy(() => import('./screens/Press.jsx'));
+const Roundup = lazy(() => import('./screens/Roundup.jsx'));
+const Playoffs = lazy(() => import('./screens/Playoffs.jsx'));
+const FinalWeek = lazy(() => import('./screens/FinalWeek.jsx'));
+const Trophy = lazy(() => import('./screens/Trophy.jsx'));
+const SeasonReview = lazy(() => import('./screens/SeasonReview.jsx'));
+const Week = lazy(() => import('./screens/Week.jsx'));
+const Dressing = lazy(() => import('./screens/Dressing.jsx'));
+const Scouting = lazy(() => import('./screens/Scouting.jsx'));
+const Recruitment = lazy(() => import('./screens/Recruitment.jsx'));
+const Contract = lazy(() => import('./screens/Contract.jsx'));
+const BoardMeeting = lazy(() => import('./screens/Board.jsx'));
+const Commercial = lazy(() => import('./screens/Commercial.jsx'));
+const Storyline = lazy(() => import('./screens/Storyline.jsx'));
+const LeagueHub = lazy(() => import('./screens/League.jsx'));
+const Career = lazy(() => import('./screens/Career.jsx'));
+const World = lazy(() => import('./screens/World.jsx'));
+const International = lazy(() => import('./screens/International.jsx'));
+const WorldCup = lazy(() => import('./screens/WorldCup.jsx'));
+const Rankings = lazy(() => import('./screens/Rankings.jsx'));
 
 class ErrorBoundary extends Component {
   constructor(p) { super(p); this.state = { err: null }; }
@@ -63,10 +86,10 @@ function useSession() {
 }
 
 export default function App() {
-  const { G, theme } = useGame();
+  const { G, theme } = useGame(); const narrow = useNarrow();
   useSession();
   return (
-    <div className="npl" data-theme={theme} style={{ minHeight: '100vh', position: 'relative' }}>
+    <div className={`npl${G && narrow ? ' m-app' : ''}`} data-theme={theme} style={{ minHeight: '100vh', position: 'relative' }}>
       <ErrorBoundary>
         <Suspense fallback={<Loading />}>
           {!G ? (
@@ -96,6 +119,28 @@ export default function App() {
                   <Route path="/retention" element={<Retention />} />
                   <Route path="/auction" element={<Auction />} />
                   <Route path="/offseason" element={<Offseason />} />
+                  <Route path="/prematch" element={<Prematch />} />
+                  <Route path="/press" element={<Press />} />
+                  <Route path="/roundup" element={<Roundup />} />
+                  <Route path="/playoffs" element={<Playoffs />} />
+                  <Route path="/final" element={<FinalWeek />} />
+                  <Route path="/trophy" element={<Trophy />} />
+                  <Route path="/review" element={<SeasonReview />} />
+                  <Route path="/week" element={<Week />} />
+                  <Route path="/dressing" element={<Dressing />} />
+                  <Route path="/scouting" element={<Scouting />} />
+                  <Route path="/recruitment" element={<Recruitment />} />
+                  <Route path="/contract/:id" element={<Contract />} />
+                  <Route path="/board" element={<BoardMeeting />} />
+                  <Route path="/commercial" element={<Commercial />} />
+                  <Route path="/stories" element={<Storyline />} />
+                  <Route path="/story/:id" element={<Storyline />} />
+                  <Route path="/league" element={<LeagueHub />} />
+                  <Route path="/career" element={<Career />} />
+                  <Route path="/world" element={<World />} />
+                  <Route path="/international" element={<International />} />
+                  <Route path="/worldcup" element={<WorldCup />} />
+                  <Route path="/rankings" element={<Rankings />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </Suspense>

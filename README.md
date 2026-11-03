@@ -9,6 +9,14 @@ You start in the 2026 season (Season 3) with the real squads, with the real 2024
 - ageing, retirements between 35 and 40, and new players from all seven provinces
 - IPL-style mega and mini auctions, with retentions and RTM cards
 - finances, board objectives and job offers
+- matchday build-ups, press conferences, key-moment decisions and a round-up after every matchday
+- composure, matchups and a live win-probability model in every match
+- a training week, a dressing room with promises, scouting and an under-19 academy
+- staff, contract talks, a board meeting, sponsors and fans, and a recruitment meeting before each auction
+- storylines, rival managers and rivalries, a deeper player profile and a manager career
+- world cricket: the year's T20 league champions, Nepalis abroad, Nepal's pathway, World Cups and in-game rankings
+
+With full control a season takes four to six hours. Settings → Pace of the season → "Let the assistant decide", plus quick sim, brings it down to about an hour.
 
 ## Desktop app (Linux)
 
@@ -81,6 +89,8 @@ npm run preview    # serve the production build
 npm run simulate   # headless: play 5 full seasons with the real engine
 npm run test:api   # test the serverless save API against an in-memory Redis
 npm run test:resume  # stop matches at 10 points, restore from the save, finish them
+npm run test:unit    # rule tests (scripts/unit): max bid, composure, promises, board odds, training, contracts, NOCs and more
+npm test             # unit tests, the season flow and the resume test
 ```
 
 `npm run dev` serves the game but not the `/api` functions. To run those locally too, use `npx vercel dev`. Without them the game works fully; only cloud saves are unavailable.

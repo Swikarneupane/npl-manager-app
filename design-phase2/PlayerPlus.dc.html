@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Player profile, deeper</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl" data-theme="{{theme}}" style="min-height: 1200px">
+  <header class="top">
+    <span class="brand">NPL Manager</span>
+    <span class="tm"><i class="dot t-ll"></i>Lumbini Lions</span>
+    <span class="kv"><span>Season</span><span>3 · 2026</span></span>
+    <span class="phase"><b>League</b> · Week 6</span>
+    <span class="spacer"></span>
+    <span class="kv"><span>Domestic purse</span><span class="num">Rs 18 L</span></span>
+  </header>
+  <div class="shell">
+    <nav class="nav" aria-label="Main">
+      <a href="Home.dc.html">Home</a>
+      <a href="Squad.dc.html" class="on">Squad</a>
+      <a href="Prematch.dc.html">Match</a>
+      <a href="Table.dc.html">Fixtures</a>
+      <a href="Table.dc.html">Table</a>
+      <span class="off" aria-disabled="true">Auction <small>Off-season</small></span>
+      <hr>
+      <a href="History.dc.html">Stats</a>
+      <a href="History.dc.html">History</a>
+      <a href="Finance.dc.html">Club</a>
+      <a href="Settings.dc.html">Settings</a>
+    </nav>
+    <main class="main">
+      <div style="max-width: 1220px">
+        <a href="Squad.dc.html" class="t-small">← Squad</a>
+        <div class="pagehead" style="margin-top: 10px">
+          <div class="stack" style="gap: 6px">
+            <h1 class="t-h1">Bibek Thapa Magar</h1>
+            <p class="mut">22 · <span class="role">BAT</span> · right-hand top order · from Gandaki Province · generated player</p>
+            <div class="row" style="gap: 6px">
+              <span class="phase" style="font-size: 12px">Professional</span>
+              <span class="phase" style="font-size: 12px">Ambitious</span>
+              <span class="phase" style="font-size: 12px; border-color: var(--gold); color: var(--gold)">Big-game player</span>
+              <span class="phase" style="font-size: 12px; border-color: var(--crimson); color: var(--crimson)">Weak against the short ball</span>
+            </div>
+          </div>
+          <div class="stack" style="align-items: flex-end; gap: 2px"><span class="faint t-small">Rating</span><span class="board-f" style="font-size: 40px; font-weight: 600; line-height: 1">66 <span class="faint" style="font-size: 20px">→ 70–80</span></span></div>
+        </div>
+
+        <div class="split" style="gap: 40px; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr)">
+          <section class="stack" style="gap: 30px">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline"><h2 class="t-h3">Form · last 10 innings</h2><span class="mut t-small">avg 23.0 · SR 131</span></div>
+              <div style="display: grid; grid-template-columns: repeat(10, minmax(0,1fr)); gap: 8px; align-items: end; height: 140px; margin-top: 14px; border-bottom: 1px solid var(--rule-strong)" role="img" aria-label="Runs in last 10 innings: 12, 34, 8, 51, 22, 0, 45, 19, 30, 9">
+                <sc-for list="{{bars}}" as="b" hint-placeholder-count="10">
+                  <div class="stack" style="align-items: center; gap: 4px; justify-content: flex-end; height: 100%">
+                    <span class="t-micro {{b.lblCls}}">{{b.v}}</span>
+                    <div style="width: 100%; height: {{b.h}}; background: {{b.c}}; border-radius: 3px 3px 0 0; min-height: 2px"></div>
+                  </div>
+                </sc-for>
+              </div>
+              <p class="faint t-micro" style="margin-top: 6px">Oldest to newest. Gold = 50+.</p>
+            </div>
+
+            <div class="cols" style="grid-template-columns: repeat(auto-fit, minmax(min(260px,100%),1fr)); gap: 28px">
+              <div>
+                <h2 class="sec">Personality</h2>
+                <table class="tbl plain compact">
+                  <tbody>
+                    <tr><td style="padding-left: 0" class="mut">Professionalism</td><td>High · first at nets</td></tr>
+                    <tr><td style="padding-left: 0" class="mut">Ambition</td><td>High · wants a Nepal cap</td></tr>
+                    <tr><td style="padding-left: 0" class="mut">Temperament</td><td>Calm</td></tr>
+                    <tr><td style="padding-left: 0" class="mut">Under pressure</td><td class="gld">Rises to it</td></tr>
+                    <tr><td style="padding-left: 0" class="mut">Loyalty</td><td>Medium</td></tr>
+                  </tbody>
+                </table>
+                <p class="faint t-micro" style="margin-top: 6px">Revealed by scouting and time at the club.</p>
+              </div>
+              <div>
+                <h2 class="sec">Relationships</h2>
+                <ul class="mlist">
+                  <li style="padding: 8px 0"><span class="grow t-small">Gulshan Jha</span><span class="blu t-small">Close friend</span></li>
+                  <li style="padding: 8px 0"><span class="grow t-small">Rohit Paudel</span><span class="t-small">Looks up to him</span></li>
+                  <li style="padding: 8px 0"><span class="grow t-small">Suraj Maharjan, batting coach</span><span class="t-small">Trusts him</span></li>
+                  <li style="padding: 8px 0"><span class="grow t-small">You</span><span class="t-small">Respects you · 68</span></li>
+                </ul>
+              </div>
+            </div>
+
+            <div>
+              <h2 class="sec">Career</h2>
+              <ol class="feed">
+                <li class="ev ev-dot"><span class="ov">2024</span><span class="tx">Gandaki under-19s. Spotted by your scout at a provincial tournament.</span></li>
+                <li class="ev ev-dot"><span class="ov">2025</span><span class="tx">Signed for Rs 4 L. Two games, 31 runs.</span></li>
+                <li class="ev ev-mile"><span class="ov">2026</span><span class="tx"><span class="tag">51</span>First fifty, against Karnali at Kirtipur. Regular at No. 4.</span></li>
+              </ol>
+            </div>
+          </section>
+
+          <aside class="stack" style="gap: 22px">
+            <div class="panel stack" style="gap: 10px">
+              <h2 class="sec" style="margin: 0">Development plan</h2>
+              <div class="field"><label for="dfocus">Focus</label><select id="dfocus" class="input" style="width: 100%; height: 40px"><option>Short ball</option><option>Against spin</option><option>Power hitting</option></select></div>
+              <div class="field"><label for="mentor">Mentor</label><select id="mentor" class="input" style="width: 100%; height: 40px"><option>Rohit Paudel</option><option>Charith Asalanka</option><option>None</option></select></div>
+              <p class="t-small">Projection: <b>66 → 70</b> by the end of the season with this plan.</p>
+            </div>
+            <div class="panel stack" style="gap: 10px">
+              <h2 class="sec" style="margin: 0">Talk to him</h2>
+              <div class="stack" style="gap: 8px">
+                <sc-for list="{{talk}}" as="t" hint-placeholder-count="4">
+                  <button type="button" class="choice {{t.cls}}" onClick="{{t.pick}}" style="padding: 10px 12px"><span style="font-weight: 600; font-size: 14px">{{t.label}}</span></button>
+                </sc-for>
+              </div>
+              <sc-if value="{{hasReply}}" hint-placeholder-val="{{ false }}"><p class="t-small ev-new" style="font-style: italic">{{reply}}</p></sc-if>
+            </div>
+            <div>
+              <h2 class="sec">Contract</h2>
+              <p class="t-small">Rs 4 L a season, ends after Season 4 · value Rs 9 L · <a href="Contract.dc.html">Offer a new deal</a></p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { t:null }; }
+  renderVals() {
+    const R = [12,34,8,51,22,0,45,19,30,9];
+    const bars = R.map(v => ({ v, h: Math.round(v / 55 * 100) + '%', c: v >= 50 ? 'var(--gold)' : 'var(--ink-3)', lblCls: v >= 50 ? 'gld' : 'faint' }));
+    const T = [['praise','Praise his consistency','He grins. “I want to get to 70 by the playoffs.” Confidence up.'],['short','Talk about the short ball','He nods. “I know. I’ve been staying late with Suraj.” Focus set.'],['future','Discuss his future here','“I want to play for Nepal. Can Lumbini get me there?” He would like a new deal.'],['criticise','Criticise the last two scores','He goes quiet. Professional, but morale dips a little.']];
+    const talk = T.map(t => ({ label:t[1], cls: this.state.t === t[0] ? 'on' : '', pick: () => this.setState({ t:t[0] }) }));
+    const sel = T.find(t => t[0] === this.state.t);
+    return { theme: this.props.theme ?? 'light', bars, talk, hasReply: !!sel, reply: sel ? sel[2] : '' };
+  }
+}
+</script>
+</body>
+</html>

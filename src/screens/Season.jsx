@@ -3,7 +3,9 @@ import { useGame } from '../lib/store.jsx';
 import { Dot, Seg } from '../components/bits.jsx';
 import { ordinal } from '../game/game.js';
 import { playoffOdds, raceText } from '../game/odds.js';
-import { fmtNRR, seasonNo, tname, tshort } from '../lib/util.js';
+import { fmtNRR, seasonNo, tname, tshort, useNarrow, stageName } from '../lib/util.js';
+import MScreen, { useTab } from '../components/MScreen.jsx';
+import { tn } from '../lib/i18n.js';
 
 const nrr2 = (x) => (x >= 0 ? '+' : '−') + Math.abs(x).toFixed(2);
 const TABS = [['table', 'Table'], ['fixtures', 'Fixtures'], ['results', 'Results'], ['playoffs', 'Playoffs']];
@@ -91,7 +93,72 @@ function Playoffs() {
   );
 }
 
+// ===== Phone: Table · Fixtures · Playoffs · Caps, with your position pinned =====
+const nrr3 = (x) => (x >= 0 ? '+' : '−') + Math.abs(x).toFixed(3);
+function MFixtures() {
+  const { G, ui } = useGame(); const [flt, setFlt] = useTab(['all', 'mine', 'results'], 'mine', 'f');
+  const mine = (f) => f.home === G.user || f.away === G.user;
+  const liveF = ui.live && !ui.live.done && ui.live.started ? ui.live.f : null;
+  const done = G.s.fixtures.filter((f) => f.res && (flt !== 'mine' || mine(f))).slice().reverse();
+  const next = G.s.fixtures.filter((f) => !f.res && (flt !== 'mine' || mine(f)));
+  const opp = (f) => (f.home === G.user ? f.away : f.home);
+  const resLine = (f) => { if (f.res.nr) return ['No result', 'faint']; if (!f.res.winner) return ['Tied', 'faint']; const m = /won by (\d+) (run|wicket)/.exec(f.res.text); const by = m ? ` by ${m[1]}${m[2] === 'wicket' ? ' wkts' : ''}` : '';
+    if (!mine(f)) return [`${tshort(G, f.res.winner)} won${by}`, 'mut']; return f.res.winner === G.user ? [`Won${by}`, 'blu'] : [`Lost${by}`, 'crim']; };
+  const sc = (f) => (f.res && f.res.sc ? f.res.sc.map((x) => `${x.r}/${x.w}`).join(' v ') : '');
+  const title = (f) => (mine(f) ? <>v {tname(G, opp(f))}</> : <><Dot id={f.home} />{tshort(G, f.home)} v <Dot id={f.away} />{tshort(G, f.away)}</>);
+  return (
+    <>
+      <div className="seg" role="group" aria-label="Filter" style={{ margin: '12px 0 4px', display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))' }}>{[['all', 'All'], ['mine', tshort(G, G.user)], ['results', 'Results']].map(([k, l]) => <button key={k} type="button" className={flt === k ? 'on' : ''} onClick={() => setFlt(k)}>{l}</button>)}</div>
+      {done.length > 0 && <><p className="mhead">Results</p><ul className="mlist">{done.slice(0, flt === 'results' ? 60 : 4).map((f) => { const [txt, cls] = resLine(f); return (
+        <li key={`${f.stage}${f.n}`}><span className="grow">{title(f)} <span className="faint t-small">· {f.date}{f.stage !== 'L' ? ` · ${stageName(f)}` : ''}</span><br /><span className="l2">{sc(f)}</span></span><Link to={`/scorecard/${f.n}`} className={`${cls} t-small`} style={{ fontWeight: 500 }}>{txt}</Link></li>); })}</ul></>}
+      {flt !== 'results' && next.length > 0 && <><p className="mhead">Next</p><ul className="mlist">{next.slice(0, flt === 'all' ? 40 : 14).map((f, k) => (
+        <li key={`${f.stage}${f.n}`}><span className={`grow${mine(f) && k === 0 ? ' b6' : ''}`}>{mine(f) && <Dot id={opp(f)} />}{title(f)}<br /><span className="l2" style={{ fontWeight: 400 }}>{f.date} · {f.night ? '7:15 pm' : '3:00 pm'}{f.stage !== 'L' ? ` · ${stageName(f)}` : ` · Match ${f.n}`}</span></span>
+          {liveF === f && <Link to="/match" className="crim t-small" style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}><span className="live" />Live</Link>}</li>))}</ul></>}
+      {!done.length && !next.length && <p className="faint t-small" style={{ paddingTop: 12 }}>No fixtures.</p>}
+    </>
+  );
+}
+function MCaps() {
+  const { G } = useGame(); const y = G.year;
+  const ps = Object.values(G.players).filter((p) => p.stats[y] && p.stats[y].m > 0);
+  const runs = ps.slice().sort((a, b) => b.stats[y].r - a.stats[y].r).slice(0, 5);
+  const wk = ps.slice().sort((a, b) => b.stats[y].w - a.stats[y].w || a.stats[y].rc - b.stats[y].rc).slice(0, 5);
+  const L = (list, v) => <ul className="mlist">{list.filter((p) => v(p) > 0).map((p, i) => <li key={p.id}><span className="board-f faint" style={{ width: 14 }}>{i + 1}</span><Link to={`/player/${p.id}`} className="grow" style={{ color: 'inherit', textDecoration: 'none' }}><Dot id={p.stats[y].team || p.team} />{p.name}</Link><span className="board-f" style={{ fontSize: 18, fontWeight: 600 }}>{v(p)}</span></li>)}{!list.some((p) => v(p) > 0) && <li className="faint t-small">No leader yet.</li>}</ul>;
+  return (
+    <>
+      <p className="mhead">Platinum Cap · most runs</p>{L(runs, (p) => p.stats[y].r)}
+      <p className="mhead">Golden Cap · most wickets</p>{L(wk, (p) => p.stats[y].w)}
+      <Link to="/history" className="t-small" style={{ display: 'inline-block', marginTop: 10 }}>Records and past champions</Link>
+    </>
+  );
+}
+function SeasonMobile() {
+  const { G } = useGame(); const [tab, setTab] = useTab(['table', 'fixtures', 'playoffs', 'caps'], 'table');
+  const st = G.standings(); const me = st.findIndex((r) => r.id === G.user);
+  const played = G.s.fixtures.filter((f) => f.stage === 'L' && f.res).length;
+  return (
+    <MScreen top={{ title: tn(G, 'League'), sub: `Season ${seasonNo(G.year)} · ${played} of 28 played`, right: <><Dot id={G.user} /><b>{ordinal(me + 1)} · {st[me].pts} pts</b></> }}
+      label="League sections" tab={tab} onTab={setTab} tabs={[['table', tn(G, 'Table')], ['fixtures', tn(G, 'Fixtures')], ['playoffs', tn(G, 'Playoffs')], ['caps', tn(G, 'Caps')]]}>
+      {tab === 'table' && <>
+        <table className="tbl compact plain" style={{ marginTop: 6 }}><thead><tr><th style={{ paddingLeft: 0 }}>#</th><th>Team</th><th className="r">P</th><th className="r">W</th><th className="r">Pts</th><th className="r">NRR</th></tr></thead>
+          <tbody>{st.map((r, i) => <tr key={r.id} className={`${r.id === G.user ? 'me' : ''}${i === 3 ? ' cut' : ''}`}><td style={{ paddingLeft: 0 }}>{i + 1}</td><td><Dot id={r.id} />{tshort(G, r.id)}</td><td className="r">{r.p}</td><td className="r">{r.w}</td><td className="r b6">{r.pts}</td><td className="r faint">{nrr3(r.nrr)}</td></tr>)}</tbody></table>
+        <p className="faint t-small" style={{ marginTop: 10 }}>Top four reach the playoffs. L and NR columns are in the full table.</p>
+        <div style={{ marginTop: 12 }}><RaceCard /></div>
+        <Link to="/league" className="t-small" style={{ display: 'inline-block', marginTop: 10 }}>League hub: managers, rivalries and the news wire</Link>
+      </>}
+      {tab === 'fixtures' && <MFixtures />}
+      {tab === 'playoffs' && <div style={{ paddingTop: 12 }}><Playoffs /><Link to="/playoffs" className="t-small" style={{ display: 'inline-block', marginTop: 10 }}>Playoff week</Link></div>}
+      {tab === 'caps' && <MCaps />}
+    </MScreen>
+  );
+}
+
 export default function Season() {
+  const narrow = useNarrow();
+  if (narrow) return <SeasonMobile />;
+  return <SeasonDesktop />;
+}
+function SeasonDesktop() {
   const { G } = useGame(); const [q, setQ] = useSearchParams();
   const tab = TABS.some(([k]) => k === q.get('tab')) ? q.get('tab') : 'table';
   const setTab = (k) => setQ(k === 'table' ? {} : { tab: k }, { replace: true });

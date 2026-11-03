@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Trophy lift, mobile</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl m-root" data-theme="{{theme}}" style="background: var(--board-bg); color: var(--board-ink)">
+  <header style="flex: none; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--board-rule)">
+    <span class="t-small" style="color: var(--board-ink-2)">The Final · Season 3</span>
+    <button type="button" class="btn btn-ghost btn-sm" style="color: var(--board-ink-2)" onClick="{{skip}}">Skip</button>
+  </header>
+
+  <main style="flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; padding: 24px 20px; text-align: center; min-height: 0; overflow-y: auto">
+    <sc-if value="{{st0}}" hint-placeholder-val="{{ false }}">
+      <div class="stack rise" style="gap: 14px">
+        <p class="board-f" style="font-size: 20px; color: var(--gold)">19.4</p>
+        <p style="font-size: 23px; line-height: 31px; font-weight: 500">Bohara to Jha, <b style="color: var(--gold)">four</b>. Lumbini Lions are champions again.</p>
+        <p class="t-small" style="font-style: italic; color: var(--board-ink-2)">Gulshan Jha drops his bat and runs to the east stand.</p>
+      </div>
+    </sc-if>
+    <sc-if value="{{st1}}" hint-placeholder-val="{{ false }}">
+      <div class="stack rise" style="gap: 12px">
+        <p style="font-size: 22px; font-weight: 600">Who lifts the trophy?</p>
+        <sc-for list="{{lifters}}" as="l" hint-placeholder-count="3">
+          <button type="button" class="choice {{l.cls}}" onClick="{{l.pick}}" style="background: transparent; color: var(--board-ink); border-color: var(--board-rule)"><span style="font-weight: 600">{{l.name}}</span><span style="color: var(--board-ink-2); font-size: 13px">{{l.why}}</span><span style="color: var(--gold); font-size: 12.5px">{{l.fx}}</span></button>
+        </sc-for>
+      </div>
+    </sc-if>
+    <sc-if value="{{st2}}" hint-placeholder-val="{{ true }}">
+      <div class="stack rise" style="gap: 10px; align-items: center">
+        <div style="width: 80px; height: 1px; background: var(--gold)"></div>
+        <p class="t-small" style="color: var(--board-ink-2)">{{lifter}} lifts it</p>
+        <p class="board-f" style="font-size: 76px; line-height: .9; font-weight: 700; color: var(--gold)">Champions</p>
+        <p style="font-family: var(--f-board-ne); font-stretch: 75%; font-size: 34px; line-height: 1.2; font-weight: 600">च्याम्पियन</p>
+        <p style="display: flex; align-items: center; justify-content: center"><i class="dot t-ll"></i>Lumbini Lions · back-to-back</p>
+        <p class="t-small" style="font-style: italic; color: var(--board-ink-2); max-width: 300px">The whole ground counts down from five.</p>
+        <div style="width: 80px; height: 1px; background: var(--gold)"></div>
+      </div>
+    </sc-if>
+  </main>
+
+  <div style="flex: none; padding: 12px 16px 20px; display: flex; gap: 8px">
+    <sc-if value="{{notLast}}" hint-placeholder-val="{{ false }}">
+      <button type="button" class="btn btn-lg" style="flex: 1 1 auto; background: var(--gold); border-color: var(--gold); color: #1A1406" onClick="{{next}}" disabled="{{nextDisabled}}">{{nextLabel}}</button>
+    </sc-if>
+    <sc-if value="{{isLast}}" hint-placeholder-val="{{ true }}">
+      <button type="button" class="btn btn-lg" style="flex: 1 1 0; background: transparent; color: var(--board-ink); border-color: var(--board-rule)">Victory lap</button>
+      <a href="SeasonReview.dc.html" class="btn btn-lg" style="flex: 1 1 0; background: var(--gold); border-color: var(--gold); color: #1A1406">Season review</a>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"stage":{"editor":"int","min":0,"max":2,"default":2},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { stage:null, lifter:null }; }
+  renderVals() {
+    const s = this.state;
+    const st = s.stage ?? this.props.stage ?? 2;
+    const L = [['Rohit Paudel','Captain, player of the final','Captain’s trust +5'],['Jimmy Neesham','Probably his last season','Dressing room unity +8'],['Gulshan Jha','Hit the winning runs','Fans love it; Paudel a little put out']];
+    const lifters = L.map(l => ({ name:l[0], why:l[1], fx:l[2], cls: s.lifter === l[0] ? 'on' : '', pick: () => this.setState({ lifter:l[0] }) }));
+    return { theme: this.props.theme ?? 'dark', st0: st === 0, st1: st === 1, st2: st === 2, lifters, lifter: s.lifter ?? 'Jimmy Neesham',
+      notLast: st < 2, isLast: st === 2, nextLabel: st === 0 ? 'Who lifts it' : 'Lift the trophy', nextDisabled: st === 1 && !s.lifter,
+      next: () => this.setState({ stage: st + 1 }), skip: () => this.setState({ stage: 2 }) };
+  }
+}
+</script>
+</body>
+</html>

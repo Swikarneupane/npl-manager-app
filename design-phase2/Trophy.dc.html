@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Trophy ceremony</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl" data-theme="{{theme}}" style="min-height: 900px; background: var(--board-bg); color: var(--board-ink); display: flex; flex-direction: column">
+  <header style="display: flex; justify-content: space-between; align-items: center; padding: 16px 28px; border-bottom: 1px solid var(--board-rule)">
+    <span class="t-small" style="color: var(--board-ink-2)">The Final · Season 3 · Kirtipur</span>
+    <span class="board-f t-small" style="color: var(--board-ink-2); font-size: 15px">Sudurpaschim 168/7 (20) · <span style="color: var(--board-ink)">Lumbini 169/5 (19.4)</span></span>
+    <button type="button" class="btn btn-ghost btn-sm" style="color: var(--board-ink-2)" onClick="{{skip}}">Skip ceremony</button>
+  </header>
+
+  <main style="flex: 1 1 auto; display: flex; align-items: center; justify-content: center; padding: 40px 24px">
+    <div style="width: min(880px, 100%); text-align: center" class="stack">
+
+      <sc-if value="{{st0}}" hint-placeholder-val="{{ true }}">
+        <div class="stack rise" style="gap: 18px; align-items: center">
+          <p class="board-f" style="font-size: 22px; color: var(--gold)">19.4</p>
+          <p style="font-size: 30px; line-height: 40px; font-weight: 500; text-wrap: balance">Bohara to Jha, <b style="color: var(--gold)">four</b>. Driven through cover, and Lumbini Lions are champions again.</p>
+          <p style="font-style: italic; color: var(--board-ink-2); max-width: 620px">The dugout empties. Gulshan Jha drops his bat and runs towards the east stand, where the noise has not stopped since the last over began.</p>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{st1}}" hint-placeholder-val="{{ false }}">
+        <div class="stack rise" style="gap: 6px">
+          <p class="t-small" style="color: var(--board-ink-2)">The presentation</p>
+          <ul style="list-style: none; margin: 18px 0 0; padding: 0; text-align: left">
+            <li style="display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--board-rule)"><span><span class="t-small" style="color: var(--board-ink-2)">Player of the final</span><br><span style="font-size: 22px; font-weight: 600">Rohit Paudel</span></span><span class="board-f" style="font-size: 28px; color: var(--gold)">78 (51)</span></li>
+            <li style="display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--board-rule)"><span><span class="t-small" style="color: var(--board-ink-2)">Platinum Cap · most runs</span><br><span style="font-size: 22px; font-weight: 600">Rohit Paudel</span></span><span class="board-f" style="font-size: 28px">412 runs</span></li>
+            <li style="display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--board-rule)"><span><span class="t-small" style="color: var(--board-ink-2)">Golden Cap · most wickets</span><br><span style="font-size: 22px; font-weight: 600">Lalit Rajbanshi</span></span><span class="board-f" style="font-size: 28px">19 wickets</span></li>
+            <li style="display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 16px; padding: 16px 0"><span><span class="t-small" style="color: var(--board-ink-2)">Emerging player of the season</span><br><span style="font-size: 22px; font-weight: 600">Gulshan Jha</span></span><span class="board-f" style="font-size: 28px">age 20</span></li>
+          </ul>
+          <p class="t-micro" style="color: var(--board-ink-2); margin-top: 8px">In-game Season 3 figures.</p>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{st2}}" hint-placeholder-val="{{ false }}">
+        <div class="stack rise" style="gap: 18px">
+          <p style="font-size: 28px; font-weight: 600">Who lifts the trophy?</p>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px,100%),1fr)); gap: 12px; text-align: left">
+            <sc-for list="{{lifters}}" as="l" hint-placeholder-count="3">
+              <button type="button" class="choice {{l.cls}}" onClick="{{l.pick}}" style="background: transparent; color: var(--board-ink); border-color: var(--board-rule)"><span style="font-weight: 600; font-size: 17px">{{l.name}}</span><span style="color: var(--board-ink-2); font-size: 13.5px">{{l.why}}</span><span style="color: var(--gold); font-size: 12.5px">{{l.fx}}</span></button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{st3}}" hint-placeholder-val="{{ false }}">
+        <div class="stack rise" style="gap: 14px; align-items: center">
+          <div style="width: 120px; height: 1px; background: var(--gold)"></div>
+          <p class="t-small" style="color: var(--board-ink-2)">{{lifter}} lifts it</p>
+          <p class="board-f" style="font-size: 120px; line-height: .9; font-weight: 700; color: var(--gold); letter-spacing: .01em">Champions</p>
+          <p style="font-family: var(--f-board-ne); font-stretch: 75%; font-size: 44px; line-height: 1.2; font-weight: 600">च्याम्पियन</p>
+          <p style="font-size: 20px; display: flex; align-items: center; justify-content: center"><i class="dot t-ll" style="width: 12px; height: 12px"></i>Lumbini Lions · back-to-back · Season 3, 2026</p>
+          <p style="font-style: italic; color: var(--board-ink-2); max-width: 600px; margin-top: 6px">Kirtipur is on its feet. The players form a line behind {{lifter}}, and the whole ground counts down from five.</p>
+          <div style="width: 120px; height: 1px; background: var(--gold); margin-top: 8px"></div>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+
+  <footer style="display: flex; justify-content: center; gap: 10px; padding: 0 24px 36px; flex-wrap: wrap">
+    <sc-if value="{{notLast}}" hint-placeholder-val="{{ true }}">
+      <button type="button" class="btn btn-lg" onClick="{{next}}" disabled="{{nextDisabled}}" style="background: var(--gold); border-color: var(--gold); color: #1A1406; min-width: 220px">{{nextLabel}}</button>
+    </sc-if>
+    <sc-if value="{{isLast}}" hint-placeholder-val="{{ false }}">
+      <button type="button" class="btn btn-lg" style="background: transparent; color: var(--board-ink); border-color: var(--board-rule)">Victory lap</button>
+      <a href="SeasonReview.dc.html" class="btn btn-lg" style="background: var(--gold); border-color: var(--gold); color: #1A1406">Season review</a>
+    </sc-if>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"stage":{"editor":"int","min":0,"max":3,"default":0},"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { stage:null, lifter:null }; }
+  renderVals() {
+    const s = this.state;
+    const st = s.stage ?? this.props.stage ?? 0;
+    const L = [['Rohit Paudel','Captain, player of the final','Expected; captain’s trust +5'],['Jimmy Neesham','37 next season, probably his last','Veterans moved; dressing room unity +8'],['Gulshan Jha','20, hit the winning runs','Fans love it; his confidence soars, Paudel a little put out']];
+    const lifters = L.map(l => ({ name:l[0], why:l[1], fx:l[2], cls: s.lifter === l[0] ? 'on' : '', pick: () => this.setState({ lifter:l[0] }) }));
+    const labels = ['The presentation','Who lifts it','Lift the trophy'];
+    return { theme: this.props.theme ?? 'dark', st0: st === 0, st1: st === 1, st2: st === 2, st3: st === 3,
+      lifters, lifter: s.lifter ?? 'Rohit Paudel', notLast: st < 3, isLast: st === 3,
+      nextLabel: labels[Math.min(st, 2)], nextDisabled: st === 2 && !s.lifter,
+      next: () => this.setState({ stage: Math.min(3, st + 1) }), skip: () => this.setState({ stage: 3 }) };
+  }
+}
+</script>
+</body>
+</html>

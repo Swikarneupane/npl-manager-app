@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Auction room</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl" data-theme="{{theme}}" style="min-height: 1080px; position: relative">
+  <header class="top">
+    <span class="brand">NPL Manager</span>
+    <span class="tm"><i class="dot t-ll"></i>Lumbini Lions</span>
+    <span class="kv"><span>Season</span><span>4 · 2027</span></span>
+    <span class="phase"><b>Auction</b> · Mega</span>
+    <span class="spacer"></span>
+    <span class="kv"><span>Domestic purse</span><span class="num">Rs 74 L</span></span>
+    <span class="kv"><span>Overseas purse</span><span class="num">Rs 36 L</span></span>
+  </header>
+  <div class="shell">
+    <nav class="nav" aria-label="Main">
+      <a href="Home.dc.html">Home</a>
+      <a href="Squad.dc.html">Squad</a>
+      <span class="off" aria-disabled="true">Match <small>Pre-season</small></span>
+      <a href="Table.dc.html">Fixtures</a>
+      <a href="Table.dc.html">Table</a>
+      <a href="Auction.dc.html" class="on" aria-current="page">Auction <small>Live</small></a>
+      <hr>
+      <a href="History.dc.html">Stats</a>
+      <a href="History.dc.html">History</a>
+      <a href="Finance.dc.html">Club</a>
+      <a href="Settings.dc.html">Settings</a>
+    </nav>
+    <main class="main" style="padding-top: 24px">
+      <div style="max-width: 1220px">
+        <div class="pagehead" style="margin-bottom: 20px">
+          <div class="stack" style="gap: 2px">
+            <h1 class="t-h1">Mega auction 2027</h1>
+            <p class="mut">Lot 37 of 142 · Set 4, overseas all-rounders · 61 sold, 12 unsold</p>
+          </div>
+          <div class="row" style="gap: 8px">
+            <button type="button" class="btn">Skip lot</button>
+            <button type="button" class="btn">Jump to my next shortlisted lot <span class="sub faint">Lot 44</span></button>
+            <button type="button" class="btn btn-ghost">Sim rest of auction</button>
+          </div>
+        </div>
+
+        <div class="split" style="gap: 32px; grid-template-columns: minmax(0,1.6fr) minmax(0,1fr)">
+          <section class="stack" style="gap: 20px">
+            <div class="board" style="padding: 22px 26px">
+              <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px">
+                <div class="stack" style="gap: 4px">
+                  <span class="blbl">Lot 37 · Overseas · All-rounder</span>
+                  <span class="bf" style="font-size: 44px; line-height: 1">Sikandar Raza</span>
+                  <span class="blbl" style="font-size: 14px">Zimbabwe · 41 · bat 74 · bowl 71 · Season 3: 286 runs, 11 wkts for Biratnagar Kings</span>
+                </div>
+                <div class="stack" style="gap: 4px; text-align: right">
+                  <span class="blbl">Base price</span>
+                  <span class="bf mid">Rs 10 L</span>
+                  <span class="blbl">Biratnagar hold an RTM card</span>
+                </div>
+              </div>
+              <div style="border-top: 1px solid var(--board-rule); margin-top: 18px; padding-top: 16px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+                <div class="stack" style="gap: 4px">
+                  <span class="blbl">Current bid</span>
+                  <span class="bf" style="font-size: 76px; line-height: .9"><span class="{{tickCls}}">{{bidText}}</span></span>
+                </div>
+                <div class="stack" style="gap: 6px; text-align: right">
+                  <span class="blbl">{{status}}</span>
+                  <span class="bf" style="font-size: 26px; display: flex; align-items: center; justify-content: flex-end"><i class="dot {{leaderDot}}" style="width: 10px; height: 10px"></i>{{leaderName}}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="row" style="gap: 10px">
+              <sc-if value="{{open}}" hint-placeholder-val="{{ true }}">
+                <button type="button" class="btn btn-primary btn-lg" style="flex: 2 1 220px; font-size: 16px" onClick="{{bid}}" disabled="{{bidDisabled}}">Bid {{nextText}} <span class="sub">· your max Rs 30 L</span></button>
+                <button type="button" class="btn btn-lg" style="flex: 1 1 120px" onClick="{{pass}}" disabled="{{passed}}">{{passLabel}}</button>
+              </sc-if>
+              <sc-if value="{{done}}" hint-placeholder-val="{{ false }}">
+                <button type="button" class="btn btn-blue btn-lg" style="flex: 1 1 auto" onClick="{{reset}}">Next lot</button>
+              </sc-if>
+            </div>
+            <p class="faint t-small">Increments: Rs 1 L up to Rs 20 L, Rs 2 L to Rs 50 L, Rs 5 L above. Overseas lots come out of the overseas purse.</p>
+
+            <div>
+              <h2 class="sec">Bid history</h2>
+              <table class="tbl plain compact">
+                <tbody>
+                  <sc-for list="{{hist}}" as="h" hint-placeholder-count="6">
+                    <tr class="{{h.cls}}"><td style="padding-left: 0"><i class="dot {{h.dot}}"></i>{{h.team}}</td><td class="r num">{{h.amt}}</td></tr>
+                  </sc-for>
+                  <tr class="dim"><td style="padding-left: 0">Opened at base</td><td class="r num">Rs 10 L</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <aside class="stack" style="gap: 28px">
+            <section class="panel stack" style="gap: 10px">
+              <h2 class="sec" style="margin: 0">Your needs</h2>
+              <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px">
+                <div class="stack"><span class="faint t-micro">Squad</span><span class="board-f" style="font-size: 22px; font-weight: 600">9 <span class="faint" style="font-size: 15px">/ 18–22</span></span></div>
+                <div class="stack"><span class="faint t-micro">Nepali</span><span class="board-f" style="font-size: 22px; font-weight: 600">6 <span class="faint" style="font-size: 15px">+8 max</span></span></div>
+                <div class="stack"><span class="faint t-micro">Overseas</span><span class="board-f crim" style="font-size: 22px; font-weight: 600">3 <span style="font-size: 15px">need 3</span></span></div>
+              </div>
+              <table class="tbl plain compact">
+                <tbody>
+                  <tr><td style="padding-left: 0" class="crim">No wicketkeeper yet</td><td class="r faint t-small">keepers from lot 41</td></tr>
+                  <tr><td style="padding-left: 0" class="mut">Your max on this lot</td><td class="r" style="font-weight: 600">Rs 30 L</td></tr>
+                  <tr><td style="padding-left: 0" class="mut">Per slot left</td><td class="r t-small">OS ≈ Rs 12 L · Nepali ≈ Rs 9 L</td></tr>
+                </tbody>
+              </table>
+              <p class="faint t-micro">Max keeps Rs 3 L back for each overseas player you must still sign.</p>
+            </section>
+            <section>
+              <div style="display: flex; justify-content: space-between; align-items: baseline"><h2 class="sec">Up next</h2><span class="faint t-micro">Set 4, then Set 5 keepers</span></div>
+              <table class="tbl plain compact">
+                <tbody>
+                  <tr><td class="faint" style="padding-left: 0">38</td><td>Kyle Brandt <span class="role">AR</span> <span class="faint t-micro">SA · 67</span></td><td class="r num">Rs 5 L</td><td class="blu t-micro">OS need</td></tr>
+                  <tr><td class="faint" style="padding-left: 0">39</td><td>Marco Venter <span class="role">AR</span> <span class="faint t-micro">SA · 70</span></td><td class="r num">Rs 8 L</td><td class="blu t-micro">OS need</td></tr>
+                  <tr><td class="faint" style="padding-left: 0">40</td><td>Imad Rauf <span class="role">AR</span> <span class="faint t-micro">UAE · 64</span></td><td class="r num">Rs 3 L</td><td class="blu t-micro">OS need</td></tr>
+                  <tr><td class="faint" style="padding-left: 0">41</td><td>Kiran Rokaya <span class="role">WK</span> <span class="faint t-micro">NEP · 66</span></td><td class="r num">Rs 2 L</td><td class="blu t-micro">WK need</td></tr>
+                  <tr><td class="faint" style="padding-left: 0">42</td><td>Pratik Bhandari <span class="role">WK</span> <span class="faint t-micro">NEP · 61</span></td><td class="r num">Rs 2 L</td><td class="faint t-micro">your RTM</td></tr>
+                  <tr><td class="gld" style="padding-left: 0">★ 44</td><td style="font-weight: 500">Aasif Sheikh <span class="role">WK</span> <span class="faint t-micro">NEP · 77</span></td><td class="r num">Rs 5 L</td><td class="gld t-micro">shortlist</td></tr>
+                </tbody>
+              </table>
+            </section>
+            <section>
+              <div style="display: flex; justify-content: space-between; align-items: baseline"><h2 class="sec">My shortlist</h2><span class="faint t-micro">Max bid set</span></div>
+              <table class="tbl plain compact">
+                <tbody>
+                  <tr><td class="faint" style="padding-left: 0">44</td><td>Aasif Sheikh <span class="role">WK</span></td><td class="r num">Rs 30 L</td><td class="faint t-micro">RTM</td></tr>
+                  <tr><td class="faint" style="padding-left: 0">52</td><td>Gulshan Jha <span class="role">AR</span></td><td class="r num">Rs 22 L</td><td class="faint t-micro">RTM</td></tr>
+                  <tr><td class="faint" style="padding-left: 0">63</td><td>Sompal Kami <span class="role">BOWL</span></td><td class="r num">Rs 25 L</td><td></td></tr>
+                  <tr><td class="faint" style="padding-left: 0">88</td><td>Nabin Chaudhary <span class="role">AR</span></td><td class="r num">Rs 8 L</td><td></td></tr>
+                </tbody>
+              </table>
+            </section>
+            <section>
+              <h2 class="sec">Sold and unsold</h2>
+              <ol class="feed">
+                <sc-for list="{{ticker}}" as="t" hint-placeholder-count="6">
+                  <li class="{{t.cls}}" style="display: grid; grid-template-columns: 56px minmax(0,1fr) auto; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--rule); font-size: 14px">
+                    <span class="{{t.kindCls}}">{{t.kind}}</span>
+                    <span><span style="font-weight: 500">{{t.player}}</span> <span class="faint">{{t.to}}</span></span>
+                    <span class="num mut">{{t.amt}}</span>
+                  </li>
+                </sc-for>
+              </ol>
+            </section>
+          </aside>
+        </div>
+
+        <section style="margin-top: 32px">
+          <h2 class="t-h3" style="margin-bottom: 10px">Purses and open slots</h2>
+          <div class="tblwrap">
+            <table class="tbl">
+              <thead><tr><th>Team</th><th class="r">Domestic purse</th><th class="r">Overseas purse</th><th class="r">Squad</th><th class="r">Nepali slots open</th><th class="r">Overseas slots open</th><th class="r">RTM cards</th></tr></thead>
+              <tbody>
+                <tr><td><i class="dot t-bk"></i>Biratnagar Kings</td><td class="r">Rs 61 L</td><td class="r">Rs 48 L</td><td class="r">10</td><td class="r">7</td><td class="r">4</td><td class="r">1</td></tr>
+                <tr><td><i class="dot t-cr"></i>Chitwan Rhinos</td><td class="r">Rs 52 L</td><td class="r">Rs 60 L</td><td class="r">9</td><td class="r">8</td><td class="r">5</td><td class="r">0</td></tr>
+                <tr><td><i class="dot t-jb"></i>Janakpur Bolts</td><td class="r">Rs 1.04 cr</td><td class="r">Rs 55 L</td><td class="r">6</td><td class="r">10</td><td class="r">6</td><td class="r">2</td></tr>
+                <tr><td><i class="dot t-ky"></i>Karnali Yaks</td><td class="r">Rs 88 L</td><td class="r">Rs 41 L</td><td class="r">8</td><td class="r">9</td><td class="r">5</td><td class="r">1</td></tr>
+                <tr><td><i class="dot t-kg"></i>Kathmandu Gorkhas</td><td class="r">Rs 47 L</td><td class="r">Rs 42 L</td><td class="r">11</td><td class="r">6</td><td class="r">3</td><td class="r">0</td></tr>
+                <tr class="me"><td><i class="dot t-ll"></i>Lumbini Lions</td><td class="r">Rs 74 L</td><td class="r">Rs 36 L</td><td class="r">9</td><td class="r">8</td><td class="r">5</td><td class="r">1</td></tr>
+                <tr><td><i class="dot t-pa"></i>Pokhara Avengers</td><td class="r">Rs 39 L</td><td class="r">Rs 34 L</td><td class="r">12</td><td class="r">5</td><td class="r">3</td><td class="r">0</td></tr>
+                <tr><td><i class="dot t-sr"></i>Sudurpaschim Royals</td><td class="r">Rs 58 L</td><td class="r">Rs 44 L</td><td class="r">10</td><td class="r">7</td><td class="r">4</td><td class="r">1</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="faint t-small" style="margin-top: 8px">Squads hold 18 to 22 players, of whom 6 to 8 are overseas.</p>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <sc-if value="{{rtm}}" hint-placeholder-val="{{ false }}">
+    <div class="scrim">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rtm-t">
+        <p class="faint t-small">Lot 29 · Right to Match</p>
+        <h2 id="rtm-t" class="t-h2" style="margin-top: 6px">Jimmy Neesham sold to Karnali Yaks for Rs 28 L</h2>
+        <p class="mut" style="margin-top: 8px">He played for Lumbini last season. Use your RTM card to keep him at the same price?</p>
+        <table class="tbl plain compact" style="margin-top: 12px">
+          <tbody>
+            <tr><td style="padding-left: 0" class="mut">RTM cards</td><td class="r">1 → 0</td></tr>
+            <tr><td style="padding-left: 0" class="mut">Overseas purse</td><td class="r">Rs 36 L → Rs 8 L</td></tr>
+            <tr><td style="padding-left: 0" class="mut">Age, outlook</td><td class="r">37 · likely to retire within 2 seasons</td></tr>
+          </tbody>
+        </table>
+        <div class="acts">
+          <button type="button" class="btn btn-primary btn-lg">Use RTM · Rs 28 L</button>
+          <button type="button" class="btn btn-lg">Let him go</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"showRtm":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":1080}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = this.initial(); }
+  initial(){ return { bid:24, leader:'pa', going:0, done:false, passed:false, n:0,
+    hist:[['pa',24],['kg',22],['pa',20],['kg',18],['bk',15],['pa',12],['kg',11]], sold:[] }; }
+  componentDidMount(){ this.timer = setInterval(() => this.tick(), 2800); }
+  componentWillUnmount(){ clearInterval(this.timer); }
+  inc(b){ return b < 20 ? 1 : (b < 50 ? 2 : 5); }
+  tick(){
+    const s = this.state; if (s.done) return;
+    const caps = { pa:32, kg:30, bk:36 };
+    const next = s.bid + this.inc(s.bid);
+    const c = ['bk','kg','pa'].filter(r => r !== s.leader && caps[r] >= next);
+    if (c.length) {
+      const r = c[s.n % c.length];
+      this.setState({ bid:next, leader:r, going:0, n:s.n + 1, hist:[[r,next]].concat(s.hist) });
+    } else if (s.going < 2) {
+      this.setState({ going:s.going + 1 });
+    } else {
+      this.setState({ done:true, going:3, sold:[{ kind:'Sold', player:'Sikandar Raza', team:s.leader, amt:s.bid }] });
+    }
+  }
+  renderVals() {
+    const s = this.state;
+    const T = { bk:'Biratnagar Kings', kg:'Kathmandu Gorkhas', pa:'Pokhara Avengers', ll:'Lumbini Lions' };
+    const rs = (n) => n >= 100 ? 'Rs ' + (n / 100).toFixed(2) + ' cr' : 'Rs ' + n + ' L';
+    const next = s.bid + this.inc(s.bid);
+    const st = ['Bidding open', 'Going once…', 'Going twice…', 'Sold to'][s.going];
+    const hist = s.hist.slice(0, 7).map((h, i) => ({ team: h[0] === 'll' ? 'Lumbini Lions (you)' : T[h[0]], dot:'t-' + h[0], amt: rs(h[1]), cls: i === 0 ? 'ev-new' : 'dim' }));
+    const base = [
+      ['Sold','Charith Asalanka','→ Lumbini Lions','Rs 14 L'],
+      ['Unsold','Dewald Moller','base Rs 8 L','—'],
+      ['Sold','Shakib Al Hasan','→ Kathmandu Gorkhas','Rs 38 L'],
+      ['Sold','Kushal Malla','→ Chitwan Rhinos','Rs 46 L'],
+      ['Unsold','Liam Carver','base Rs 8 L','—'],
+      ['Sold','Kushal Bhurtel','→ Pokhara Avengers, RTM','Rs 52 L']
+    ].map(t => ({ kind:t[0], player:t[1], to:t[2], amt:t[3], kindCls: t[0] === 'Sold' ? 'blu' : 'faint', cls:'' }));
+    const extra = s.sold.map(x => ({ kind:'Sold', player:x.player, to:'→ ' + T[x.team], amt: rs(x.amt), kindCls:'blu', cls:'ev-new' }));
+    return { theme: this.props.theme ?? 'dark', rtm: this.props.showRtm ?? false,
+      bidText: rs(s.bid), nextText: rs(next), tickCls: s.hist.length % 2 ? 'tick-a' : 'tick-b',
+      leaderName: s.leader === 'll' ? 'Lumbini Lions (you)' : T[s.leader], leaderDot: 't-' + s.leader,
+      status: s.done ? 'Sold to' : (s.leader === 'll' ? 'You lead · ' + st : st),
+      open: !s.done, done: s.done, passed: s.passed, passLabel: s.passed ? 'Passed' : 'Pass',
+      bidDisabled: s.passed || s.leader === 'll' || next > 30,
+      hist, ticker: extra.concat(base).slice(0, 7),
+      bid: () => this.setState({ bid:next, leader:'ll', going:0, hist:[['ll',next]].concat(s.hist) }),
+      pass: () => this.setState({ passed:true }),
+      reset: () => this.setState(this.initial()) };
+  }
+}
+</script>
+</body>
+</html>

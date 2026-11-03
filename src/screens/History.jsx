@@ -2,6 +2,9 @@ import { useGame } from '../lib/store.jsx';
 import { Dot, PageHead, Seg } from '../components/bits.jsx';
 import { careerOf } from '../game/game.js';
 import { seasonNo, tname, tshort } from '../lib/util.js';
+import { castVote } from '../game/living.js';
+import { autosave } from '../lib/save.js';
+import { Link } from 'react-router-dom';
 
 const REAL = { hs: { v: 114, no: true, who: 'Mark Watt', team: 'KY', y: 2025 }, bb: { w: 6, r: 25, who: 'Shahab Alam', team: 'KG', y: 2025 }, ht: { v: 220, w: 6, team: 'BK', opp: 'PA', y: 2025 } };
 const best = (a, b, f) => (!b ? a : !a ? b : f(a) >= f(b) ? a : b);
@@ -51,10 +54,25 @@ function Records() {
     </>
   );
 }
+function Ballot() {
+  const { G, update } = useGame(); const L = G.s.living; const b = L && L.ballot; const votes = (L && L.votes) || []; const fw = L ? Object.entries(L.farewell).filter(([, x]) => x.played) : [];
+  return (
+    <>
+      {b && <section className="panel stack" style={{ gap: 8, marginBottom: 24 }}><h2 className="t-h3">Hall of Fame ballot · {b.y} retirements</h2>
+        <p className="t-small mut">The panel's view is shown; your vote moves it by 4 points. 75% gets a player in. The ballot closes when the season starts. In your game.</p>
+        <table className="tbl compact plain"><thead><tr><th>Player</th><th className="r">M</th><th className="r">Runs</th><th className="r">Wkts</th><th className="r">Panel</th><th>Your vote</th></tr></thead>
+          <tbody>{b.list.map((e) => <tr key={e.pid}><td className="name">{e.name}{e.farewell && <span className="t-micro gld"> · farewell</span>}{e.mine && <span className="t-micro blu"> · yours</span>}</td><td className="r">{e.m}</td><td className="r">{e.r}</td><td className="r">{e.w}</td><td className="r num">{e.pct}%</td>
+            <td><span className="row" style={{ gap: 6 }}><button type="button" className={`btn btn-sm${e.vote === true ? ' btn-blue' : ''}`} aria-pressed={e.vote === true} onClick={() => update(() => { castVote(G, e.pid, true); autosave(G); })}>Yes</button><button type="button" className={`btn btn-sm${e.vote === false ? ' btn-blue' : ''}`} aria-pressed={e.vote === false} onClick={() => update(() => { castVote(G, e.pid, false); autosave(G); })}>No</button></span></td></tr>)}</tbody></table></section>}
+      {votes.length > 0 && <><h2 className="t-h3" style={{ margin: '0 0 10px' }}>Past votes</h2><table className="tbl plain compact" style={{ marginBottom: 24 }}><tbody>{votes.slice(0, 12).map((v, i) => <tr key={i}><td style={{ paddingLeft: 0 }}>{v.name}</td><td className="r faint">{v.y}</td><td className="r num">{v.pct}%</td><td className={v.in ? 'gld' : 'faint'}>{v.in ? 'Inducted' : 'Not this time'}</td></tr>)}</tbody></table></>}
+      {fw.length > 0 && <p className="t-small" style={{ marginBottom: 20 }}>Farewells at Kirtipur: {fw.map(([pid, x]) => `${(G.P(pid) || { name: '?' }).name} (${x.y})`).join(', ')}. <Link to="/career?tab=legends">Plan the next one</Link></p>}
+    </>
+  );
+}
 function Fame() {
   const { G } = useGame(); const hof = G.s.hof.slice().reverse(); const ret = G.s.retiredList.slice(-30).reverse();
   return (
     <>
+      <Ballot />
       <h2 className="t-h3" style={{ marginBottom: 10 }}>Hall of Fame</h2>
       {hof.length ? <div className="tblwrap"><table className="tbl compact"><thead><tr><th>Player</th><th>Nat</th><th className="r">Retired</th><th className="r">M</th><th className="r">Runs</th><th className="r">Wkts</th></tr></thead><tbody>{hof.map((h, i) => <tr key={i}><td className="name">{h.name}</td><td>{h.nat}</td><td className="r">{h.y}</td><td className="r">{h.m}</td><td className="r">{h.r}</td><td className="r">{h.w}</td></tr>)}</tbody></table></div> : <p className="faint">No inductees yet. Great careers are inducted when the player retires.</p>}
       <h2 className="t-h3" style={{ margin: '28px 0 10px' }}>Recent retirements</h2>

@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Nepal at the World Cup, mobile</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl m-root" data-theme="{{theme}}">
+  <section class="board" style="border-radius: 0; border-width: 0 0 1px; padding: 12px 16px; flex: none; box-shadow: inset 0 -2px 0 var(--gold)" aria-label="Scoreboard">
+    <div style="display: flex; justify-content: space-between"><span class="blbl" style="color: var(--gold)">T20 World Cup 2028 · Group C · in-game</span><span class="blbl">Hobart</span></div>
+    <p class="blbl" style="margin-top: 4px">Pakistan 158/7 (20) · Nepal need 18 off 15</p>
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 2px">
+      <div style="display: flex; align-items: baseline; gap: 8px"><span class="bf" style="font-size: 46px; line-height: .95">141/5</span><span class="bf" style="font-size: 18px; color: var(--board-ink-2)">17.3</span></div>
+      <div class="stack" style="text-align: right"><span class="blbl">Win and</span><span class="bf" style="font-size: 20px; line-height: 1.15; color: var(--gold)">Super 8</span></div>
+    </div>
+    <div style="display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 8px; align-items: center; margin-top: 8px">
+      <span class="bf" style="font-size: 14px">Nepal 44%</span>
+      <div class="wp" role="img" aria-label="Win probability Nepal 44 percent"><i style="width: 44%; background: var(--crimson-solid)"></i><i style="width: 56%; background: var(--t-cr)"></i></div>
+      <span class="bf" style="font-size: 14px; color: var(--board-ink-2)">56%</span>
+    </div>
+  </section>
+  <div class="m-scroll">
+    <ul class="mlist">
+      <li style="padding: 8px 0"><span class="grow"><b style="font-weight: 600">Dipendra Singh Airee*</b></span><span class="board-f" style="font-size: 18px">38 (24)</span></li>
+      <li style="padding: 8px 0"><span class="grow">Gulshan Jha <span class="faint t-small">· Lumbini</span></span><span class="board-f" style="font-size: 18px">9 (6)</span></li>
+    </ul>
+    <ol class="feed">
+      <li class="ev ev-four ev-new" style="grid-template-columns: 38px minmax(0,1fr); gap: 4px 10px"><span class="ov">17.3</span><span class="tx"><span class="tag">4</span>Airee, <b>four</b>, reverse-swept fine.<span class="ne">एरीको रिभर्स स्विप, चौका! पहाडमा नेपाली झन्डा हल्लिँदैछ।</span></span></li>
+      <li class="ev ev-crowd" style="grid-template-columns: 38px minmax(0,1fr); gap: 4px 10px"><span class="ov"></span><span class="tx">“Nepal! Nepal!” from the hill, louder than the Pakistan end.</span></li>
+      <li class="ev ev-wkt" style="grid-template-columns: 38px minmax(0,1fr); gap: 4px 10px"><span class="ov">16.4</span><span class="tx"><span class="tag">W</span>Paudel <b>out</b> for 47, caught at long-on.</span></li>
+    </ol>
+    <div class="panel stack" style="gap: 6px; margin-top: 12px; padding: 12px 14px">
+      <p class="faint t-micro">Your Lumbini players tonight</p>
+      <p class="t-small">Paudel 47 (33) · Rajbanshi 4–0–27–2 · Jha batting · Thapa Magar not playing</p>
+    </div>
+    <p class="faint t-micro" style="margin-top: 10px">You follow Nepal's games as a fan and club manager; you don't pick the national side.</p>
+  </div>
+  <div class="m-actions">
+    <button type="button" class="btn" style="flex: 1 1 auto; background: var(--gold); border-color: var(--gold); color: #1A1406">Keep listening</button>
+    <button type="button" class="btn">Group C</button>
+  </div>
+  <nav class="bnav" aria-label="Main">
+    <a href="MHome.dc.html">Home</a>
+    <a href="MSquad.dc.html">Squad</a>
+    <a href="MWorldCup.dc.html" class="on" aria-current="page"><span class="live"></span>Nepal</a>
+    <a href="MLeague.dc.html">League</a>
+    <a href="Settings.dc.html">More</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return { theme: this.props.theme ?? 'dark' }; }
+}
+</script>
+</body>
+</html>

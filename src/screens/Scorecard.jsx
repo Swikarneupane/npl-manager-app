@@ -36,7 +36,9 @@ function Summary({ G, card }) {
 
 export default function Scorecard() {
   const { G, ui } = useGame(); const { n } = useParams(); const [q, setQ] = useSearchParams();
-  const f = G.s.fixtures.find((x) => String(x.n) === String(n));
+  // /scorecard/F2027: a final archived at the end of an earlier season (G.s.finals, living.js)
+  const arch = /^F(\d{4})$/.exec(String(n)); const A = arch && G.s.finals ? G.s.finals[arch[1]] : null;
+  const f = A ? { ...A, stage: 'F', y: +arch[1] } : G.s.fixtures.find((x) => String(x.n) === String(n));
   let card, res;
   if (f && f.card) { card = f.card; res = f.res; } else if (f && ui.live && ui.live.f === f) { card = G.compactCard(ui.live.m); res = ui.live.m.result; }
   if (!f || !card) return <p>No scorecard for that match yet.</p>;
@@ -50,10 +52,10 @@ export default function Scorecard() {
   return (
     <div className="scorepg stack" style={{ gap: 14 }}>
       <div className="sechead" style={{ alignItems: 'center' }}>
-        <Link to="/season?tab=results" className="t-small row" style={{ gap: 4, alignItems: 'center' }}><Icon name="back" size={18} />Results</Link>
-        <span className="t-micro faint">{f.date} · Kirtipur</span>
+        {A ? <Link to="/career" className="t-small row" style={{ gap: 4, alignItems: 'center' }}><Icon name="back" size={18} />Career</Link> : <Link to="/season?tab=results" className="t-small row" style={{ gap: 4, alignItems: 'center' }}><Icon name="back" size={18} />Results</Link>}
+        <span className="t-micro faint">{f.date}{A ? ` ${f.y}` : ''} · Kirtipur</span>
       </div>
-      <h1 className="t-h3">Scorecard · {stageName(f)}</h1>
+      <h1 className="t-h3">Scorecard · {stageName(f)}{A ? ` · ${f.y}` : ''}</h1>
       <section className="board scboard">
         <p className="bf sc-head">{head}</p>{extra && <p className="blbl">{extra}</p>}
         <div className="sc-sides">{card.map((c, i) => <div key={i}><p className="blbl row" style={{ gap: 6, alignItems: 'center' }}><Dot id={c.t} />{tshort(G, c.t)}</p><p className="bf sc-score">{c.r}/{c.w} <span>{ov(c.b)}</span></p></div>)}</div>

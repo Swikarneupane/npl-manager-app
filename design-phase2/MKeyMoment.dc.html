@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Key moment, mobile</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl m-root" data-theme="{{theme}}">
+  <section class="board" style="border-radius: 0; border-width: 0 0 1px; padding: 12px 16px; flex: none; box-shadow: inset 0 -2px 0 var(--gold)" aria-label="Scoreboard">
+    <div style="display: flex; justify-content: space-between"><span class="blbl" style="color: var(--gold)">The Final · last over</span><span class="blbl">ball by ball</span></div>
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 4px">
+      <div style="display: flex; align-items: baseline; gap: 8px"><span class="bf" style="font-size: 46px; line-height: .95">160/5</span><span class="bf" style="font-size: 18px; color: var(--board-ink-2)">19.0</span></div>
+      <div class="stack" style="text-align: right"><span class="blbl">To win</span><span class="bf" style="font-size: 26px; line-height: 1.1; color: var(--gold)">9 off 6</span></div>
+    </div>
+    <div style="display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 8px; align-items: center; margin-top: 8px">
+      <span class="bf" style="font-size: 14px">48%</span>
+      <div class="wp" role="img" aria-label="Win probability 48 percent Lumbini"><i style="width: 48%; background: var(--t-ll)"></i><i style="width: 52%; background: var(--t-sr)"></i></div>
+      <span class="bf" style="font-size: 14px; color: var(--board-ink-2)">52%</span>
+    </div>
+  </section>
+
+  <div class="m-scroll" style="padding-top: 12px">
+    <div class="balls" style="justify-content: center; gap: 8px" aria-label="Last over: six balls to come">
+      <span class="ball next q">1</span><span class="ball next"></span><span class="ball next"></span><span class="ball next"></span><span class="ball next"></span><span class="ball next"></span>
+    </div>
+    <ul class="mlist" style="margin-top: 8px">
+      <li style="padding: 8px 0"><span class="grow"><b style="font-weight: 600">Gulshan Jha*</b> 24 (15)</span><span class="gauge" style="width: 120px"><span class="meter"><i style="width: 52%"></i></span>52</span></li>
+      <li style="padding: 8px 0"><span class="grow">Jimmy Neesham 33 (21)</span><span class="gauge high" style="width: 120px"><span class="meter"><i style="width: 81%"></i></span>81</span></li>
+      <li style="padding: 8px 0"><span class="grow">Rajan Bohara <span class="faint t-small">pace · 3–0–31–1</span></span><span class="faint t-small">bowling</span></li>
+    </ul>
+    <p class="t-small mut" style="margin: 10px 0 6px; font-style: italic">Fine leg up, long-off back. Bohara has bowled four yorkers in a row tonight. The ground is silent.</p>
+
+    <p class="mhead" style="color: var(--gold)">Ball 19.1 · your call</p>
+    <div class="stack" style="gap: 8px">
+      <sc-for list="{{opts}}" as="o" hint-placeholder-count="3">
+        <button type="button" class="choice {{o.cls}}" onClick="{{o.pick}}" style="padding: 10px 12px"><span style="font-weight: 600">{{o.label}}</span><span class="fx">{{o.how}}</span><span class="fx">Win chance <span class="{{o.dir}}">{{o.wp}}</span></span></button>
+      </sc-for>
+    </div>
+  </div>
+
+  <div class="m-actions">
+    <button type="button" class="btn btn-lg" style="flex: 1 1 auto; background: var(--gold); border-color: var(--gold); color: #1A1406">Bowl ball 19.1</button>
+  </div>
+  <nav class="bnav" aria-label="Main">
+    <a href="MHome.dc.html">Home</a>
+    <a href="MSquad.dc.html">Squad</a>
+    <a href="MMatch.dc.html" class="on" aria-current="page"><span class="live"></span>Final</a>
+    <a href="MLeague.dc.html">League</a>
+    <a href="Settings.dc.html">More</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { pick:'single' }; }
+  renderVals() {
+    const O = [['single','Get Neesham on strike','Gulshan pushes for one; Neesham faces five balls','48% → 51%','up'],['go','Gulshan: go for it','Back away, aim over cover. Big reward if the yorker misses','48% → 50%','up'],['run','Run anything','Steal byes, dive for the crease. Run-out risk','48% → 46%','down']];
+    const opts = O.map(o => ({ label:o[1], how:o[2], wp:o[3], dir:o[4], cls: this.state.pick === o[0] ? 'on' : '', pick: () => this.setState({ pick:o[0] }) }));
+    return { theme: this.props.theme ?? 'dark', opts };
+  }
+}
+</script>
+</body>
+</html>

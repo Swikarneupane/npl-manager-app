@@ -4,6 +4,7 @@ import { R, Match } from '../game/engine.js';
 import { sleep } from './util.js';
 import { afterFixture } from './flow.js';
 import { autosave, saveLocal } from './save.js';
+import { applyPlan, keyMoment, resolveKey, addExpert, alsoFixture, simAlso } from '../game/matchday.js';
 
 export const SPEEDS = { 0.5: 1700, 1: 950, 2: 480, 4: 170 };
 
@@ -32,6 +33,14 @@ export class LiveMatch {
   resume() { if (this.wait) { const r = this.wait.res; this.wait = null; r(); } this.refresh(); }
   resolvePending(v) { const p = this.pending; this.pending = null; if (p) p.res(v); this.refresh(); }
   sim(to) { this.simTo = to; this.innIdx = this.m.inns.length; if (this.pending && this.pending.type === 'bowler') this.resolvePending(null); this.resume(); }
+  // The assistant (or any fast sim) resolves key moments; otherwise the match pauses on a gold card.
+  async askKey(inn, km) {
+    if (this.fast() || this.G.s.settings.assistant) return resolveKey(this.G, this.m, inn, km, km.rec, true);
+    const idx = await new Promise((res) => { this.pending = { type: 'key', km, res, pick: km.rec }; this.persist(); this.refresh(); });
+    return resolveKey(this.G, this.m, inn, km, idx, false);
+  }
+  // Fraction of the match bowled, for the "also live" ticker.
+  progress() { const m = this.m; return m.inns.reduce((a, i) => a + i.balls, 0) / (2 * m.maxBalls); }
   setMode(m) { this.mode = m; if (m !== 'ball' && this.wait && this.wait.label === 'Next ball') this.resume(); this.refresh(); }
 
   start() {
@@ -42,7 +51,9 @@ export class LiveMatch {
       toss: () => (self.fast() ? (self.m.night ? 'field' : 'bat') : new Promise((res) => { self.pending = { type: 'toss', res }; self.refresh(); })),
       // A bowler picked ahead of time (nextBowler) is used without stopping; otherwise the game
       // stops at the overs the mode asks about, with the captain's pick preselected.
-      chooseBowler: (inn, m) => {
+      chooseBowler: async (inn, m) => {
+        const km = keyMoment(G, m, inn, 'bowler');
+        if (km) { const b = await self.askKey(inn, km); if (b) { self.nextBowler = null; return b; } }
         const want = self.nextBowler; self.nextBowler = null;
         const ok = want && m.bowlerOptions(inn).includes(want) ? want : null;
         if (self.fast()) return ok;
@@ -57,7 +68,9 @@ export class LiveMatch {
       pickNext: (inn, m, rem) => (self.nextBat && rem.includes(self.nextBat) ? self.nextBat : null),
       beforeOver: async (inn) => {
         if (self.lastInn && self.lastInn !== inn) { self.lastInn = inn; self.prevOver = null; if (!self.fast()) await self.waitUser('Start the second innings'); }
-        self.lastInn = inn; self.refresh();
+        self.lastInn = inn; applyPlan(G, self.m, inn);
+        const km = keyMoment(G, self.m, inn, 'over'); if (km) await self.askKey(inn, km);
+        self.refresh();
       },
       overEnd: async (inn) => {
         self.prevOver = { seq: inn.overSeq.slice(), n: inn.balls / 6, bowler: G.P(inn.cur).name };
@@ -66,6 +79,7 @@ export class LiveMatch {
         if (!self.fast() && self.mode === 'over') { self.refresh(); await self.waitUser('Next over'); }
       },
       afterBall: async (inn, m, info) => {
+        if (self.mode !== 'quick' && self.simTo !== 'match') addExpert(G, m, inn, info.ev === 'drop' ? 'drop' : info.ev === 'wkt' ? 'wkt' : info.ev === '0' ? 'dot' : info.ev);
         self.takeSnap(); self.refresh();
         if (self.simTo === 'innings' && self.innIdx !== m.inns.length) self.simTo = null;
         if (self.fast()) { if (inn.balls % 12 === 0) await sleep(0); return; }
@@ -76,8 +90,12 @@ export class LiveMatch {
         await sleep(self.mode === 'key' && Math.floor(inn.balls / 6) < 15 && !key ? self.speed() * 0.45 : self.speed());
       },
     };
+    const af = alsoFixture(G, this.f);
+    if (af && af.res) this.also = { f: af };
+    else if (af) this.alsoP = simAlso(G, af).then((a) => { this.also = a; this.refresh(); return a; }).catch((e) => { console.error(e); return null; });
     this.m.run(hooks)
-      .then(() => { G.recordMatch(this.m, this.f); this.done = true; delete G.s.liveMatch; afterFixture(G); autosave(G); this.refresh(); })
+      .then(async () => { G.recordMatch(this.m, this.f);
+        if (this.alsoP) { const a = await this.alsoP; if (a && a.m && !a.f.res) G.recordMatch(a.m, a.f); } this.done = true; delete G.s.liveMatch; afterFixture(G); autosave(G); this.refresh(); })
       .catch((e) => { console.error(e); this.error = e.message; this.refresh(); });
     this.refresh();
   }

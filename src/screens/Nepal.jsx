@@ -32,7 +32,8 @@ export default function Nepal() {
   const fringeNote = (p) => { const st = p.stats[G.year] || p.stats[G.year - 1]; return p.bowl >= 55 ? `${st ? `${st.w} NPL wickets this season. ` : ''}A couple more good NPL games could earn a call-up.` : `${st ? `${st.r} NPL runs this season. ` : ''}Needs runs to force his way in.`; };
   return (
     <div className="nepalpg stack" style={{ gap: 16 }}>
-      <div className="sechead" style={{ alignItems: 'center' }}><div><h1 className="t-h1">Nepal</h1><p className="t-micro faint">National team · men</p></div></div>
+      <div className="sechead" style={{ alignItems: 'center' }}><div><h1 className="t-h1">Nepal</h1><p className="t-micro faint">National team · men</p></div>
+        <div className="row" style={{ gap: 8 }}><Link className="btn btn-sm" to="/international">Pathway and tables</Link><Link className="btn btn-sm" to="/worldcup">World Cup</Link><Link className="btn btn-sm" to="/rankings">Rankings</Link></div></div>
       <section className="board nboard">
         <p className="blbl">{played ? `Nepal's winter ${w}–${String(w + 1).slice(2)} · played` : `Next for Nepal · ${G.s.phase === 'preseason' || G.s.phase === 'league' || G.s.phase === 'playoffs' ? 'after the NPL final' : 'this winter'}`}</p>
         <p className="bf nb-title">{e0.name}</p><p className="blbl">{e0.dates} · {e0.venue} · {e0.fmt}{e0.real ? '' : ' · in your game'}</p>

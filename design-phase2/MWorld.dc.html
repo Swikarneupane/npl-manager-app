@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Around the world, mobile</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl m-root" data-theme="{{theme}}">
+  <header class="m-top">
+    <span class="team">Who won what in 2028</span>
+    <span class="purse">Off-season<br>simulated</span>
+  </header>
+  <div class="tabs" role="tablist" aria-label="Sections">
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3"><button type="button" role="tab" class="{{t.cls}}" aria-selected="{{t.sel}}" onClick="{{t.pick}}">{{t.label}}</button></sc-for>
+  </div>
+  <div class="m-scroll">
+    <sc-if value="{{isChamps}}" hint-placeholder-val="{{ true }}">
+      <ul class="mlist">
+        <sc-for list="{{rows}}" as="r" hint-placeholder-count="9">
+          <li class="{{r.cls}}" style="padding: 9px 0">
+            <span class="grow"><span class="l2">{{r.when}} · {{r.league}}</span><br><span style="font-weight: 600"><span class="gld" aria-hidden="true">★ </span>{{r.champ}}</span><br><span class="l2">beat {{r.beat}} {{r.margin}}</span></span>
+            <sc-if value="{{r.hasNep}}" hint-placeholder-val="{{ false }}"><span class="crim t-micro" style="font-weight: 600">Nepali</span></sc-if>
+          </li>
+        </sc-for>
+      </ul>
+    </sc-if>
+    <sc-if value="{{isNep}}" hint-placeholder-val="{{ false }}">
+      <p class="mhead">Nepali champions abroad</p>
+      <ul class="mlist">
+        <li><span class="grow"><b style="font-weight: 600">Sandeep Lamichhane</b><br><span class="l2">BPL champion · 3 for 19, player of the final</span></span><span class="gld">★</span></li>
+        <li><span class="grow"><b style="font-weight: 600">Bibek Thapa Magar</b> <span class="faint t-small">· Lumbini</span><br><span class="l2">ILT20 runner-up · development contract</span></span><span class="faint t-small">2nd</span></li>
+      </ul>
+    </sc-if>
+    <sc-if value="{{isNext}}" hint-placeholder-val="{{ false }}">
+      <ul class="mlist" style="margin-top: 6px">
+        <li><span class="grow">BBL and BPL<br><span class="l2">Start next week</span></span></li>
+        <li><span class="grow">SA20 and ILT20<br><span class="l2">January</span></span></li>
+        <li><span class="grow">Nepali players signed<br><span class="l2">3 so far, 1 from Lumbini</span></span></li>
+      </ul>
+    </sc-if>
+    <p class="faint t-micro" style="margin-top: 12px">Real league and team names; results simulated in your save.</p>
+  </div>
+  <nav class="bnav" aria-label="Main">
+    <a href="MHome.dc.html">Home</a>
+    <a href="MSquad.dc.html">Squad</a>
+    <a href="MAuction.dc.html">Auction</a>
+    <a href="MLeague.dc.html">League</a>
+    <a href="Settings.dc.html" class="on" aria-current="page">More</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { tab:'Champions' }; }
+  renderVals() {
+    const L = [['Jan','BBL','Perth Scorchers','Sydney Sixers','by 6 wkts',0],['Feb','SA20','Sunrisers Eastern Cape','Paarl Royals','by 32 runs',0],['Feb','ILT20','Dubai Capitals','Desert Vipers','by 4 wkts',1],['Feb','BPL','Rajshahi Warriors','Fortune Barishal','by 11 runs',1],['May','IPL','Royal Challengers Bengaluru','Mumbai Indians','by 5 wkts',0],['May','PSL','Islamabad United','Lahore Qalandars','by 2 wkts',0],['Jul','MLC','MI New York','Washington Freedom','by 18 runs',0],['Sep','CPL','Trinbago Knight Riders','Guyana Amazon Warriors','by 7 wkts',0],['Nov','NPL','Kathmandu Gorkhas','Lumbini Lions','by 3 runs',0]];
+    const rows = L.map(l => ({ when:l[0], league:l[1], champ:l[2], beat:l[3], margin:l[4], hasNep: !!l[5], cls: l[1] === 'NPL' ? 'me' : '' }));
+    const t = this.state.tab;
+    const tabs = ['Champions','Nepalis','Coming up'].map(x => ({ label:x, sel: t === x, cls: t === x ? 'on' : '', pick: () => this.setState({ tab:x }) }));
+    return { theme: this.props.theme ?? 'light', tabs, rows, isChamps: t === 'Champions', isNep: t === 'Nepalis', isNext: t === 'Coming up' };
+  }
+}
+</script>
+</body>
+</html>

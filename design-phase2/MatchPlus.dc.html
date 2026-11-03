@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Live match, depth</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl" data-theme="{{theme}}" style="min-height: 1200px; position: relative">
+  <header class="top">
+    <span class="brand">NPL Manager</span>
+    <span class="tm"><i class="dot t-ll"></i>Lumbini Lions</span>
+    <span class="phase"><b>League</b> · Match 17 live</span>
+    <span class="spacer"></span>
+    <a href="Roundup.dc.html" class="t-small" style="display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--ink-2)"><span class="live"></span>Also live: <i class="dot t-sr" style="margin: 0"></i>Sudurpaschim 151/4 (17.2) v <i class="dot t-kg" style="margin: 0"></i>Kathmandu · Airee 64*</a>
+  </header>
+  <div class="shell">
+    <nav class="nav" aria-label="Main">
+      <a href="Home.dc.html">Home</a>
+      <a href="Squad.dc.html">Squad</a>
+      <a href="MatchPlus.dc.html" class="on" aria-current="page">Match <small>Live</small></a>
+      <a href="Table.dc.html">Fixtures</a>
+      <a href="Table.dc.html">Table</a>
+      <span class="off" aria-disabled="true">Auction <small>Off-season</small></span>
+      <hr>
+      <a href="History.dc.html">Stats</a>
+      <a href="History.dc.html">History</a>
+      <a href="Finance.dc.html">Club</a>
+      <a href="Settings.dc.html">Settings</a>
+    </nav>
+    <main class="main" style="padding-top: 22px">
+      <div style="max-width: 1220px" class="stack">
+        <section class="board" aria-label="Scoreboard">
+          <div style="display: flex; flex-wrap: wrap; align-items: flex-end; gap: 18px 36px">
+            <div class="stack" style="gap: 6px">
+              <span class="blbl" style="display: flex; align-items: center"><i class="dot t-ll"></i>Lumbini Lions · chasing 173 · death overs</span>
+              <div style="display: flex; align-items: baseline; gap: 14px"><span class="bf big">154/6</span><span class="bf mid" style="color: var(--board-ink-2)">18.0 ov</span></div>
+            </div>
+            <span class="vr"></span>
+            <div class="cells">
+              <div class="cell"><span class="blbl">Need</span><span class="bf mid">19 off 12</span></div>
+              <div class="cell"><span class="blbl">Required</span><span class="bf mid">9.50</span></div>
+              <div class="cell"><span class="blbl">Partnership</span><span class="bf mid">41 (25)</span></div>
+              <div class="cell"><span class="blbl">Crowd</span><span class="bf mid">Roaring</span></div>
+            </div>
+            <span style="flex: 1 1 0"></span>
+            <div class="stack" style="gap: 6px; text-align: right"><span class="blbl" style="display: flex; align-items: center; justify-content: flex-end"><i class="dot t-bk"></i>Biratnagar Kings</span><span class="bf mid">172/6 <span style="color: var(--board-ink-2); font-size: 22px">(20)</span></span></div>
+          </div>
+          <div style="margin-top: 16px; display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 14px; align-items: center">
+            <span class="bf" style="font-size: 18px">Lumbini 41%</span>
+            <div class="wp" role="img" aria-label="Win probability: Lumbini 41 percent"><i style="width: 41%; background: var(--t-ll)"></i><i style="width: 59%; background: var(--t-bk)"></i></div>
+            <span class="bf" style="font-size: 18px; color: var(--board-ink-2)">59% Biratnagar</span>
+          </div>
+        </section>
+
+        <!-- phase rail -->
+        <div style="display: grid; grid-template-columns: 6fr 9fr 5fr; gap: 6px; margin-top: 16px" aria-label="Innings phases">
+          <div class="stack" style="gap: 4px"><div class="meter blue"><i style="width: 100%"></i></div><span class="t-small"><b>Powerplay</b> <span class="mut">52/1 · plan worked: Shakib seen out</span></span></div>
+          <div class="stack" style="gap: 4px"><div class="meter blue"><i style="width: 100%"></i></div><span class="t-small"><b>Middle</b> <span class="mut">61/4 · Lamichhane 3–0–19–3</span></span></div>
+          <div class="stack" style="gap: 4px"><div class="meter"><i style="width: 40%; background: var(--crimson-solid)"></i></div><span class="t-small"><b>Death</b> <span class="mut">41/1 so far · All-out from 17</span></span></div>
+        </div>
+
+        <div class="split" style="margin-top: 24px; gap: 36px; grid-template-columns: minmax(0,1.55fr) minmax(0,1fr)">
+          <section>
+            <div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--rule-strong); padding-bottom: 8px">
+              <h2 class="t-h3">Commentary</h2>
+              <span class="faint t-small">Two voices · ball by ball and expert</span>
+            </div>
+            <ol class="feed" aria-live="polite">
+              <li class="ev-over ev-new"><b>End of over 18</b><span>14 runs</span><span>Need 19 from 12</span><span>Lamichhane has 1 over left</span></li>
+              <li class="ev ev-crowd"><span class="ov"></span><span class="tx">Phones are out across the east stand; the noise has not dropped since the six.</span></li>
+              <li class="ev ev-six"><span class="ov">17.6</span><span class="tx"><span class="tag">6</span>Raza to Neesham, <b>six</b>. Picks the slower ball early and hits it over long-on.<span class="ne" style="font-style: italic; color: var(--ink-3)">Expert: “That is what experience buys you. He waited for it.”</span></span></li>
+              <li class="ev"><span class="ov">17.5</span><span class="tx"><span class="tag faint">2</span>Raza to Neesham, 2 runs. Pushed into the gap, hard running.</span></li>
+              <li class="ev ev-dot"><span class="ov">17.4</span><span class="tx"><span class="tag">·</span>Raza to Jha, no run. Swings, misses outside off.<span class="ne" style="font-style: italic; color: var(--ink-3)">Expert: “Gulshan is trying to hit every ball for six. Someone needs to calm him.”</span></span></li>
+              <li class="ev ev-four"><span class="ov">17.3</span><span class="tx"><span class="tag">4</span>Raza to Jha, <b>four</b>. Thick edge, past short third.</span></li>
+              <li class="ev"><span class="ov">17.2</span><span class="tx"><span class="tag faint">1</span>Raza to Neesham, 1 run.</span></li>
+              <li class="ev"><span class="ov">17.1</span><span class="tx"><span class="tag faint">1</span>Raza to Jha, 1 run. Leg bye, off the pad.</span></li>
+            </ol>
+          </section>
+
+          <aside class="stack" style="gap: 20px">
+            <div class="panel stack" style="gap: 12px">
+              <h2 class="sec" style="margin: 0">Composure at the crease</h2>
+              <div class="stack" style="gap: 4px"><div style="display: flex; justify-content: space-between"><span><b style="font-weight: 600">Jimmy Neesham</b> 31 (19)</span><span class="blu t-small">Steady</span></div><div class="gauge high"><div class="meter"><i style="width: 76%"></i></div><span>76</span></div></div>
+              <div class="stack" style="gap: 4px"><div style="display: flex; justify-content: space-between"><span><b style="font-weight: 600">Gulshan Jha</b> 22 (14)</span><span class="crim t-small">Rushing</span></div><div class="gauge low"><div class="meter"><i style="width: 38%"></i></div><span>38</span></div><span class="faint t-micro">Down 14 after the miss at 17.4 · first match against Lamichhane</span></div>
+              <div class="stack" style="gap: 4px"><div style="display: flex; justify-content: space-between"><span>Biratnagar fielders</span><span class="mut t-small">Edgy</span></div><div class="gauge"><div class="meter"><i style="width: 55%"></i></div><span>55</span></div></div>
+            </div>
+            <div class="panel stack" style="gap: 8px">
+              <h2 class="sec" style="margin: 0">Dugout</h2>
+              <ul class="mlist">
+                <li style="min-height: 36px; padding: 6px 0"><span class="grow">Impact Player</span><span class="mut t-small">Used · Hemant Dhami for Suman Tamang, over 10</span></li>
+                <li style="min-height: 36px; padding: 6px 0"><span class="grow">Strategic timeouts</span><span class="mut t-small">Both used</span></li>
+                <li style="min-height: 36px; padding: 6px 0"><span class="grow">Reviews</span><span class="mut t-small">1 left</span></li>
+                <li style="min-height: 36px; padding: 6px 0"><span class="grow">Send a message out</span><button type="button" class="btn btn-sm">Drinks runner</button></li>
+              </ul>
+            </div>
+            <button type="button" class="btn btn-primary btn-lg">Next ball</button>
+          </aside>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <sc-if value="{{moment}}" hint-placeholder-val="{{ true }}">
+    <div class="scrim">
+      <div class="modal occasion" role="dialog" aria-modal="true" aria-labelledby="km" style="width: min(620px, 100%)">
+        <p class="gld t-small" style="font-weight: 600">Key moment · over 19</p>
+        <h2 id="km" class="t-h2" style="margin-top: 6px">19 needed from 12. Lamichhane is coming back for his last over.</h2>
+        <p class="mut t-small" style="margin-top: 6px">Gulshan Jha is on strike and rattled. Lamichhane has 3 wickets tonight; left-handers score 8.2 an over off him this season.</p>
+        <div class="stack" style="gap: 8px; margin-top: 16px">
+          <sc-for list="{{opts}}" as="o" hint-placeholder-count="3">
+            <button type="button" class="choice {{o.cls}}" onClick="{{o.pick}}"><span style="font-weight: 600">{{o.label}}</span><span class="fx">{{o.how}}</span><span class="fx">Win chance <span class="{{o.dirCls}}">{{o.wp}}</span> · {{o.risk}}</span></button>
+          </sc-for>
+        </div>
+        <div class="acts"><button type="button" class="btn btn-primary btn-lg" onClick="{{close}}">Send the message out</button></div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"showMoment":{"editor":"boolean","default":true},"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { pick:'calm', closed:false }; }
+  renderVals() {
+    const O = [
+      ['attack','Gulshan: take Lamichhane on','Matchup favours the left-hander. Two big shots and the chase is done.','41% → 47%','up','High wicket risk at composure 38'],
+      ['calm','Gulshan: calm down, get Neesham on strike','Singles first; Neesham attacks the last over against pace.','41% → 44%','up','Leaves 13+ for the final over'],
+      ['block','See out Lamichhane','Block his over, then 15 or so from Kshetri’s last over.','41% → 33%','down','Safe now, very hard later']
+    ];
+    const s = this.state;
+    const opts = O.map(o => ({ label:o[1], how:o[2], wp:o[3], dirCls:o[4], risk:o[5], cls: s.pick === o[0] ? 'on' : '', pick: () => this.setState({ pick:o[0] }) }));
+    return { theme: this.props.theme ?? 'dark', opts, moment: (this.props.showMoment ?? true) && !s.closed, close: () => this.setState({ closed:true }) };
+  }
+}
+</script>
+</body>
+</html>

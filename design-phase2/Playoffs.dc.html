@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Playoff week</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl" data-theme="{{theme}}" style="min-height: 1100px">
+  <header class="top">
+    <span class="brand">NPL Manager</span>
+    <span class="tm"><i class="dot t-ll"></i>Lumbini Lions</span>
+    <span class="kv"><span>Season</span><span>3 · 2026</span></span>
+    <span class="phase" style="border-color: var(--gold); color: var(--gold)"><b style="color: var(--gold)">Playoffs</b> · into the final</span>
+    <span class="spacer"></span>
+    <span class="kv"><span>Domestic purse</span><span class="num">Rs 18 L</span></span>
+  </header>
+  <div class="shell">
+    <nav class="nav" aria-label="Main">
+      <a href="Home.dc.html">Home</a>
+      <a href="Squad.dc.html">Squad</a>
+      <a href="Prematch.dc.html">Match</a>
+      <a href="Playoffs.dc.html" class="on" aria-current="page">Fixtures <small>Playoffs</small></a>
+      <a href="Table.dc.html">Table</a>
+      <span class="off" aria-disabled="true">Auction <small>Off-season</small></span>
+      <hr>
+      <a href="History.dc.html">Stats</a>
+      <a href="History.dc.html">History</a>
+      <a href="Finance.dc.html">Club</a>
+      <a href="Settings.dc.html">Settings</a>
+    </nav>
+    <main class="main">
+      <div style="max-width: 1220px">
+        <div class="pagehead">
+          <div class="stack" style="gap: 4px">
+            <h1 class="t-h1">Playoff week</h1>
+            <p class="mut">You won Qualifier 1. Your final opponent is decided on Thursday.</p>
+          </div>
+          <a href="FinalWeek.dc.html" class="btn btn-primary btn-lg">Final week plan</a>
+        </div>
+
+        <section aria-label="Playoff bracket" style="display: grid; grid-template-columns: minmax(0,1fr) 40px minmax(0,1fr) 40px minmax(0,1fr); align-items: center; gap: 0">
+          <div class="stack" style="gap: 28px">
+            <div class="panel stack" style="gap: 6px">
+              <span class="faint t-small">Qualifier 1 · Tue 17 Nov · played</span>
+              <p style="display: flex; justify-content: space-between"><span style="display: flex; align-items: center"><i class="dot t-sr"></i>Sudurpaschim</span><span class="board-f" style="font-size: 18px">163/8</span></p>
+              <p style="display: flex; justify-content: space-between; font-weight: 600"><span style="display: flex; align-items: center"><i class="dot t-ll"></i>Lumbini</span><span class="board-f" style="font-size: 18px">172/6</span></p>
+              <span class="blu t-small">Lumbini won by 9 runs → Final</span>
+            </div>
+            <div class="panel stack" style="gap: 6px">
+              <span class="faint t-small">Eliminator · Wed 18 Nov · played</span>
+              <p style="display: flex; justify-content: space-between; font-weight: 600"><span style="display: flex; align-items: center"><i class="dot t-kg"></i>Kathmandu</span><span class="board-f" style="font-size: 18px">158/4</span></p>
+              <p style="display: flex; justify-content: space-between"><span style="display: flex; align-items: center"><i class="dot t-bk"></i>Biratnagar</span><span class="board-f" style="font-size: 18px">155/9</span></p>
+              <span class="mut t-small">Kathmandu won by 6 wkts · Biratnagar out</span>
+            </div>
+          </div>
+          <div style="height: 60%; border: 1px solid var(--rule-strong); border-left: 0; border-radius: 0 8px 8px 0; margin-right: 8px" aria-hidden="true"></div>
+          <div class="panel stack" style="gap: 6px; border-color: var(--ink-3)">
+            <span class="faint t-small">Qualifier 2 · Thu 19 Nov · 7:15 pm</span>
+            <p style="display: flex; align-items: center"><i class="dot t-sr"></i>Sudurpaschim <span class="faint t-small" style="margin-left: 6px">loser of Q1</span></p>
+            <p style="display: flex; align-items: center"><i class="dot t-kg"></i>Kathmandu <span class="faint t-small" style="margin-left: 6px">winner of Eliminator</span></p>
+            <span class="t-small mut">Winner plays you in the final</span>
+            <div class="row" style="gap: 6px; margin-top: 4px"><button type="button" class="btn btn-sm">Watch live</button><button type="button" class="btn btn-sm">Send analyst</button></div>
+          </div>
+          <div style="height: 2px; background: var(--rule-strong); margin: 0 8px" aria-hidden="true"></div>
+          <div class="panel occasion stack" style="gap: 6px">
+            <span class="gld t-small" style="font-weight: 600">Final · Sat 21 Nov · 7:15 pm</span>
+            <p style="display: flex; align-items: center; font-weight: 600"><i class="dot t-ll"></i>Lumbini Lions</p>
+            <p class="mut">v winner of Qualifier 2</p>
+            <span class="t-small mut">Sold out · Kirtipur</span>
+          </div>
+        </section>
+
+        <div class="cols" style="margin-top: 36px; grid-template-columns: repeat(auto-fit, minmax(min(340px,100%),1fr)); gap: 32px">
+          <section>
+            <h2 class="t-h3" style="margin-bottom: 8px">Who would you rather face?</h2>
+            <table class="tbl plain compact">
+              <thead><tr><th style="padding-left: 0"></th><th><i class="dot t-sr"></i>Sudurpaschim</th><th><i class="dot t-kg"></i>Kathmandu</th></tr></thead>
+              <tbody>
+                <tr><td style="padding-left: 0" class="mut">Against you this season</td><td>1–1</td><td>0–1</td></tr>
+                <tr><td style="padding-left: 0" class="mut">Form</td><td>W W L W W</td><td>L L W W W</td></tr>
+                <tr><td style="padding-left: 0" class="mut">Danger player</td><td>Dipendra Singh Airee</td><td>Karan KC, in his final season</td></tr>
+                <tr><td style="padding-left: 0" class="mut">Model's final odds for you</td><td>48%</td><td>57%</td></tr>
+              </tbody>
+            </table>
+          </section>
+          <section>
+            <h2 class="t-h3" style="margin-bottom: 8px">Before the final</h2>
+            <ul class="mlist">
+              <li><span class="grow">Rest or train on Wednesday and Thursday<br><span class="l2">Neesham and Trumpelmann need at least one rest day</span></span><a href="Week.dc.html" class="btn btn-sm">Plan</a></li>
+              <li><span class="grow">Watch Qualifier 2 live<br><span class="l2">Unlocks a fuller opposition report for the final</span></span><span class="faint t-small">Thu</span></li>
+              <li><span class="grow">Media day<br><span class="l2">Both captains and managers · Friday</span></span><a href="Press.dc.html" class="btn btn-sm">Prepare</a></li>
+            </ul>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() { return { theme: this.props.theme ?? 'light' }; }
+}
+</script>
+</body>
+</html>

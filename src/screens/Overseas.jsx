@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useGame } from '../lib/store.jsx';
-import { Icon } from '../components/icons.jsx';
 import { ovr, fmtL } from '../game/engine.js';
 import { COUNTRY_NAMES } from '../game/data.js';
 import { autosave } from '../lib/save.js';
@@ -24,7 +23,7 @@ export default function Overseas() {
   return (
     <div className="ospg stack" style={{ gap: 14 }}>
       <div className="sechead" style={{ alignItems: 'center' }}>
-        <Link to="/squad" className="t-small row" style={{ gap: 4, alignItems: 'center' }}><Icon name="back" size={18} />Squad</Link>
+        <Link to="/squad" className="t-small row" style={{ gap: 4, alignItems: 'center' }}>‹ Squad</Link>
         <span className="t-small faint">{os.filter((p) => !p.temp).length} of 6–8</span>
       </div>
       <h1 className="t-h1">Overseas players</h1>

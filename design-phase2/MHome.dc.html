@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Home, mobile</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl m-root" data-theme="{{theme}}">
+  <header class="m-top">
+    <span class="team"><i class="dot t-ll"></i>Lumbini Lions</span>
+    <span class="phase" style="font-size: 12px; padding: 2px 8px"><b>League</b> · Wk 5</span>
+    <span class="purse">Dom <b>Rs 18 L</b><br>OS <b>Rs 9 L</b></span>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Home sections">
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+      <button type="button" role="tab" class="{{t.cls}}" aria-selected="{{t.sel}}" onClick="{{t.pick}}">{{t.label}}<sc-if value="{{t.hasBadge}}" hint-placeholder-val="{{ false }}"><span class="badge">{{t.badge}}</span></sc-if></button>
+    </sc-for>
+  </div>
+
+  <div class="m-scroll">
+    <sc-if value="{{isToday}}" hint-placeholder-val="{{ true }}">
+      <section class="stack" style="gap: 8px; padding: 14px 0 16px; border-bottom: 1px solid var(--rule)">
+        <p class="faint t-small">Tonight 7:15 pm · Match 17 · Kirtipur</p>
+        <p style="font-size: 20px; line-height: 26px; font-weight: 600; display: flex; flex-direction: column">
+          <span style="display: flex; align-items: center"><i class="dot t-ll"></i>Lumbini Lions <span class="faint t-small" style="font-weight: 400; margin-left: 8px">2nd</span></span>
+          <span style="display: flex; align-items: center"><i class="dot t-bk"></i>Biratnagar Kings <span class="faint t-small" style="font-weight: 400; margin-left: 8px">4th</span></span>
+        </p>
+        <p class="t-small mut">Form <span class="board-f" style="font-size: 15px; letter-spacing: .08em">W L W W</span> v <span class="board-f" style="font-size: 15px; letter-spacing: .08em">– W L W</span> · XI set 7 + 4</p>
+        <div style="display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 8px; margin-top: 4px">
+          <a href="MMatch.dc.html" class="btn btn-primary" style="min-height: 46px">Go to match</a>
+          <a href="MSquad.dc.html" class="btn" style="min-height: 46px">Review XI</a>
+        </div>
+      </section>
+
+      <p class="mhead">Needs your decision · 2</p>
+      <div class="stack" style="gap: 10px">
+        <div class="panel" style="padding: 14px">
+          <p style="font-weight: 600">Sponsor wants Rohit Paudel for an ad shoot</p>
+          <p class="t-small mut" style="margin-top: 2px">+Rs 6 L · costs about 8% fitness before the Gorkhas game</p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px">
+            <button type="button" class="btn" style="min-height: 44px">Accept</button>
+            <button type="button" class="btn" style="min-height: 44px">Decline</button>
+          </div>
+        </div>
+        <div class="panel" style="padding: 14px">
+          <p style="font-weight: 600">Rs 200 student ticket on Saturday?</p>
+          <p class="t-small mut" style="margin-top: 2px">Fan support up, gate receipts down</p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px">
+            <button type="button" class="btn" style="min-height: 44px">Agree</button>
+            <button type="button" class="btn" style="min-height: 44px">Keep prices</button>
+          </div>
+        </div>
+      </div>
+
+      <p class="mhead">Also today</p>
+      <ul class="mlist">
+        <li><span class="grow"><span class="crim">Roshan Karki</span> out 2 weeks, hamstring</span></li>
+        <li><span class="grow">Board confidence 72, up 6</span><span class="faint t-small">Satisfied</span></li>
+        <li><button type="button" class="btn btn-ghost" style="padding: 0; min-height: 32px; color: var(--blue)" onClick="{{toInbox}}">1 more in Inbox</button></li>
+      </ul>
+    </sc-if>
+
+    <sc-if value="{{isInbox}}" hint-placeholder-val="{{ false }}">
+      <div class="seg" role="group" aria-label="Filter" style="margin: 12px 0 4px; display: flex; overflow-x: auto; flex-wrap: nowrap">
+        <button type="button" class="on">All</button><button type="button">Decisions</button><button type="button">Injuries</button><button type="button">News</button><button type="button">Results</button>
+      </div>
+      <ul class="mlist">
+        <li><span class="grow"><span style="font-weight: 600">Sponsor wants Rohit Paudel for a shoot</span><br><span class="l2">Decision · Today</span></span><span class="badge">!</span></li>
+        <li><span class="grow"><span style="font-weight: 600">Rs 200 student ticket on Saturday?</span><br><span class="l2">Decision · Today</span></span><span class="badge">!</span></li>
+        <li><span class="grow"><span style="font-weight: 600">Roshan Karki: hamstring, 2 weeks</span><br><span class="l2">Injury · Today</span></span></li>
+        <li><span class="grow">Karan KC to retire after Season 3<br><span class="l2">League news · Today</span></span></li>
+        <li><span class="grow">Lumbini beat Karnali Yaks by 22 runs<br><span class="l2">Result · Sun · Player of the match Lalit Rajbanshi</span></span></li>
+        <li><span class="grow">Scout report: Gulshan Jha, potential 74–86<br><span class="l2">Scouting · Sat</span></span></li>
+      </ul>
+    </sc-if>
+
+    <sc-if value="{{isClub}}" hint-placeholder-val="{{ false }}">
+      <section class="stack" style="gap: 8px; padding-top: 14px">
+        <p class="mhead" style="margin-top: 0">Board objective</p>
+        <p style="font-weight: 600">Top two and Qualifier 1</p>
+        <div style="display: flex; justify-content: space-between" class="t-small"><span class="mut">Confidence</span><span>72 · Satisfied</span></div>
+        <div class="meter blue"><i style="width: 72%"></i></div>
+      </section>
+      <p class="mhead">Table</p>
+      <table class="tbl compact plain">
+        <tbody>
+          <tr><td style="padding-left: 0">1</td><td><i class="dot t-sr"></i>Sudurpaschim</td><td class="r">6</td><td class="r faint">+0.912</td></tr>
+          <tr class="me"><td style="padding-left: 0">2</td><td><i class="dot t-ll"></i>Lumbini</td><td class="r">6</td><td class="r faint">+0.488</td></tr>
+          <tr><td style="padding-left: 0">3</td><td><i class="dot t-kg"></i>Kathmandu</td><td class="r">6</td><td class="r faint">+0.301</td></tr>
+          <tr class="cut"><td style="padding-left: 0">4</td><td><i class="dot t-bk"></i>Biratnagar</td><td class="r">5</td><td class="r faint">+0.226</td></tr>
+        </tbody>
+      </table>
+      <a href="MLeague.dc.html" class="t-small" style="display: inline-block; margin-top: 8px">Full table</a>
+      <p class="mhead">Money</p>
+      <ul class="mlist">
+        <li><span class="grow">Balance</span><span>Rs 3.84 cr</span></li>
+        <li><span class="grow">Wage bill</span><span>Rs 2.21 cr <span class="faint">/ 2.4 cr cap</span></span></li>
+        <li><span class="grow">Fan support</span><span>64 · Warm</span></li>
+      </ul>
+    </sc-if>
+  </div>
+
+  <nav class="bnav" aria-label="Main">
+    <a href="MHome.dc.html" class="on" aria-current="page">Home</a>
+    <a href="MSquad.dc.html">Squad</a>
+    <a href="MMatch.dc.html"><span class="live"></span>Match</a>
+    <a href="MLeague.dc.html">League</a>
+    <a href="Settings.dc.html">More</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"tab":{"editor":"enum","options":["Today","Inbox","Club"],"default":"Today"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { tab: null }; }
+  renderVals() {
+    const tab = this.state.tab ?? this.props.tab ?? 'Today';
+    const B = { Today:'2', Inbox:'3', Club:'' };
+    const tabs = ['Today','Inbox','Club'].map(t => ({ label:t, sel: tab === t, cls: tab === t ? 'on' : '', badge: B[t], hasBadge: !!B[t], pick: () => this.setState({ tab: t }) }));
+    return { theme: this.props.theme ?? 'light', tabs, isToday: tab === 'Today', isInbox: tab === 'Inbox', isClub: tab === 'Club', toInbox: () => this.setState({ tab: 'Inbox' }) };
+  }
+}
+</script>
+</body>
+</html>

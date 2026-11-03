@@ -34,6 +34,10 @@ export default function Settings() {
         <div className="field"><span className="lbl">Default playback speed</span><Seg options={[['0.5', '0.5×'], ['1', '1×'], ['2', '2×'], ['4', '4×']]} value={String(S.speed)} onChange={(v) => set('speed', +v)} label="Speed" /></div>
         <Chk k="pauseDRS" l="Always pause for DRS decisions" /><Chk k="animate" l="Animate commentary ball by ball" /></section>
       <hr className="hr" />
+      <section className="stack" style={{ gap: 12 }}><h2 className="t-h3">Pace of the season</h2>
+        <Seg options={[['0', 'I run everything'], ['1', 'Let the assistant decide']]} value={S.assistant ? '1' : '0'} onChange={(v) => set('assistant', v === '1')} label="Pace of the season" />
+        <p className="faint t-small">{S.assistant ? 'The assistant handles matchday build-ups, press conferences, the training week and routine club business, and answers storylines with the cautious choice. With quick sim, a season takes about an hour.' : 'You make every call: build-ups, press, training, the dressing room and the office. A season takes four to six hours.'}</p></section>
+      <hr className="hr" />
       <section className="stack" style={{ gap: 12 }}><h2 className="t-h3">Difficulty</h2>
         <Seg options={[['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']]} value={S.difficulty || 'normal'} onChange={(v) => set('difficulty', v)} label="Difficulty" />
         <p className="faint t-small">{DIFF_TEXT[S.difficulty || 'normal']} Changes apply from the next bid, ball and board review.</p></section>

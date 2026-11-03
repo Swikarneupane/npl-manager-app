@@ -19,7 +19,7 @@ export class AuctionRoom {
     if (a.cur && !a.cur.done && !this.timer && !this.rtmAsk) this.schedule();
   }
   logSale(c, w) { const a = this.A; a.log = a.log || []; a.log.unshift({ pid: c.pid, team: w, price: c.bid }); if (a.log.length > 40) a.log.length = 40; }
-  canUserBid() { const G = this.G, c = this.A.cur; if (!c || c.done) return false; const p = G.P(c.pid); return c.leader !== G.user && G.canAdd(G.user, p) && G.nextBidAmount() <= G.budgetOf(G.user, p); }
+  canUserBid() { const G = this.G, c = this.A.cur; if (!c || c.done) return false; const p = G.P(c.pid); return c.leader !== G.user && G.canAdd(G.user, p) && G.nextBidAmount() <= G.lotMax(G.user, p); }
   tick() {
     const G = this.G, c = this.A.cur; this.timer = null;
     if (!c || c.done || this.rtmAsk) return;
@@ -40,7 +40,7 @@ export class AuctionRoom {
   answerRTM(use) { this.rtmAsk = null; if (use) this.G.useRTM(this.G.user); this.hammer(); }
   // Leave the "Scout and shortlist" screen and open lot 1.
   enter() { this.A.prep = false; autosave(this.G); this.ensureLot(); this.refresh(); }
-  canJump() { const G = this.G, c = this.A.cur; return this.canUserBid() && G.jumpBidAmount() <= G.budgetOf(G.user, G.P(c.pid)); }
+  canJump() { const G = this.G, c = this.A.cur; return this.canUserBid() && G.jumpBidAmount() <= G.lotMax(G.user, G.P(c.pid)); }
   jumpBid() { if (!this.canJump()) return 'You cannot afford that jump.'; return this.bid(this.G.jumpBidAmount()); }
   // Each AI team's position on the current lot.
   rivalStatus(tid) {

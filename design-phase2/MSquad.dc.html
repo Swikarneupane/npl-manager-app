@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Squad, mobile</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl m-root" data-theme="{{theme}}">
+  <header class="m-top">
+    <span class="team"><i class="dot t-ll"></i>Squad</span>
+    <span class="faint t-small">17 players</span>
+    <span class="purse">Dom <b>Rs 18 L</b><br>OS <b>Rs 9 L</b></span>
+  </header>
+
+  <div class="m-pin" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 16px">
+    <p class="t-small num" style="display: flex; gap: 12px">
+      <span>XI <b>{{n}}</b>/11</span><span>Nepali <b>{{nep}}</b>/7</span><span>Overseas <b>{{os}}</b>/4</span>
+    </p>
+    <span class="phase" style="font-size: 12px; border-color: {{ruleColor}}; color: {{ruleColor}}">{{ruleMsg}}</span>
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="Squad sections">
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+      <button type="button" role="tab" class="{{t.cls}}" aria-selected="{{t.sel}}" onClick="{{t.pick}}">{{t.label}}</button>
+    </sc-for>
+  </div>
+
+  <div class="m-scroll">
+    <sc-if value="{{isXi}}" hint-placeholder-val="{{ true }}">
+      <p class="mhead">Playing XI · tap to drop</p>
+      <ul class="mlist">
+        <sc-for list="{{xiRows}}" as="p" hint-placeholder-count="11">
+          <li>
+            <span class="board-f faint" style="width: 18px; text-align: right; font-size: 16px">{{p.pos}}</span>
+            <span class="grow"><span style="font-weight: 500">{{p.name}}</span> <span class="faint t-small">{{p.mark}}</span><br><span class="l2">{{p.nat}} · {{p.role}} · {{p.key}}</span></span>
+            <input type="checkbox" checked="{{p.inXi}}" onChange="{{p.toggle}}" aria-label="Drop {{p.name}}" style="width: 20px; height: 20px">
+          </li>
+        </sc-for>
+      </ul>
+      <p class="mhead">Bench · tap to pick</p>
+      <ul class="mlist">
+        <sc-for list="{{benchRows}}" as="p" hint-placeholder-count="6">
+          <li class="{{p.cls}}">
+            <span class="grow"><span>{{p.name}}</span><br><span class="l2">{{p.nat}} · {{p.role}} · {{p.key}}</span></span>
+            <input type="checkbox" checked="{{p.inXi}}" onChange="{{p.toggle}}" aria-label="Pick {{p.name}}" style="width: 20px; height: 20px">
+          </li>
+        </sc-for>
+      </ul>
+    </sc-if>
+
+    <sc-if value="{{isAll}}" hint-placeholder-val="{{ false }}">
+      <div class="seg" role="group" aria-label="Sort by" style="margin: 12px 0 4px; display: grid; grid-template-columns: repeat(4, minmax(0,1fr))"><button type="button" class="on">Rating</button><button type="button">Form</button><button type="button">Fitness</button><button type="button">Value</button></div>
+      <ul class="mlist">
+        <sc-for list="{{allRows}}" as="p" hint-placeholder-count="17">
+          <li>
+            <a href="Player.dc.html" class="grow" style="color: inherit; text-decoration: none"><span style="font-weight: 500">{{p.name}}</span> <span class="faint t-small">{{p.nat}} · {{p.age}} · {{p.role}}</span><br><span class="l2">Bat {{p.bat}} · Bowl {{p.bowl}} · Pot <span class="{{p.potCls}}">{{p.pot}}</span> · Form {{p.form}} · Fit {{p.fit}}</span><sc-if value="{{p.hasInj}}" hint-placeholder-val="{{ false }}"><br><span class="crim t-small">{{p.inj}}</span></sc-if></a>
+            <span class="t-small mut num" style="text-align: right">{{p.val}}</span>
+          </li>
+        </sc-for>
+      </ul>
+    </sc-if>
+
+    <sc-if value="{{isOrder}}" hint-placeholder-val="{{ false }}">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-top: 12px">
+        <div class="field"><label for="c">Captain</label><select id="c" class="input" style="width: 100%; height: 44px"><option>Rohit Paudel</option><option>Charith Asalanka</option></select></div>
+        <div class="field"><label for="w">Wicketkeeper</label><select id="w" class="input" style="width: 100%; height: 44px"><option>Aasif Sheikh</option><option>Niroshan Dickwella</option></select></div>
+      </div>
+      <p class="mhead">Batting order</p>
+      <ol class="mlist">
+        <sc-for list="{{order}}" as="o" hint-placeholder-count="11">
+          <li style="padding: 4px 0">
+            <span class="board-f faint" style="width: 18px; text-align: right; font-size: 16px">{{o.n}}</span>
+            <span class="grow"><span style="font-weight: 500">{{o.name}}</span> <span class="faint t-small">{{o.role}}</span></span>
+            <button type="button" class="btn btn-ghost" style="min-height: 44px; width: 44px; padding: 0" onClick="{{o.up}}" aria-label="Move {{o.name}} up">↑</button>
+            <button type="button" class="btn btn-ghost" style="min-height: 44px; width: 44px; padding: 0" onClick="{{o.down}}" aria-label="Move {{o.name}} down">↓</button>
+          </li>
+        </sc-for>
+      </ol>
+    </sc-if>
+
+    <sc-if value="{{isTrain}}" hint-placeholder-val="{{ false }}">
+      <div class="field" style="padding-top: 12px">
+        <span class="lbl" id="ti">Team intensity</span>
+        <div class="seg" role="group" aria-labelledby="ti" style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr))">
+          <sc-for list="{{intensity}}" as="i" hint-placeholder-count="3"><button type="button" class="{{i.cls}}" onClick="{{i.pick}}" style="min-height: 40px">{{i.label}}</button></sc-for>
+        </div>
+        <p class="faint t-small">{{intensityNote}}</p>
+      </div>
+      <p class="mhead">Focus by player</p>
+      <ul class="mlist">
+        <sc-for list="{{allRows}}" as="p" hint-placeholder-count="17">
+          <li style="padding: 6px 0">
+            <span class="grow"><span>{{p.name}}</span><br><span class="l2">{{p.role}} · {{p.key}}</span></span>
+            <select class="input" style="height: 40px" aria-label="Training focus for {{p.name}}"><sc-for list="{{p.focusOpts}}" as="f" hint-placeholder-count="6"><option selected="{{f.sel}}">{{f.label}}</option></sc-for></select>
+          </li>
+        </sc-for>
+      </ul>
+    </sc-if>
+  </div>
+
+  <nav class="bnav" aria-label="Main">
+    <a href="MHome.dc.html">Home</a>
+    <a href="MSquad.dc.html" class="on" aria-current="page">Squad</a>
+    <a href="MMatch.dc.html"><span class="live"></span>Match</a>
+    <a href="MLeague.dc.html">League</a>
+    <a href="Settings.dc.html">More</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"tab":{"editor":"enum","options":["XI","Squad","Order","Training"],"default":"XI"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { tab:null, xi:[1,2,6,9,8,5,3,4,15,10,7], intensity:'Normal' }; }
+  renderVals() {
+    const P = [
+      [1,'Rohit Paudel','NEP',24,'BAT',82,38,'86',1,'8.1',96,'','Rs 58 L','Batting'],
+      [2,'Aasif Sheikh','NEP',25,'WK',76,12,'78–84',0,'7.0',98,'','Rs 34 L','Keeping'],
+      [3,'Gulshan Jha','NEP',20,'AR',64,66,'74–86',0,'6.4',91,'','Rs 26 L','Batting'],
+      [4,'Lalit Rajbanshi','NEP',27,'BOWL',22,77,'79',1,'7.6',94,'','Rs 28 L','Bowling'],
+      [5,'Jimmy Neesham','NZ',36,'AR',71,70,'72',1,'6.8',88,'','Rs 22 L','Fitness'],
+      [6,'Charith Asalanka','SL',29,'BAT',79,45,'81',1,'7.4',97,'','Rs 40 L','Batting'],
+      [7,'Ruben Trumpelmann','NAM',28,'BOWL',30,76,'78',1,'6.9',95,'','Rs 30 L','Bowling'],
+      [8,'Niroshan Dickwella','SL',33,'WK',72,5,'73',1,'5.8',92,'','Rs 15 L','Batting'],
+      [9,'Bibek Thapa Magar','NEP',22,'BAT',66,20,'70–80',0,'6.9',99,'','Rs 9 L','Batting'],
+      [10,'Sushant Rai','NEP',26,'BOWL',18,70,'71–75',0,'7.1',93,'','Rs 11 L','Bowling'],
+      [11,'Nabin Chaudhary','NEP',19,'AR',55,58,'72–88',0,'6.0',97,'','Rs 12 L','Bowling'],
+      [12,'Roshan Karki','NEP',28,'BOWL',25,68,'69',1,'5.5',64,'Injured · hamstring, 2 wk','Rs 9 L','Rest'],
+      [13,'Hemant Dhami','NEP',31,'BAT',70,30,'70',1,'6.2',90,'','Rs 8 L','Batting'],
+      [14,'Pratik Bhandari','NEP',21,'WK',58,8,'66–78',0,'6.6',96,'','Rs 7 L','Keeping'],
+      [15,'Suman Tamang','NEP',24,'BOWL',20,69,'70–76',0,'7.3',95,'','Rs 10 L','Bowling'],
+      [16,'Liam Carver','ENG',27,'BOWL',24,72,'74',1,'6.5',100,'','Rs 14 L','Bowling'],
+      [17,'Dewald Moller','SA',31,'BAT',73,18,'74',1,'6.1',94,'','Rs 13 L','Batting']
+    ];
+    const s = this.state;
+    const tab = s.tab ?? this.props.tab ?? 'XI';
+    const byId = {}; P.forEach(p => byId[p[0]] = p);
+    const FO = ['Batting','Bowling','Keeping','Fielding','Fitness','Rest'];
+    const toggle = (id) => { const xi = s.xi.includes(id) ? s.xi.filter(x => x !== id) : (s.xi.length < 11 ? s.xi.concat([id]) : s.xi); this.setState({ xi }); };
+    const key = (p) => p[4] === 'BOWL' ? 'Bowl ' + p[6] : (p[4] === 'AR' ? 'Bat ' + p[5] + ' · Bowl ' + p[6] : 'Bat ' + p[5]);
+    const row = (p) => ({ id:p[0], name:p[1], nat:p[2], age:p[3], role:p[4], bat:p[5], bowl:p[6], pot:p[7], potCls: p[8] ? '' : 'faint', form:p[9], fit:p[10] + '%',
+      inj:p[11], hasInj: !!p[11], val:p[12], key:key(p), inXi: s.xi.includes(p[0]), toggle: () => toggle(p[0]),
+      mark: p[0] === 1 ? '(c)' : (p[0] === 2 ? '(wk)' : ''), cls: p[11] ? 'dim' : '', focusOpts: FO.map(f => ({ label:f, sel: f === p[13] })) });
+    const xiRows = s.xi.map((id, i) => Object.assign(row(byId[id]), { pos: i + 1 }));
+    const benchRows = P.filter(p => !s.xi.includes(p[0])).map(row);
+    const nep = s.xi.filter(id => byId[id][2] === 'NEP').length;
+    const os = s.xi.length - nep;
+    const valid = nep === 7 && os === 4;
+    let ruleMsg = 'Legal XI';
+    if (!valid) ruleMsg = s.xi.length < 11 ? 'Pick ' + (11 - s.xi.length) + ' more' : (os > 4 ? 'Too many overseas' : 'Need 4 overseas');
+    if (s.xi.length < 11 && nep > 7) ruleMsg = 'Too many Nepali';
+    if (s.xi.length < 11 && os > 4) ruleMsg = 'Too many overseas';
+    const move = (i, d) => { const xi = s.xi.slice(); const j = i + d; if (j < 0 || j >= xi.length) return; const t = xi[i]; xi[i] = xi[j]; xi[j] = t; this.setState({ xi }); };
+    const order = s.xi.map((id, i) => ({ n: i + 1, name: byId[id][1], role: byId[id][4], up: () => move(i, -1), down: () => move(i, 1) }));
+    const notes = { Light:'Faster recovery, slower development.', Normal:'Steady development, standard injury risk.', Hard:'Faster development; fitness drops about 4% a week.' };
+    const tabs = ['XI','Squad','Order','Training'].map(t => ({ label:t, sel: tab === t, cls: tab === t ? 'on' : '', pick: () => this.setState({ tab: t }) }));
+    return { theme: this.props.theme ?? 'light', tabs, isXi: tab === 'XI', isAll: tab === 'Squad', isOrder: tab === 'Order', isTrain: tab === 'Training',
+      xiRows, benchRows, allRows: P.map(row), order, n: s.xi.length, nep, os, ruleMsg, ruleColor: valid ? 'var(--blue)' : 'var(--crimson)',
+      intensity: ['Light','Normal','Hard'].map(l => ({ label:l, cls: s.intensity === l ? 'on' : '', pick: () => this.setState({ intensity: l }) })), intensityNote: notes[s.intensity] };
+  }
+}
+</script>
+</body>
+</html>

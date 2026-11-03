@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Around the world</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl" data-theme="{{theme}}" style="min-height: 1200px">
+  <header class="top">
+    <span class="brand">NPL Manager</span>
+    <span class="tm"><i class="dot t-ll"></i>Lumbini Lions</span>
+    <span class="kv"><span>Season</span><span>5 → 6</span></span>
+    <span class="phase"><b>Off-season</b> · December 2028</span>
+    <span class="spacer"></span>
+    <span class="kv"><span>Domestic purse</span><span class="num">Rs 1.50 cr</span></span>
+  </header>
+  <div class="shell">
+    <nav class="nav" aria-label="Main">
+      <a href="Home.dc.html">Home</a>
+      <a href="Squad.dc.html">Squad</a>
+      <span class="off" aria-disabled="true">Match <small>Off-season</small></span>
+      <a href="Table.dc.html">Fixtures</a>
+      <a href="Table.dc.html">Table</a>
+      <a href="Retention.dc.html">Auction</a>
+      <hr>
+      <a href="World.dc.html" class="on" aria-current="page">World <small>Year in review</small></a>
+      <a href="International.dc.html">Nepal</a>
+      <a href="History.dc.html">History</a>
+      <a href="Finance.dc.html">Club</a>
+      <a href="Settings.dc.html">Settings</a>
+    </nav>
+    <main class="main">
+      <div style="max-width: 1220px">
+        <div class="pagehead">
+          <div class="stack" style="gap: 4px">
+            <p class="faint t-small">Off-season digest · simulated in your save</p>
+            <h1 class="t-h1">Who won what in 2028</h1>
+            <p class="mut">Nine T20 leagues finished this year. Tap a league for its final.</p>
+          </div>
+        </div>
+
+        <div class="split" style="gap: 40px; grid-template-columns: minmax(0,1.6fr) minmax(0,1fr)">
+          <section class="stack" style="gap: 14px">
+            <div class="tblwrap">
+              <table class="tbl">
+                <thead><tr><th>Finished</th><th>League</th><th>Champions</th><th>Beat</th><th>Final</th><th></th></tr></thead>
+                <tbody>
+                  <sc-for list="{{rows}}" as="r" hint-placeholder-count="9">
+                    <tr class="{{r.cls}}">
+                      <td class="faint">{{r.when}}</td>
+                      <td>{{r.league}}</td>
+                      <td class="name"><span class="gld" aria-hidden="true">★ </span>{{r.champ}}</td>
+                      <td class="mut">{{r.beat}}</td>
+                      <td class="t-small">{{r.margin}}</td>
+                      <td class="r"><button type="button" class="btn btn-sm {{r.btnCls}}" onClick="{{r.pick}}" aria-pressed="{{r.on}}">{{r.btn}}</button></td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+            <p class="faint t-micro">League and team names are real. Winners, scores and awards are simulated by the game from 2027 on.</p>
+
+            <div class="panel stack ev-new" style="gap: 8px">
+              <p class="faint t-small">{{sel.league}} final · {{sel.when}}</p>
+              <h2 class="t-h2"><span class="gld" aria-hidden="true">★ </span>{{sel.champ}} beat {{sel.beat}} {{sel.margin}}</h2>
+              <p class="mut" style="max-width: 680px">{{sel.story}}</p>
+              <sc-if value="{{sel.hasNep}}" hint-placeholder-val="{{ false }}"><p class="t-small"><span class="crim" style="font-weight: 600">Nepali angle:</span> {{sel.nep}}</p></sc-if>
+            </div>
+          </section>
+
+          <aside class="stack" style="gap: 24px">
+            <div>
+              <h2 class="sec">Headlines from the year</h2>
+              <ul class="inbox">
+                <li><span class="when">Feb</span><div><p class="ttl">Lamichhane named player of the final as Rajshahi win the BPL</p></div></li>
+                <li><span class="when">May</span><div><p class="ttl">Bengaluru beat Mumbai in the IPL final</p></div></li>
+                <li><span class="when">May</span><div><p class="ttl">Last-ball finish in the PSL final</p></div></li>
+                <li><span class="when">Sep</span><div><p class="ttl">Trinbago win a one-sided CPL final</p></div></li>
+              </ul>
+            </div>
+            <div>
+              <h2 class="sec">Nepali champions abroad</h2>
+              <ul class="mlist">
+                <li style="padding: 8px 0"><span class="grow">Sandeep Lamichhane<br><span class="l2">BPL champion · Rajshahi Warriors</span></span><span class="gld t-small">★</span></li>
+                <li style="padding: 8px 0"><span class="grow">Bibek Thapa Magar <span class="faint t-small">· Lumbini</span><br><span class="l2">ILT20 runner-up · development contract</span></span><span class="faint t-small">2nd</span></li>
+              </ul>
+            </div>
+            <div class="panel stack" style="gap: 6px">
+              <h2 class="sec" style="margin: 0">Coming up this winter</h2>
+              <p class="t-small">BBL and BPL start next week · SA20 and ILT20 in January · 3 Nepali players signed so far</p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { sel:'bpl' }; }
+  renderVals() {
+    const L = [
+      ['bbl','Jan','Big Bash League','Perth Scorchers','Sydney Sixers','by 6 wickets','Perth chased 168 with an over to spare after losing two early wickets.','6th title',''],
+      ['sa20','Feb','SA20','Sunrisers Eastern Cape','Paarl Royals','by 32 runs','A 70-run opening stand set up 189; Paarl were never in the chase.','3rd title',''],
+      ['ilt20','Feb','ILT20','Dubai Capitals','Desert Vipers','by 4 wickets','A tight chase at Dubai, settled by a six in the last over.','2nd title','Your Bibek Thapa Magar was on the Desert Vipers’ development roster and played in two league games.'],
+      ['bpl','Feb','Bangladesh Premier League','Rajshahi Warriors','Fortune Barishal','by 11 runs','Defending 156 on a slow pitch, Rajshahi strangled the middle overs.','1st title','Sandeep Lamichhane took 3 for 19 in the final and was player of the final.'],
+      ['ipl','May','Indian Premier League','Royal Challengers Bengaluru','Mumbai Indians','by 5 wickets','Mumbai’s 178 was chased with four balls left.','3rd title',''],
+      ['psl','May','Pakistan Super League','Islamabad United','Lahore Qalandars','by 2 wickets','Three needed off the last ball; a scrambled two and an overthrow.','4th title',''],
+      ['mlc','Jul','Major League Cricket','MI New York','Washington Freedom','by 18 runs','New York’s spinners took 6 wickets in the final.','2nd title',''],
+      ['cpl','Sep','Caribbean Premier League','Trinbago Knight Riders','Guyana Amazon Warriors','by 7 wickets','A one-sided final in Trinidad.','6th title',''],
+      ['npl','Nov','Nepal Premier League','Kathmandu Gorkhas','Lumbini Lions','by 3 runs','Your final. Kathmandu held on to defend 6 off the last over.','1st title','Your team. Lumbini lost the final in your Season 5.']
+    ];
+    const s = this.state;
+    const rows = L.map(l => { const on = s.sel === l[0]; return { when:l[1], league:l[2], champ:l[3], beat:l[4], margin:l[5], on, btn: on ? 'Showing' : 'Final', btnCls: on ? 'btn-blue' : '', cls: l[0] === 'npl' ? 'me' : '', pick: () => this.setState({ sel:l[0] }) }; });
+    const x = L.find(l => l[0] === s.sel);
+    const sel = { league:x[2], when:x[1] + ' 2028', champ:x[3], beat:x[4], margin:x[5], story:x[6], titles:x[7], nep:x[8], hasNep: !!x[8] };
+    return { theme: this.props.theme ?? 'light', rows, sel };
+  }
+}
+</script>
+</body>
+</html>

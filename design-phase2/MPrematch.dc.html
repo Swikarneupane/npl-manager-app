@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Build-up, mobile</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl m-root" data-theme="{{theme}}">
+  <header class="m-top">
+    <span class="team"><i class="dot t-ll"></i>v <i class="dot t-bk" style="margin-left: 6px"></i>Biratnagar</span>
+    <span class="purse"><b>Tonight 7:15</b><br>toss in 4 h</span>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="Build-up steps">
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+      <button type="button" role="tab" class="{{t.cls}}" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="padding: 0 10px">{{t.label}}</button>
+    </sc-for>
+  </div>
+
+  <div class="m-scroll">
+    <sc-if value="{{isOpp}}" hint-placeholder-val="{{ false }}">
+      <p style="font-weight: 600; margin-top: 14px">Biratnagar win when Lamichhane strangles overs 7–14</p>
+      <ul class="mlist">
+        <li><span class="grow">Lamichhane <span class="crim t-small">High threat</span><br><span class="l2">Left-handers score 8.2 an over off him</span></span></li>
+        <li><span class="grow">Warner <span class="crim t-small">High threat</span><br><span class="l2">Averages 14 v off-spin in the powerplay</span></span></li>
+        <li><span class="grow">Raza <span class="t-small mut">Medium</span><br><span class="l2">Concedes 9.4 an over at the death</span></span></li>
+      </ul>
+    </sc-if>
+    <sc-if value="{{isPitch}}" hint-placeholder-val="{{ false }}">
+      <p style="font-weight: 600; margin-top: 14px">Dry, turning from over 10, heavy dew after 9 pm</p>
+      <ul class="mlist">
+        <li><span class="grow">Par score</span><span>164</span></li>
+        <li><span class="grow">Chasing side at night</span><span>won 10 of 16</span></li>
+        <li><span class="grow">Rain</span><span>20%</span></li>
+      </ul>
+      <p class="t-small mut" style="margin-top: 10px">Assistant: bowl first if you win the toss.</p>
+    </sc-if>
+    <sc-if value="{{isXi}}" hint-placeholder-val="{{ false }}">
+      <p class="t-small mut" style="margin-top: 14px">7 Nepali + 4 overseas · Legal XI</p>
+      <ol class="t-small" style="margin: 8px 0 0; padding-left: 20px; line-height: 26px"><li>Paudel (c)</li><li>Sheikh (wk)</li><li>Asalanka</li><li>Thapa Magar</li><li>Dickwella</li><li>Neesham <span class="crim">· 88%</span></li><li>Jha</li><li>Rajbanshi</li><li>Tamang</li><li>Rai</li><li>Trumpelmann</li></ol>
+      <a href="MSquad.dc.html" class="btn" style="margin-top: 12px; width: 100%">Edit XI and substitutes</a>
+    </sc-if>
+    <sc-if value="{{isPlan}}" hint-placeholder-val="{{ false }}">
+      <ul class="mlist" style="margin-top: 6px">
+        <li><span class="grow">Powerplay<br><span class="l2">Bat: see out Shakib · Bowl: off-spin to Warner</span></span></li>
+        <li><span class="grow">Middle<br><span class="l2">Bat: see out Lamichhane, attack Raza · Bowl: spin both ends</span></span></li>
+        <li><span class="grow">Death<br><span class="l2">Bat: all-out from 17 · Bowl: wide yorkers</span></span></li>
+      </ul>
+    </sc-if>
+    <sc-if value="{{isTalk}}" hint-placeholder-val="{{ true }}">
+      <p class="t-small mut" style="margin-top: 12px">Mood: <b style="color: var(--ink)">confident</b> · three players have never faced Lamichhane</p>
+      <p class="mhead">Tone</p>
+      <div class="stack" style="gap: 8px">
+        <sc-for list="{{tones}}" as="t" hint-placeholder-count="4">
+          <button type="button" class="choice {{t.cls}}" onClick="{{t.pick}}" style="padding: 10px 12px"><span style="font-weight: 600">{{t.label}}</span><span class="fx">{{t.fx}}</span></button>
+        </sc-for>
+      </div>
+      <p class="mhead">A word with</p>
+      <ul class="mlist">
+        <li style="padding: 6px 0"><span class="grow">Gulshan Jha<br><span class="l2">nervous</span></span><select class="input" aria-label="Word with Gulshan Jha"><option>Back yourself</option><option>Play your game</option><option>Nothing</option></select></li>
+        <li style="padding: 6px 0"><span class="grow">Hemant Dhami<br><span class="l2">dropped, unhappy</span></span><select class="input" aria-label="Word with Hemant Dhami"><option>Your chance will come</option><option>Earn it</option><option>Nothing</option></select></li>
+      </ul>
+    </sc-if>
+  </div>
+
+  <div class="m-actions">
+    <button type="button" class="btn btn-primary" style="flex: 1 1 auto" onClick="{{next}}">{{nextLabel}}</button>
+    <button type="button" class="btn btn-ghost">Assistant</button>
+  </div>
+
+  <nav class="bnav" aria-label="Main">
+    <a href="MHome.dc.html">Home</a>
+    <a href="MSquad.dc.html">Squad</a>
+    <a href="MPrematch.dc.html" class="on" aria-current="page">Match</a>
+    <a href="MLeague.dc.html">League</a>
+    <a href="Settings.dc.html">More</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"tab":{"editor":"enum","options":["Opposition","Pitch","XI","Plan","Talk"],"default":"Talk"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { tab:null, tone:'calm' }; }
+  renderVals() {
+    const s = this.state;
+    const L = ['Opposition','Pitch','XI','Plan','Talk'];
+    const tab = s.tab ?? this.props.tab ?? 'Talk';
+    const tabs = L.map(t => ({ label:t, sel: tab === t, cls: tab === t ? 'on' : '', pick: () => this.setState({ tab:t }) }));
+    const T = [['calm','Calm','Steady composure for everyone'],['fired','Fired up','Veterans up; nervous players may rush'],['pressure','Pressure on','Leaders respond; youngsters tighten up'],['nopressure','No pressure','Young players relax; veterans may switch off']];
+    const tones = T.map(t => ({ label:t[1], fx:t[2], cls: s.tone === t[0] ? 'on' : '', pick: () => this.setState({ tone:t[0] }) }));
+    const i = L.indexOf(tab);
+    return { theme: this.props.theme ?? 'light', tabs, tones,
+      isOpp: tab === 'Opposition', isPitch: tab === 'Pitch', isXi: tab === 'XI', isPlan: tab === 'Plan', isTalk: tab === 'Talk',
+      next: () => this.setState({ tab: L[Math.min(4, i + 1)] }), nextLabel: i < 4 ? 'Next: ' + L[i + 1] : 'Go to the toss' };
+  }
+}
+</script>
+</body>
+</html>

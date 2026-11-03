@@ -35,11 +35,14 @@ for (let season = 0; season < 2; season++) {
     if (!f) { if (G.s.phase === 'league') G.setupPlayoffs(); else { const ch = G.advancePlayoffs(); if (ch) G.seasonAwards(ch); } continue; }
     if (userFix(G, f)) {
       // make sure decisions keep coming: force one after a user match if the 1-in-3 roll missed
-      if (lastM && !G.pendingDecisions().length) { G.makeEvent(lastM, G.s.fixtures.find((x) => x.n === lastM.n)); stats.made++; }
+      // (phase 2 modules add decisions of their own: stories, staff advice; only the core post-match event counts here)
+      const core = (n) => !n.story && n.kind === 'event' && !n.src;
+      if (lastM && !G.pendingDecisions().some(core)) { G.makeEvent(lastM, G.s.fixtures.find((x) => x.n === lastM.n)); stats.made++; }
       const due = G.decisionsDue();
       for (const n of due) ok(n.due != null && n.due <= f.n && n.choices[n.safe], 'a due decision has a deadline and a cautious choice');
       if (due.length) {
-        const n = due[0]; const board0 = G.teams[G.user].board;
+        const hasPromise = (d) => d.choices.some((c) => c.fx && (c.fx.promise === 'start' || c.fx.promise === 'debut'));
+        const n = ((plan === 'keep' || plan === 'break') && due.find(hasPromise)) || due.find(core) || due[0]; const board0 = G.teams[G.user].board;
         if (plan === 'expire') {
           // leave it: playing the match anyway must apply the cautious option and cost board 2
           const safe = n.choices[cautiousIndex(n)];

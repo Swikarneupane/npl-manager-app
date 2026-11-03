@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { gradeOfL } from '../game/office.js';
 import { useGame } from '../lib/store.jsx';
 import { Dot, Role } from '../components/bits.jsx';
 import { ovr, fmtL } from '../game/engine.js';
@@ -34,7 +35,7 @@ export default function Offseason() {
 
   const sq = t.squad.map((id) => G.P(id)).filter((p) => p.prevOvr != null);
   const delta = (p) => ovr(p) - p.prevOvr;
-  const coachOf = (p) => { const st = G.s.staff[G.user]; if (!p.coachDev) return null; const bat = p.role !== 'BOWL'; const x = bat ? st.bat : st.bowl; return x ? `level ${x.level} ${bat ? 'batting' : 'bowling'} coach` : null; };
+  const coachOf = (p) => { const st = G.s.staff[G.user]; if (!p.coachDev) return null; const bat = p.role !== 'BOWL'; const x = bat ? st.bat : st.bowl; return x ? `grade ${gradeOfL(x.level)} ${bat ? 'batting' : 'bowling'} coach` : null; };
   const why = (p) => { const d = delta(p); const r = []; if (p.age <= 22) r.push('Young'); const c = coachOf(p); if (c) r.push(c); if (p.focus !== 'Balanced' && d > 0) r.push(`${p.focus.toLowerCase()} focus`); if (t.training === 'Intense' && d > 0) r.push('hard training'); if (p.age >= 31 && d < 0) r.push('Age'); if (p.age >= 35) r.push('may retire next year'); if (d === 0 && p.pot <= ovr(p)) r.push('At his ceiling'); if (!r.length) r.push(d > 0 ? 'Regular cricket' : d < 0 ? 'Lost a step' : 'Steady'); return r.join(' · '); };
   const ret = (s.lastRetired || []).map((id) => G.P(id)).filter(Boolean);
   const myRet = ret.filter((p) => p.prevTeam === G.user);

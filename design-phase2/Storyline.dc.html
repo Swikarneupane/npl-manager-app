@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Story event</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl" data-theme="{{theme}}" style="min-height: 1000px">
+  <header class="top">
+    <span class="brand">NPL Manager</span>
+    <span class="tm"><i class="dot t-ll"></i>Lumbini Lions</span>
+    <span class="kv"><span>Season</span><span>3 · 2026</span></span>
+    <span class="phase"><b>League</b> · Week 4</span>
+    <span class="spacer"></span>
+    <span class="kv"><span>Domestic purse</span><span class="num">Rs 18 L</span></span>
+  </header>
+  <div class="shell">
+    <nav class="nav" aria-label="Main">
+      <a href="Home.dc.html" class="on">Home <small>Story</small></a>
+      <a href="Squad.dc.html">Squad</a>
+      <a href="Prematch.dc.html">Match</a>
+      <a href="Table.dc.html">Fixtures</a>
+      <a href="Table.dc.html">Table</a>
+      <span class="off" aria-disabled="true">Auction <small>Off-season</small></span>
+      <hr>
+      <a href="History.dc.html">Stats</a>
+      <a href="History.dc.html">History</a>
+      <a href="Finance.dc.html">Club</a>
+      <a href="Settings.dc.html">Settings</a>
+    </nav>
+    <main class="main">
+      <div style="max-width: 1180px">
+        <div class="split" style="gap: 44px; grid-template-columns: minmax(0,1.6fr) minmax(0,1fr)">
+          <section class="stack" style="gap: 22px">
+            <div class="stack" style="gap: 6px">
+              <p class="faint t-small">Story · part 3 of a chain that started in Week 2</p>
+              <h1 class="t-h1">Liam Carver wants to go home</h1>
+              <p class="mut" style="font-size: 16px; line-height: 26px; max-width: 660px">Your overseas seamer has barely spoken at training. Tonight his agent called: Liam misses his family, the food, the cold. He wants a week in England, in the middle of the run-in.</p>
+            </div>
+
+            <ol class="feed" aria-label="How we got here">
+              <li class="ev ev-dot"><span class="ov">Wk 2</span><span class="tx">Carver skips the team dinner after the Pokhara defeat. <span class="faint">You let it go.</span></span></li>
+              <li class="ev ev-dot"><span class="ov">Wk 3</span><span class="tx">The physio notes he is sleeping badly. Bowling speed down 4 kph.</span></li>
+              <li class="ev ev-drs"><span class="ov">Wk 4</span><span class="tx"><span class="tag">Now</span><b>His agent asks for a week's leave.</b></span></li>
+            </ol>
+
+            <div>
+              <h2 class="sec">What do you do?</h2>
+              <div class="stack" style="gap: 10px">
+                <sc-for list="{{opts}}" as="o" hint-placeholder-count="4">
+                  <button type="button" class="choice {{o.cls}}" onClick="{{o.pick}}"><span style="font-weight: 600">{{o.label}}</span><span class="fx">{{o.fx}}</span></button>
+                </sc-for>
+              </div>
+            </div>
+            <sc-if value="{{hasOut}}" hint-placeholder-val="{{ false }}">
+              <div class="panel stack ev-new" style="gap: 6px">
+                <p class="faint t-small">What happens next</p>
+                <p>{{out}}</p>
+                <p class="mut t-small">{{later}}</p>
+              </div>
+            </sc-if>
+          </section>
+
+          <aside class="stack" style="gap: 24px">
+            <div>
+              <h2 class="sec">Other stories running</h2>
+              <ul class="mlist">
+                <li><span class="grow">Dashain leave<br><span class="l2">4 players ask to go home for Tika day; you play two days later</span></span><span class="crim t-small">Decide by Fri</span></li>
+                <li><span class="grow">Hemant Dhami unrest<br><span class="l2">Part 2 of 4 · senior core watching</span></span><span class="t-small mut">Ongoing</span></li>
+                <li><span class="grow">Nabin Chaudhary's exams<br><span class="l2">University exams clash with the academy final</span></span><span class="t-small mut">Week 6</span></li>
+                <li><span class="grow">National call-up<br><span class="l2">Nepal camp wants Paudel and Rajbanshi for 3 days</span></span><span class="t-small mut">Week 7</span></li>
+              </ul>
+            </div>
+            <div class="panel stack" style="gap: 6px">
+              <h2 class="sec" style="margin: 0">How stories work</h2>
+              <p class="t-small">Each story is a chain of small events over weeks or seasons. Your choice at each step changes the next one, and no answer is always right.</p>
+              <p class="faint t-micro">Story characters, like Carver, are generated players.</p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { pick:null }; }
+  renderVals() {
+    const O = [
+      ['family','Fly his family out to Nepal','Rs 2 L · he stays, happiness up · board notices the cost','His wife and daughter land in Kathmandu on Thursday. Carver bowls his fastest spell of the season on Sunday.','Later: his family wants to stay for the playoffs. Another Rs 1 L.'],
+      ['leave','Give him the week off','He misses 2 games · comes back refreshed, or not at all','He flies out on Tuesday. You need a fourth overseas player for two games.','Later: 1 in 3 chance he asks to end his contract early.'],
+      ['mentor','Ask Neesham to look after him','Free · works if they click · Neesham’s focus slips a little','Neesham takes him out for dal bhat and a long talk. Carver is quieter but stays.','Later: the two become close; the overseas group grows stronger.'],
+      ['refuse','Refuse: he signed a contract','He stays, unhappy · may ask to leave at the auction','The agent hangs up. Carver trains, but alone, earbuds in.','Later: his form drops and the overseas group takes his side.']
+    ];
+    const s = this.state;
+    const opts = O.map(o => ({ label:o[1], fx:o[2], cls: s.pick === o[0] ? 'on' : '', pick: () => this.setState({ pick:o[0] }) }));
+    const sel = O.find(o => o[0] === s.pick);
+    return { theme: this.props.theme ?? 'light', opts, hasOut: !!sel, out: sel ? sel[3] : '', later: sel ? sel[4] : '' };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — League hub</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl" data-theme="{{theme}}" style="min-height: 1200px">
+  <header class="top">
+    <span class="brand">NPL Manager</span>
+    <span class="tm"><i class="dot t-ll"></i>Lumbini Lions</span>
+    <span class="kv"><span>Season</span><span>3 · 2026</span></span>
+    <span class="phase"><b>League</b> · Week 6</span>
+    <span class="spacer"></span>
+    <span class="kv"><span>Domestic purse</span><span class="num">Rs 18 L</span></span>
+  </header>
+  <div class="shell">
+    <nav class="nav" aria-label="Main">
+      <a href="Home.dc.html">Home</a>
+      <a href="Squad.dc.html">Squad</a>
+      <a href="Prematch.dc.html">Match</a>
+      <a href="Table.dc.html">Fixtures</a>
+      <a href="League.dc.html" class="on" aria-current="page">Table <small>League hub</small></a>
+      <span class="off" aria-disabled="true">Auction <small>Off-season</small></span>
+      <hr>
+      <a href="History.dc.html">Stats</a>
+      <a href="History.dc.html">History</a>
+      <a href="Finance.dc.html">Club</a>
+      <a href="Settings.dc.html">Settings</a>
+    </nav>
+    <main class="main">
+      <div style="max-width: 1220px">
+        <div class="pagehead">
+          <div class="stack" style="gap: 4px">
+            <h1 class="t-h1">League hub</h1>
+            <p class="mut">The other seven clubs, their managers and what is brewing · rival managers are generated characters</p>
+          </div>
+        </div>
+
+        <section>
+          <h2 class="t-h3" style="margin-bottom: 8px">Rival managers</h2>
+          <div class="tblwrap">
+            <table class="tbl">
+              <thead><tr><th>Club</th><th>Manager</th><th>Style</th><th style="width: 160px">Job security</th><th>With you</th><th>Lately</th></tr></thead>
+              <tbody>
+                <tr><td class="name"><i class="dot t-sr"></i>Sudurpaschim</td><td>Arun Bista</td><td class="t-small">Pace and bounce, all-out attack</td><td><div class="gauge high"><div class="meter"><i style="width: 92%"></i></div>Secure</div></td><td class="crim t-small">Rivals · two finals</td><td class="mut t-small">Unbeaten in 4</td></tr>
+                <tr><td class="name"><i class="dot t-kg"></i>Kathmandu</td><td>Deepak Shah</td><td class="t-small">Rotation, data-driven</td><td><div class="gauge low"><div class="meter"><i style="width: 34%"></i></div>Under pressure</div></td><td class="crim t-small">Spat in the press</td><td class="mut t-small">Lost 2 in a row</td></tr>
+                <tr><td class="name"><i class="dot t-bk"></i>Biratnagar</td><td>Rajesh Yadav</td><td class="t-small">Spin-first, defensive</td><td><div class="gauge"><div class="meter"><i style="width: 61%"></i></div>Stable</div></td><td class="t-small">Respectful</td><td class="mut t-small">Lost to you last week</td></tr>
+                <tr><td class="name"><i class="dot t-pa"></i>Pokhara</td><td>Sameer Gurung</td><td class="t-small">Big spender, buys stars</td><td><div class="gauge"><div class="meter"><i style="width: 58%"></i></div>Stable</div></td><td class="t-small">Wants your players</td><td class="mut t-small">Asked about Jha</td></tr>
+                <tr><td class="name"><i class="dot t-ky"></i>Karnali</td><td>Mohan Rawal</td><td class="t-small">Youth, home-grown</td><td><div class="gauge high"><div class="meter"><i style="width: 80%"></i></div>Secure</div></td><td class="t-small">Friendly</td><td class="mut t-small">3 teenagers in the XI</td></tr>
+                <tr><td class="name"><i class="dot t-cr"></i>Chitwan</td><td>Sunita Mahato</td><td class="t-small">Balanced, patient</td><td><div class="gauge"><div class="meter"><i style="width: 66%"></i></div>Stable</div></td><td class="t-small">Neutral</td><td class="mut t-small">Signed Sunil Bhatta</td></tr>
+                <tr><td class="name"><i class="dot t-jb"></i>Janakpur</td><td>Interim: Vikram Jha</td><td class="t-small">Unknown yet</td><td><div class="gauge low"><div class="meter"><i style="width: 20%"></i></div>Caretaker</div></td><td class="t-small">—</td><td class="crim t-small">Manager sacked on Friday</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <div class="split" style="margin-top: 32px; gap: 40px; grid-template-columns: minmax(0,1.3fr) minmax(0,1fr)">
+          <section>
+            <h2 class="t-h3" style="margin-bottom: 8px">News wire</h2>
+            <ul class="inbox">
+              <li class="unread"><span class="when">Today</span><div><p class="ttl">Janakpur sack their manager after six straight defeats</p><p class="mut t-small">Caretaker Vikram Jha promises “fearless cricket”. Expect a changed side when you meet them in Week 7.</p></div></li>
+              <li class="unread"><span class="when">Today</span><div><p class="ttl">Kathmandu manager: “Lumbini got lucky last year”</p><p class="mut t-small">Reply in Thursday's press conference, or ignore it. <a href="Press.dc.html">Press room</a></p></div></li>
+              <li><span class="when">Mon</span><div><p class="ttl">Pokhara ask about Gulshan Jha</p><p class="mut t-small">No bids between auctions, but they will be at the next one with Rs 1 cr.</p></div></li>
+              <li><span class="when">Sun</span><div><p class="ttl">Record watch: Dipendra Singh Airee 46 runs short of the season record</p><p class="mut t-small">Three games left. The commentary will mark it if he gets there.</p></div></li>
+            </ul>
+          </section>
+          <aside class="stack" style="gap: 22px">
+            <div>
+              <h2 class="sec">Your rivalries</h2>
+              <ul class="mlist">
+                <li><span class="grow"><i class="dot t-sr"></i>Sudurpaschim<br><span class="l2">Two finals in two years</span></span><span class="gauge low" style="width: 130px"><span class="meter"><i style="width: 90%"></i></span>Fierce</span></li>
+                <li><span class="grow"><i class="dot t-kg"></i>Kathmandu<br><span class="l2">Press spat, Thursday's game</span></span><span class="gauge" style="width: 130px"><span class="meter"><i style="width: 62%"></i></span>Heated</span></li>
+                <li><span class="grow"><i class="dot t-bk"></i>Biratnagar<br><span class="l2">2025 Qualifier 2, last-over win this year</span></span><span class="gauge" style="width: 130px"><span class="meter"><i style="width: 48%"></i></span>Growing</span></li>
+              </ul>
+              <p class="faint t-micro" style="margin-top: 6px">Rivalry games bring bigger crowds, more pressure and louder headlines.</p>
+            </div>
+            <div class="panel stack" style="gap: 6px">
+              <h2 class="sec" style="margin: 0">Other games this week</h2>
+              <p class="t-small">Thu · Sudurpaschim v Pokhara <span class="faint">· follow live</span></p>
+              <p class="t-small">Fri · Chitwan v Janakpur <span class="faint">· first game for the caretaker</span></p>
+              <button type="button" class="btn btn-sm" style="align-self: flex-start">Set alerts for these games</button>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  renderVals() { return { theme: this.props.theme ?? 'dark' }; }
+}
+</script>
+</body>
+</html>

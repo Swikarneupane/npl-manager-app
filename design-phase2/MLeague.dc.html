@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — League, mobile</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl m-root" data-theme="{{theme}}">
+  <header class="m-top">
+    <span class="team">League</span>
+    <span class="faint t-small">Season 3 · 16 of 28 played</span>
+    <span class="purse"><i class="dot t-ll"></i><b>2nd · 6 pts</b></span>
+  </header>
+
+  <div class="tabs" role="tablist" aria-label="League sections">
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+      <button type="button" role="tab" class="{{t.cls}}" aria-selected="{{t.sel}}" onClick="{{t.pick}}">{{t.label}}</button>
+    </sc-for>
+  </div>
+
+  <div class="m-scroll">
+    <sc-if value="{{isTable}}" hint-placeholder-val="{{ true }}">
+      <table class="tbl compact plain" style="margin-top: 6px">
+        <thead><tr><th style="padding-left: 0">#</th><th>Team</th><th class="r">P</th><th class="r">W</th><th class="r">Pts</th><th class="r">NRR</th></tr></thead>
+        <tbody>
+          <tr><td style="padding-left: 0">1</td><td><i class="dot t-sr"></i>Sudurpaschim</td><td class="r">4</td><td class="r">3</td><td class="r" style="font-weight: 600">6</td><td class="r faint">+0.912</td></tr>
+          <tr class="me"><td style="padding-left: 0">2</td><td><i class="dot t-ll"></i>Lumbini</td><td class="r">4</td><td class="r">3</td><td class="r" style="font-weight: 600">6</td><td class="r faint">+0.488</td></tr>
+          <tr><td style="padding-left: 0">3</td><td><i class="dot t-kg"></i>Kathmandu</td><td class="r">4</td><td class="r">3</td><td class="r" style="font-weight: 600">6</td><td class="r faint">+0.301</td></tr>
+          <tr class="cut"><td style="padding-left: 0">4</td><td><i class="dot t-bk"></i>Biratnagar</td><td class="r">4</td><td class="r">2</td><td class="r" style="font-weight: 600">5</td><td class="r faint">+0.226</td></tr>
+          <tr><td style="padding-left: 0">5</td><td><i class="dot t-pa"></i>Pokhara</td><td class="r">4</td><td class="r">2</td><td class="r" style="font-weight: 600">4</td><td class="r faint">−0.054</td></tr>
+          <tr><td style="padding-left: 0">6</td><td><i class="dot t-ky"></i>Karnali</td><td class="r">4</td><td class="r">1</td><td class="r" style="font-weight: 600">3</td><td class="r faint">−0.412</td></tr>
+          <tr><td style="padding-left: 0">7</td><td><i class="dot t-cr"></i>Chitwan</td><td class="r">4</td><td class="r">1</td><td class="r" style="font-weight: 600">2</td><td class="r faint">−0.640</td></tr>
+          <tr><td style="padding-left: 0">8</td><td><i class="dot t-jb"></i>Janakpur</td><td class="r">4</td><td class="r">0</td><td class="r" style="font-weight: 600">0</td><td class="r faint">−0.811</td></tr>
+        </tbody>
+      </table>
+      <p class="faint t-small" style="margin-top: 10px">Top four reach the playoffs. L and NR columns are in the full table.</p>
+      <a href="Table.dc.html" class="t-small" style="display: inline-block; margin-top: 6px">Full table with form</a>
+    </sc-if>
+
+    <sc-if value="{{isFix}}" hint-placeholder-val="{{ false }}">
+      <div class="seg" role="group" aria-label="Filter" style="margin: 12px 0 4px; display: grid; grid-template-columns: repeat(3, minmax(0,1fr))"><button type="button">All</button><button type="button" class="on">Lumbini</button><button type="button">Results</button></div>
+      <p class="mhead">Results</p>
+      <ul class="mlist">
+        <li><span class="grow">v Karnali Yaks <span class="faint t-small">· Sun 25</span><br><span class="l2">168/6 v 146/9</span></span><a href="Scorecard.dc.html" class="blu t-small" style="font-weight: 500">Won by 22</a></li>
+        <li><span class="grow">v Kathmandu Gorkhas <span class="faint t-small">· Wed 21</span></span><span class="blu t-small" style="font-weight: 500">Won</span></li>
+        <li><span class="grow">v Pokhara Avengers <span class="faint t-small">· Mon 19</span></span><span class="crim t-small" style="font-weight: 500">Lost</span></li>
+        <li><span class="grow">v Chitwan Rhinos <span class="faint t-small">· Sat 17</span></span><span class="blu t-small" style="font-weight: 500">Won</span></li>
+      </ul>
+      <p class="mhead">Next</p>
+      <ul class="mlist">
+        <li><span class="grow" style="font-weight: 600"><i class="dot t-bk"></i>v Biratnagar Kings<br><span class="l2" style="font-weight: 400">Tonight · 7:15 pm</span></span><a href="MMatch.dc.html" class="crim t-small" style="font-weight: 600; display: flex; align-items: center; gap: 6px"><span class="live"></span>Live</a></li>
+        <li><span class="grow"><i class="dot t-kg"></i>v Kathmandu Gorkhas<br><span class="l2">Thu 29 Oct · 7:15 pm</span></span></li>
+        <li><span class="grow"><i class="dot t-sr"></i>v Sudurpaschim Royals<br><span class="l2">Sun 1 Nov · 3:00 pm</span></span></li>
+      </ul>
+    </sc-if>
+
+    <sc-if value="{{isPo}}" hint-placeholder-val="{{ false }}">
+      <p class="faint t-small" style="margin-top: 12px">If the league ended today</p>
+      <ul class="mlist">
+        <li><span class="grow"><span class="l2">Qualifier 1</span><br><i class="dot t-sr"></i>Sudurpaschim v <i class="dot t-ll"></i><b style="font-weight: 600">Lumbini</b></span></li>
+        <li><span class="grow"><span class="l2">Eliminator</span><br><i class="dot t-kg"></i>Kathmandu v <i class="dot t-bk"></i>Biratnagar</span></li>
+        <li><span class="grow"><span class="l2">Qualifier 2</span><br>Loser of Q1 v winner of Eliminator</span></li>
+        <li><span class="grow"><span class="l2">Final</span><br>Winner of Q1 v winner of Q2</span></li>
+      </ul>
+    </sc-if>
+
+    <sc-if value="{{isCaps}}" hint-placeholder-val="{{ false }}">
+      <p class="mhead">Platinum Cap · most runs</p>
+      <ul class="mlist">
+        <li><span class="board-f faint" style="width: 14px">1</span><span class="grow"><i class="dot t-ll"></i>Rohit Paudel</span><span class="board-f" style="font-size: 18px; font-weight: 600">167</span></li>
+        <li><span class="board-f faint" style="width: 14px">2</span><span class="grow"><i class="dot t-pa"></i>Kushal Bhurtel</span><span class="board-f" style="font-size: 18px; font-weight: 600">154</span></li>
+        <li><span class="board-f faint" style="width: 14px">3</span><span class="grow"><i class="dot t-sr"></i>Dipendra Singh Airee</span><span class="board-f" style="font-size: 18px; font-weight: 600">141</span></li>
+      </ul>
+      <p class="mhead">Golden Cap · most wickets</p>
+      <ul class="mlist">
+        <li><span class="board-f faint" style="width: 14px">1</span><span class="grow"><i class="dot t-ll"></i>Lalit Rajbanshi</span><span class="board-f" style="font-size: 18px; font-weight: 600">9</span></li>
+        <li><span class="board-f faint" style="width: 14px">2</span><span class="grow"><i class="dot t-bk"></i>Sandeep Lamichhane</span><span class="board-f" style="font-size: 18px; font-weight: 600">8</span></li>
+        <li><span class="board-f faint" style="width: 14px">3</span><span class="grow"><i class="dot t-ky"></i>Sompal Kami</span><span class="board-f" style="font-size: 18px; font-weight: 600">7</span></li>
+      </ul>
+      <a href="History.dc.html" class="t-small" style="display: inline-block; margin-top: 10px">Records and past champions</a>
+    </sc-if>
+  </div>
+
+  <nav class="bnav" aria-label="Main">
+    <a href="MHome.dc.html">Home</a>
+    <a href="MSquad.dc.html">Squad</a>
+    <a href="MMatch.dc.html"><span class="live"></span>Match</a>
+    <a href="MLeague.dc.html" class="on" aria-current="page">League</a>
+    <a href="Settings.dc.html">More</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"tab":{"editor":"enum","options":["Table","Fixtures","Playoffs","Caps"],"default":"Table"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { tab:null }; }
+  renderVals() {
+    const tab = this.state.tab ?? this.props.tab ?? 'Table';
+    const tabs = ['Table','Fixtures','Playoffs','Caps'].map(t => ({ label:t, sel: tab === t, cls: tab === t ? 'on' : '', pick: () => this.setState({ tab: t }) }));
+    return { theme: this.props.theme ?? 'light', tabs, isTable: tab === 'Table', isFix: tab === 'Fixtures', isPo: tab === 'Playoffs', isCaps: tab === 'Caps' };
+  }
+}
+</script>
+</body>
+</html>

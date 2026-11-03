@@ -1,0 +1,36 @@
+/* Living league: stories, league hub, manager career, deeper player profile. Colours via tokens only. */
+.lv-wrap{max-width:1220px}
+.lv-split{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:40px;align-items:start}
+@media (max-width:1000px){.lv-split{grid-template-columns:minmax(0,1fr);gap:28px}}
+.lv-chip{display:inline-flex;align-items:center;font-size:12px;line-height:18px;padding:2px 9px;border:1px solid var(--rule-strong);border-radius:999px;color:var(--ink-2);white-space:nowrap}
+.lv-chip.g{border-color:var(--gold);color:var(--gold)}
+.lv-chip.r{border-color:var(--crimson);color:var(--crimson)}
+.lv-chip.b{border-color:var(--blue);color:var(--blue)}
+.lv-chips{display:flex;flex-wrap:wrap;gap:6px}
+.lv-fx{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column;gap:2px}
+.lv-fx li{font-size:12.5px;color:var(--ink-3)}
+.lv-fx .up{color:var(--blue)}
+.lv-fx .down{color:var(--crimson)}
+.lv-fx .warn{color:var(--gold)}
+.lv-out{border-left:3px solid var(--gold)}
+.lv-gauge{width:140px}
+.lv-mgr td{vertical-align:middle}
+.lv-bars{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:8px;align-items:end;height:140px;margin-top:14px;border-bottom:1px solid var(--rule-strong)}
+.lv-bar{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%;text-decoration:none;color:inherit;min-width:0}
+.lv-bar i{display:block;width:100%;min-height:2px;border-radius:3px 3px 0 0;background:var(--ink-3)}
+.lv-bar.g i{background:var(--gold)}
+.lv-bar.e{opacity:.35}
+.lv-big{font-size:40px;font-weight:600;line-height:1}
+.lv-rep{font-size:30px;font-weight:600}
+.lv-cab{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));gap:12px}
+.lv-cab .ghost{border-style:dashed;background:transparent}
+.lv-yr{font-size:30px;font-weight:600}
+.lv-sel{width:100%;height:40px}
+.lv-reply{font-style:italic}
+.lv-tl .mile .tag{background:var(--gold-soft);color:var(--gold)}
+.lv-side{display:flex;flex-direction:column;gap:24px}
+.lv-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin-bottom:24px}
+.lv-head .r{display:flex;flex-direction:column;align-items:flex-end;gap:4px;min-width:240px}
+@media (max-width:760px){.lv-head .r{align-items:flex-start;min-width:0}.lv-bars{gap:4px;height:120px}.lv-big{font-size:32px}}
+.lv-gst{flex-direction:column;align-items:stretch;gap:3px;text-align:right}
+.lv-gst .meter{min-width:0;width:100%}

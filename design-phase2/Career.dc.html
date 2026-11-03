@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Manager career</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl" data-theme="{{theme}}" style="min-height: 1200px">
+  <header class="top">
+    <span class="brand">NPL Manager</span>
+    <span class="tm"><i class="dot t-ll"></i>Lumbini Lions</span>
+    <span class="kv"><span>Season</span><span>3 → 4</span></span>
+    <span class="phase"><b>Off-season</b></span>
+    <span class="spacer"></span>
+    <span class="kv"><span>Manager</span><span>Swikar</span></span>
+  </header>
+  <div class="shell">
+    <nav class="nav" aria-label="Main">
+      <a href="Home.dc.html">Home</a>
+      <a href="Squad.dc.html">Squad</a>
+      <span class="off" aria-disabled="true">Match <small>Off-season</small></span>
+      <a href="Table.dc.html">Fixtures</a>
+      <a href="Table.dc.html">Table</a>
+      <a href="Retention.dc.html">Auction</a>
+      <hr>
+      <a href="History.dc.html">Stats</a>
+      <a href="Career.dc.html" class="on" aria-current="page">History <small>Your career</small></a>
+      <a href="Finance.dc.html">Club</a>
+      <a href="Settings.dc.html">Settings</a>
+    </nav>
+    <main class="main">
+      <div style="max-width: 1220px">
+        <div class="pagehead">
+          <div class="stack" style="gap: 6px">
+            <h1 class="t-h1">Swikar, manager</h1>
+            <p class="mut">1 season · Lumbini Lions · 9 matches · W5 L2 in the league, 2 playoff wins</p>
+            <div class="row" style="gap: 6px">
+              <span class="phase" style="font-size: 12px">Backs young players</span>
+              <span class="phase" style="font-size: 12px">Spin-first</span>
+              <span class="phase" style="font-size: 12px; border-color: var(--gold); color: var(--gold)">Calm in big games</span>
+            </div>
+          </div>
+          <div class="stack" style="align-items: flex-end; gap: 4px; min-width: 260px">
+            <span class="faint t-small">Reputation</span>
+            <span class="board-f" style="font-size: 30px; font-weight: 600">Respected · 64</span>
+            <div class="meter blue" style="width: 260px"><i style="width: 64%"></i></div>
+            <span class="faint t-micro">Local · Respected · National · Legendary</span>
+          </div>
+        </div>
+
+        <div class="split" style="gap: 40px; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr)">
+          <section class="stack" style="gap: 30px">
+            <div>
+              <h2 class="t-h3" style="margin-bottom: 8px">Trophy cabinet</h2>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(200px,100%),1fr)); gap: 12px">
+                <div class="panel occasion stack" style="gap: 4px"><span class="gld t-small" style="font-weight: 600">NPL champions</span><span class="board-f" style="font-size: 30px; font-weight: 600">2026</span><span class="t-small mut">Final v Sudurpaschim · won by 5 wkts</span><a href="Scorecard.dc.html" class="t-small">Final scorecard</a></div>
+                <div class="panel stack" style="gap: 4px; border-style: dashed; background: transparent"><span class="faint t-small">Next to win</span><span class="board-f faint" style="font-size: 30px">2027</span><span class="t-small faint">Back-to-back as manager</span></div>
+              </div>
+            </div>
+
+            <div>
+              <h2 class="t-h3" style="margin-bottom: 8px">Achievements · 4 of 18</h2>
+              <ul class="mlist">
+                <li><span class="grow">First title<br><span class="l2">Win the NPL</span></span><span class="gld t-small" style="font-weight: 600">Unlocked</span></li>
+                <li><span class="grow">Trust the kids<br><span class="l2">Pick a 20-year-old in a final</span></span><span class="gld t-small" style="font-weight: 600">Unlocked</span></li>
+                <li><span class="grow">Last-over specialist<br><span class="l2">Win 3 games in the final over</span></span><span class="gld t-small" style="font-weight: 600">Unlocked</span></li>
+                <li><span class="grow">Press-proof<br><span class="l2">10 press conferences without a bad headline</span></span><span class="gld t-small" style="font-weight: 600">Unlocked</span></li>
+                <li class="dim"><span class="grow">All-Nepali champions<br><span class="l2">Win the final with no overseas player batting in the top 6</span></span><span class="faint t-small">Locked</span></li>
+                <li class="dim"><span class="grow">Dynasty<br><span class="l2">5 titles in 10 seasons</span></span><span class="faint t-small">1 of 5</span></li>
+                <li class="dim"><span class="grow">From the academy to Nepal<br><span class="l2">An academy graduate earns a national cap</span></span><span class="faint t-small">Locked</span></li>
+              </ul>
+            </div>
+          </section>
+
+          <aside class="stack" style="gap: 24px">
+            <div>
+              <h2 class="sec">Who wants you</h2>
+              <ul class="mlist">
+                <li><span class="grow"><i class="dot t-kg"></i>Kathmandu Gorkhas<br><span class="l2">Interested · would double your budget</span></span><button type="button" class="btn btn-sm">Listen</button></li>
+                <li class="dim"><span class="grow">Nepal A team coach<br><span class="l2">Needs reputation 80 · offered from Season 6</span></span><span class="faint t-small">Locked</span></li>
+              </ul>
+            </div>
+            <div class="panel stack" style="gap: 8px">
+              <h2 class="sec" style="margin: 0">Legends and farewells</h2>
+              <p class="t-small"><b>Jimmy Neesham</b> may retire after Season 4. Plan a farewell game at Kirtipur: a guard of honour, a lap, and a vote for the Hall of Fame.</p>
+              <button type="button" class="btn btn-sm" style="align-self: flex-start">Plan farewell</button>
+            </div>
+            <div>
+              <h2 class="sec">Challenges for another save</h2>
+              <ul class="mlist">
+                <li style="padding: 8px 0"><span class="grow t-small">Rescue Janakpur from last place</span><span class="faint t-small">Hard</span></li>
+                <li style="padding: 8px 0"><span class="grow t-small">Win with no overseas stars over 70</span><span class="faint t-small">Very hard</span></li>
+                <li style="padding: 8px 0"><span class="grow t-small">Build a dynasty: 5 titles in 10 seasons</span><span class="faint t-small">Long</span></li>
+              </ul>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  renderVals() { return { theme: this.props.theme ?? 'dark' }; }
+}
+</script>
+</body>
+</html>

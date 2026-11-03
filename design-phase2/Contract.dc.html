@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Contract talks</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl" data-theme="{{theme}}" style="min-height: 1000px">
+  <header class="top">
+    <span class="brand">NPL Manager</span>
+    <span class="tm"><i class="dot t-ll"></i>Lumbini Lions</span>
+    <span class="kv"><span>Season</span><span>3 · 2026</span></span>
+    <span class="phase"><b>Off-season</b> · contract talks</span>
+    <span class="spacer"></span>
+    <span class="kv"><span>Wage room</span><span class="num">Rs 31 L</span></span>
+  </header>
+  <main style="max-width: 1180px; margin: 0 auto; padding: 32px 32px 56px">
+    <a href="Squad.dc.html" class="t-small">← Squad</a>
+    <div class="pagehead" style="margin-top: 10px">
+      <div class="stack" style="gap: 4px">
+        <h1 class="t-h1">New contract: Gulshan Jha</h1>
+        <p class="mut">20 · all-rounder · Emerging player of Season 3 · current deal Rs 9 L, ends this off-season</p>
+      </div>
+      <p class="t-small mut">Round {{round}} of 3 · agent: Bimal Karki (generated)</p>
+    </div>
+
+    <div class="split" style="gap: 44px; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr)">
+      <section class="stack" style="gap: 24px">
+        <div class="field">
+          <div style="display: flex; justify-content: space-between; align-items: baseline"><label for="wage">Wage per season</label><span class="board-f" style="font-size: 26px; font-weight: 600">Rs {{wage}} L</span></div>
+          <input id="wage" type="range" min="8" max="32" step="1" value="{{wage}}" onInput="{{setWage}}" onChange="{{setWage}}">
+          <div style="display: flex; justify-content: space-between" class="faint t-micro"><span>Rs 8 L</span><span>Agent asks Rs 22 L</span><span>Rs 32 L</span></div>
+        </div>
+        <div class="field">
+          <span class="lbl" id="yrs">Length</span>
+          <div class="seg" role="group" aria-labelledby="yrs"><sc-for list="{{years}}" as="o" hint-placeholder-count="4"><button type="button" class="{{o.cls}}" onClick="{{o.pick}}">{{o.label}}</button></sc-for></div>
+        </div>
+        <div class="field">
+          <span class="lbl" id="role">Promised role</span>
+          <div class="seg" role="group" aria-labelledby="role"><sc-for list="{{roles}}" as="o" hint-placeholder-count="3"><button type="button" class="{{o.cls}}" onClick="{{o.pick}}">{{o.label}}</button></sc-for></div>
+          <p class="faint t-small">A promise is tracked in the dressing room. Break it and his happiness falls fast.</p>
+        </div>
+        <div class="field">
+          <span class="lbl">Extras</span>
+          <label class="chk"><input type="checkbox" checked="{{bPlayoff}}" onChange="{{tPlayoff}}"> Playoff bonus · Rs 1 L per playoff win</label>
+          <label class="chk"><input type="checkbox" checked="{{bPom}}" onChange="{{tPom}}"> Player of the match bonus · Rs 50,000 each</label>
+          <label class="chk"><input type="checkbox" checked="{{rel}}" onChange="{{tRel}}"> Release clause · Rs 60 L (other teams can buy him out at the next auction)</label>
+        </div>
+        <div class="row" style="gap: 10px">
+          <button type="button" class="btn btn-primary btn-lg" onClick="{{submit}}" disabled="{{noRounds}}">Make offer</button>
+          <button type="button" class="btn btn-lg btn-ghost">Walk away</button>
+        </div>
+      </section>
+
+      <aside class="stack" style="gap: 22px">
+        <div class="panel stack" style="gap: 10px">
+          <h2 class="sec" style="margin: 0">Agent's reading</h2>
+          <div style="display: flex; justify-content: space-between" class="t-small"><span class="mut">Chance he signs</span><span class="{{chanceCls}}" style="font-weight: 600">{{chance}}%</span></div>
+          <div class="meter blue"><i style="width: {{chanceW}}"></i></div>
+          <p class="pull" style="font-size: 15px; line-height: 23px">“{{reply}}”</p>
+        </div>
+        <div>
+          <h2 class="sec">What he wants</h2>
+          <ul class="mlist">
+            <li style="padding: 8px 0"><span class="grow t-small">A regular place, not rotation</span><span class="crim t-small">Must have</span></li>
+            <li style="padding: 8px 0"><span class="grow t-small">Around Rs 22 L</span><span class="t-small mut">Important</span></li>
+            <li style="padding: 8px 0"><span class="grow t-small">A release clause</span><span class="t-small mut">Nice to have</span></li>
+          </ul>
+        </div>
+        <div>
+          <h2 class="sec">Context</h2>
+          <ul class="mlist">
+            <li style="padding: 8px 0"><span class="grow t-small">Pokhara Avengers have asked his agent about him</span></li>
+            <li style="padding: 8px 0"><span class="grow t-small">Highest Nepali wage in your squad: Rohit Paudel, Rs 30 L</span></li>
+            <li style="padding: 8px 0"><span class="grow t-small">If unsigned, he enters the auction pool</span></li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { wage:16, yrs:3, role:'Regular', bPlayoff:true, bPom:false, rel:false, round:1, sent:false }; }
+  renderVals() {
+    const s = this.state;
+    let c = 40 + (s.wage - 22) * 4 + (s.role === 'Key player' ? 15 : (s.role === 'Regular' ? 5 : -25)) + (s.bPlayoff ? 5 : 0) + (s.bPom ? 4 : 0) + (s.rel ? 12 : 0) - (s.yrs === 4 ? 10 : 0);
+    c = Math.max(5, Math.min(95, Math.round(c)));
+    let reply = 'Make us an offer. He loves the club, but he knows what he did last season.';
+    if (s.sent) reply = c >= 70 ? 'That works. We have a deal if you put it in writing today.' : (c >= 45 ? 'Closer. Move on the wage or add a release clause and we are there.' : 'With respect, Pokhara are talking about double this. Try again.');
+    const seg = (arr, key, fmt) => arr.map(v => ({ label: fmt ? fmt(v) : v, cls: s[key] === v ? 'on' : '', pick: () => this.setState({ [key]: v, sent:false }) }));
+    return { theme: this.props.theme ?? 'light', wage: s.wage, round: s.round,
+      setWage: (e) => this.setState({ wage: Number(e.target.value), sent:false }),
+      years: seg([1,2,3,4], 'yrs', v => v + (v === 1 ? ' season' : ' seasons')), roles: seg(['Rotation','Regular','Key player'], 'role'),
+      bPlayoff: s.bPlayoff, bPom: s.bPom, rel: s.rel,
+      tPlayoff: () => this.setState({ bPlayoff: !s.bPlayoff, sent:false }), tPom: () => this.setState({ bPom: !s.bPom, sent:false }), tRel: () => this.setState({ rel: !s.rel, sent:false }),
+      chance: c, chanceW: c + '%', chanceCls: c >= 70 ? 'blu' : (c < 40 ? 'crim' : ''), reply,
+      noRounds: s.round > 3, submit: () => this.setState({ sent:true, round: Math.min(4, s.round + 1) }) };
+  }
+}
+</script>
+</body>
+</html>

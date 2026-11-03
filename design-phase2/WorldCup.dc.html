@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — T20 World Cup 2028</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl" data-theme="{{theme}}" style="min-height: 1250px">
+  <header class="top">
+    <span class="brand">NPL Manager</span>
+    <span class="tm"><i class="dot t-ll"></i>Lumbini Lions</span>
+    <span class="kv"><span>Season</span><span>5 · 2028</span></span>
+    <span class="phase" style="border-color: var(--gold); color: var(--gold)"><b style="color: var(--gold)">World Cup</b> · group stage</span>
+    <span class="spacer"></span>
+    <span class="kv"><span>Your players at the World Cup</span><span class="num">4</span></span>
+  </header>
+  <div class="shell">
+    <nav class="nav" aria-label="Main">
+      <a href="Home.dc.html">Home</a>
+      <a href="Squad.dc.html">Squad</a>
+      <span class="off" aria-disabled="true">Match <small>Off-season</small></span>
+      <a href="Table.dc.html">Fixtures</a>
+      <a href="Table.dc.html">Table</a>
+      <span class="off" aria-disabled="true">Auction</span>
+      <hr>
+      <a href="World.dc.html">World <small>Leagues</small></a>
+      <a href="WorldCup.dc.html" class="on" aria-current="page">Nepal <small>World Cup</small></a>
+      <a href="History.dc.html">History</a>
+      <a href="Finance.dc.html">Club</a>
+      <a href="Settings.dc.html">Settings</a>
+    </nav>
+    <main class="main">
+      <div style="max-width: 1220px">
+        <section class="board occasion" style="padding: 26px 30px; border-radius: 12px">
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 18px">
+            <div class="stack" style="gap: 8px">
+              <span class="blbl" style="color: var(--gold); font-size: 14px">T20 World Cup 2028 · Australia and New Zealand · Group C · in-game</span>
+              <span class="bf" style="font-size: 50px; line-height: 1">Nepal v Pakistan</span>
+              <span class="blbl" style="font-size: 14px">Tonight · Bellerive Oval, Hobart · win and Nepal reach the Super 8 for the first time</span>
+            </div>
+            <div class="stack" style="gap: 8px; align-items: flex-end">
+              <span class="blbl">Starts in</span>
+              <span class="bf" style="font-size: 40px; line-height: 1">3h 20m</span>
+              <div class="row" style="gap: 8px"><button type="button" class="btn" style="background: var(--gold); border-color: var(--gold); color: #1A1406">Follow live</button><button type="button" class="btn" style="background: transparent; color: var(--board-ink); border-color: var(--board-rule)">Key moments only</button></div>
+            </div>
+          </div>
+          <p class="t-small" style="margin-top: 14px; color: var(--board-ink-2); font-style: italic">Nepali fans have driven down from Sydney and Melbourne overnight. The hill at Bellerive is crimson and blue.</p>
+        </section>
+
+        <div class="split" style="margin-top: 28px; gap: 40px; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr)">
+          <section class="stack" style="gap: 26px">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px">
+                <h2 class="t-h3">Groups · top two reach the Super 8</h2>
+                <div class="seg" role="group" aria-label="Group"><sc-for list="{{groups}}" as="g" hint-placeholder-count="4"><button type="button" class="{{g.cls}}" onClick="{{g.pick}}">{{g.label}}</button></sc-for></div>
+              </div>
+              <div class="tblwrap" style="margin-top: 10px">
+                <table class="tbl">
+                  <thead><tr><th>#</th><th>Team</th><th class="r">P</th><th class="r">W</th><th class="r">L</th><th class="r">Pts</th><th class="r">NRR</th><th>Left to play</th></tr></thead>
+                  <tbody>
+                    <sc-for list="{{rows}}" as="r" hint-placeholder-count="5">
+                      <tr class="{{r.cls}}"><td>{{r.n}}</td><td class="name">{{r.team}}</td><td class="r">{{r.p}}</td><td class="r">{{r.w}}</td><td class="r">{{r.l}}</td><td class="r" style="font-weight: 600">{{r.pts}}</td><td class="r faint">{{r.nrr}}</td><td class="t-small mut">{{r.left}}</td></tr>
+                    </sc-for>
+                  </tbody>
+                </table>
+              </div>
+              <p class="faint t-small" style="margin-top: 8px">{{groupNote}}</p>
+            </div>
+
+            <div>
+              <h2 class="t-h3" style="margin-bottom: 8px">Nepal so far</h2>
+              <ul class="mlist">
+                <li><span class="grow">Beat USA by 6 wickets<br><span class="l2">Gulshan Jha 3 for 21 on World Cup debut</span></span><span class="blu t-small">W</span></li>
+                <li><span class="grow">Beat Ireland by 14 runs<br><span class="l2">Rohit Paudel 71 off 48</span></span><span class="blu t-small">W</span></li>
+                <li><span class="grow">Lost to New Zealand by 8 wickets<br><span class="l2">All out for 112 in Auckland</span></span><span class="crim t-small">L</span></li>
+              </ul>
+            </div>
+          </section>
+
+          <aside class="stack" style="gap: 22px">
+            <div>
+              <h2 class="sec">Road to the final</h2>
+              <ol class="mlist">
+                <li style="padding: 8px 0"><span class="grow">Group stage</span><span class="crim t-small">Now</span></li>
+                <li style="padding: 8px 0"><span class="grow">Super 8 · two groups of four</span><span class="faint t-small">Win tonight</span></li>
+                <li style="padding: 8px 0"><span class="grow">Semi-finals</span><span class="faint t-small">—</span></li>
+                <li style="padding: 8px 0"><span class="grow">Final</span><span class="faint t-small">—</span></li>
+              </ol>
+            </div>
+            <div>
+              <h2 class="sec">Tournament leaders · in-game</h2>
+              <table class="tbl compact plain">
+                <tbody>
+                  <tr><td style="padding-left: 0" class="mut">Most runs</td><td>3rd · Kushal Bhurtel, Nepal</td><td class="r">164</td></tr>
+                  <tr><td style="padding-left: 0" class="mut">Most wickets</td><td>2nd · Sandeep Lamichhane, Nepal</td><td class="r">8</td></tr>
+                  <tr><td style="padding-left: 0" class="mut">Best economy</td><td>Lalit Rajbanshi, Nepal</td><td class="r">5.4</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="panel stack" style="gap: 8px">
+              <h2 class="sec" style="margin: 0">Your Lumbini players here</h2>
+              <p class="t-small">Rohit Paudel (c) · Lalit Rajbanshi · Gulshan Jha · Bibek Thapa Magar</p>
+              <p class="faint t-micro">A strong World Cup lifts their ratings, value and fame. A heavy workload raises injury risk before the NPL.</p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1440,"height":1250}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { g:'C' }; }
+  renderVals() {
+    const G = {
+      A: [['Australia',4,4,0,8,'+1.84','Done'],['England',4,3,1,6,'+0.92','Done'],['Afghanistan',4,2,2,4,'+0.10','Done'],['Netherlands',4,1,3,2,'−0.88','Done'],['Canada',4,0,4,0,'−1.95','Done']],
+      B: [['India',3,3,0,6,'+2.10','v Oman'],['South Africa',3,2,1,4,'+0.75','v Scotland'],['Scotland',3,1,2,2,'−0.41','v South Africa'],['UAE',4,1,3,2,'−0.90','Done'],['Oman',3,1,2,2,'−1.02','v India']],
+      C: [['New Zealand',3,3,0,6,'+1.62','v Ireland'],['Pakistan',3,2,1,4,'+0.58','v Nepal'],['Nepal',3,2,1,4,'+0.21','v Pakistan · tonight'],['Ireland',3,1,2,2,'−0.47','v New Zealand'],['USA',4,0,4,0,'−1.70','Done']],
+      D: [['West Indies',4,3,1,6,'+0.96','Done'],['Sri Lanka',4,3,1,6,'+0.61','Done'],['Bangladesh',4,2,2,4,'+0.12','Done'],['Zimbabwe',4,1,3,2,'−0.55','Done'],['Namibia',4,1,3,2,'−1.10','Done']]
+    };
+    const notes = { A:'Australia and England are through.', B:'India are through; South Africa need one more win.', C:'Winner of Nepal v Pakistan joins New Zealand in the Super 8.', D:'West Indies and Sri Lanka are through on net run rate.' };
+    const g = this.state.g;
+    const groups = ['A','B','C','D'].map(k => ({ label:'Group ' + k, cls: g === k ? 'on' : '', pick: () => this.setState({ g:k }) }));
+    const rows = G[g].map((r, i) => ({ n:i + 1, team:r[0], p:r[1], w:r[2], l:r[3], pts:r[4], nrr:r[5], left:r[6], cls: r[0] === 'Nepal' ? 'me' : (i === 1 ? 'cut' : '') }));
+    return { theme: this.props.theme ?? 'dark', groups, rows, groupNote: notes[g] + ' All results are simulated in the save.' };
+  }
+}
+</script>
+</body>
+</html>

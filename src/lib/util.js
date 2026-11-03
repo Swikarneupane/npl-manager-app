@@ -8,9 +8,13 @@ const NPD = '०१२३४५६७८९';
 export const nn = (G, s) => (G && G.s.settings.nepNum ? String(s).replace(/[0-9]/g, (d) => NPD[d]) : s);
 export function hash(str) { let h = 2166136261; for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return Math.abs(h); }
 export const formDisp = (p) => ((p.form + 10) / 2).toFixed(1);
+// Potential as scouts see it: the range stored on the player (p.potLo/p.potHi, narrowed by scout
+// reports in game/club.js), or one number once he is fully scouted. Older objects fall back to a hash range.
 export function potRange(p) {
   const o = ovr(p); if (p.scouted || p.pot <= o) return String(Math.max(o, p.pot));
-  const h = hash(p.id); const lo = Math.max(o, p.pot - (h % 7) - 1), hi = Math.min(97, p.pot + ((h >> 4) % 6) + 1);
+  let lo, hi;
+  if (p.potLo != null && p.potHi != null) { lo = Math.max(o, p.potLo); hi = Math.max(lo, p.potHi); }
+  else { const h = hash(p.id); lo = Math.max(o, p.pot - (h % 7) - 1); hi = Math.min(97, p.pot + ((h >> 4) % 6) + 1); }
   return lo === hi ? String(lo) : `${lo}–${hi}`;
 }
 export const stageName = (f) => ({ L: `Match ${f.n} of 28`, Q1: 'Qualifier 1', EL: 'Eliminator', Q2: 'Qualifier 2', F: 'Final' })[f.stage];

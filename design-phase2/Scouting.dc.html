@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Scouting and academy</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl" data-theme="{{theme}}" style="min-height: 1100px">
+  <header class="top">
+    <span class="brand">NPL Manager</span>
+    <span class="tm"><i class="dot t-ll"></i>Lumbini Lions</span>
+    <span class="kv"><span>Season</span><span>3 · 2026</span></span>
+    <span class="phase"><b>League</b> · Week 6</span>
+    <span class="spacer"></span>
+    <span class="kv"><span>Scouting budget</span><span class="num">Rs 2.4 L left</span></span>
+  </header>
+  <div class="shell">
+    <nav class="nav" aria-label="Main">
+      <a href="Home.dc.html">Home</a>
+      <a href="Squad.dc.html">Squad</a>
+      <a href="Prematch.dc.html">Match</a>
+      <a href="Table.dc.html">Fixtures</a>
+      <a href="Table.dc.html">Table</a>
+      <span class="off" aria-disabled="true">Auction <small>Off-season</small></span>
+      <hr>
+      <a href="History.dc.html">Stats</a>
+      <a href="History.dc.html">History</a>
+      <a href="Finance.dc.html" class="on">Club <small>Scouting</small></a>
+      <a href="Settings.dc.html">Settings</a>
+    </nav>
+    <main class="main">
+      <div style="max-width: 1220px">
+        <div class="pagehead">
+          <div class="stack" style="gap: 4px">
+            <h1 class="t-h1">Scouting and academy</h1>
+            <p class="mut">3 scouts out · 4 new reports · next academy match Saturday</p>
+          </div>
+        </div>
+
+        <div class="split" style="gap: 40px; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr)">
+          <section class="stack" style="gap: 30px">
+            <div>
+              <h2 class="t-h3" style="margin-bottom: 8px">Provinces</h2>
+              <div class="tblwrap">
+                <table class="tbl compact">
+                  <thead><tr><th>Province</th><th>Scout</th><th class="r">Watched</th><th>Best find so far</th><th></th></tr></thead>
+                  <tbody>
+                    <tr><td class="name">Koshi</td><td class="faint">—</td><td class="r">4</td><td class="mut">Prabin Limbu · AR · 64–76</td><td class="r"><button type="button" class="btn btn-sm">Send scout</button></td></tr>
+                    <tr><td class="name">Madhesh</td><td>Bishnu (B grade) · 3 days left</td><td class="r">11</td><td><span style="font-weight: 500">Anish Yadav</span> · BOWL · <span class="gld">74–90</span></td><td></td></tr>
+                    <tr><td class="name">Bagmati</td><td class="faint">—</td><td class="r">9</td><td class="mut">Rojan Shrestha · WK · 62–72</td><td class="r"><button type="button" class="btn btn-sm">Send scout</button></td></tr>
+                    <tr><td class="name">Gandaki</td><td class="faint">—</td><td class="r">2</td><td class="mut">Not enough seen</td><td class="r"><button type="button" class="btn btn-sm">Send scout</button></td></tr>
+                    <tr class="me"><td class="name">Lumbini · home</td><td>Ramesh (A grade) · academy league</td><td class="r">18</td><td class="mut">Milan Tharu · BAT · 63–71</td><td></td></tr>
+                    <tr><td class="name">Karnali</td><td>Kamala (C grade) · 6 days left</td><td class="r">5</td><td><span style="font-weight: 500">Sujal Budha</span> · BAT · <span class="gld">76–88</span></td><td></td></tr>
+                    <tr><td class="name">Sudurpaschim</td><td class="faint">—</td><td class="r">7</td><td class="mut">Sunil Bhatta signed by Chitwan</td><td class="r"><button type="button" class="btn btn-sm">Send scout</button></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="faint t-small" style="margin-top: 8px">Better scouts narrow potential faster. Scouts are generated staff; players listed are generated.</p>
+            </div>
+
+            <div>
+              <h2 class="t-h3" style="margin-bottom: 8px">New reports</h2>
+              <ul class="inbox">
+                <li class="unread"><span class="when">Today</span><div><p class="ttl">Anish Yadav, 17 · fast bowler · Madhesh</p><p class="mut t-small">Potential narrowed <span class="faint">70–92</span> → <b class="gld">74–90</b>. “Hits 135 kph already, raw but fearless. Will need two seasons.”</p><div class="acts"><button type="button" class="btn btn-sm btn-primary">Sign to academy · Rs 50,000</button><button type="button" class="btn btn-sm">Keep watching</button><button type="button" class="btn btn-sm">Add to auction shortlist</button></div></div></li>
+                <li class="unread"><span class="when">Mon</span><div><p class="ttl">Sujal Budha, 18 · top-order bat · Karnali</p><p class="mut t-small">Potential <b class="gld">76–88</b>. Second report due in 6 days.</p></div></li>
+                <li><span class="when">Sun</span><div><p class="ttl">Sunil Bhatta, 18 · leg-spin · signed by Chitwan</p><p class="mut t-small">We reported him in Week 2 and did not act. Chitwan did.</p></div></li>
+              </ul>
+            </div>
+          </section>
+
+          <aside class="stack" style="gap: 24px">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline"><h2 class="sec">Academy · under-19</h2><span class="faint t-micro">5 of 12 places</span></div>
+              <ul class="mlist">
+                <li style="padding: 8px 0"><span class="grow">Dipak Thapa, 17 <span class="role">BAT</span><br><span class="l2">Rating 52 · potential 70–82 · form 7.8</span></span><button type="button" class="btn btn-sm">Promote</button></li>
+                <li style="padding: 8px 0"><span class="grow">Saroj Gurung, 16 <span class="role">BOWL</span><br><span class="l2">Rating 45 · potential 66–84</span></span><button type="button" class="btn btn-sm">Promote</button></li>
+                <li style="padding: 8px 0"><span class="grow">Rakesh Mahato, 18 <span class="role">AR</span><br><span class="l2">Rating 55 · potential 60–68</span></span><button type="button" class="btn btn-sm">Release</button></li>
+                <li style="padding: 8px 0"><span class="grow">Bikash Oli, 17 <span class="role">WK</span><br><span class="l2">Rating 49 · potential 64–76</span></span><button type="button" class="btn btn-sm">Promote</button></li>
+                <li style="padding: 8px 0"><span class="grow">Aman Chaudhary, 16 <span class="role">BOWL</span><br><span class="l2">Rating 41 · potential 62–80 · homesick</span></span><button type="button" class="btn btn-sm">Talk</button></li>
+              </ul>
+            </div>
+            <div class="panel stack" style="gap: 6px">
+              <h2 class="sec" style="margin: 0">Next academy match</h2>
+              <p class="t-small"><b>Sat 31 Oct</b> v Karnali Yaks under-19 · watch it live or get the report</p>
+              <p class="faint t-micro">Academy players who score or take wickets grow faster and catch the board's eye.</p>
+            </div>
+            <div class="panel stack" style="gap: 6px">
+              <h2 class="sec" style="margin: 0">Board objective</h2>
+              <p class="t-small">Two academy players in the senior squad by the end of Season 4 · <span class="mut">0 of 2</span></p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() { return { theme: this.props.theme ?? 'dark' }; }
+}
+</script>
+</body>
+</html>

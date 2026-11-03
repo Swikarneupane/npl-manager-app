@@ -1,9 +1,9 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../lib/store.jsx';
-import { tr } from '../lib/util.js';
+import { tn } from '../lib/i18n.js';
+import { MORE_MAIN, DEPTH_GROUPS } from '../lib/nav.js';
 import { unreadCount } from './news.jsx';
-import { Icon } from './icons.jsx';
 
 // Where the Auction tile goes in each phase; null means the tile is disabled.
 export function auctionLink(G) {
@@ -13,8 +13,8 @@ export function auctionLink(G) {
   return { to: null, sub: ph === 'offseason' ? 'Opens after the off-season' : 'Opens after season' };
 }
 
-// Phone-only sheet behind the More tab. The Shell owns open/close and history; this renders the
-// tiles and handles Esc and focus.
+// Phone-only sheet behind the More tab: History, Club, World, Nepal and Settings first, then the
+// depth screens by group. Text only. The Shell owns open/close and history; this handles Esc and focus.
 export default function MoreSheet({ onClose }) {
   const { G } = useGame(); const nav = useNavigate(); const ref = useRef(null);
   useEffect(() => {
@@ -24,16 +24,7 @@ export default function MoreSheet({ onClose }) {
     document.addEventListener('keydown', key);
     return () => document.removeEventListener('keydown', key);
   }, [onClose]);
-  const unread = unreadCount(G); const auc = auctionLink(G);
-  const tiles = [
-    ['news', '/news', 'News', unread ? `${unread} unread` : 'All read', true],
-    ['nepal', '/nepal', 'Nepal', 'National team'],
-    ['stats', '/stats', 'Stats', 'Cap races'],
-    ['history', '/history', 'History', 'Records'],
-    ['auction', auc.to, 'Auction', auc.sub],
-    ['club', '/club', 'Club', 'Board · money'],
-    ['settings', '/settings', 'Settings', 'Saves · language'],
-  ];
+  const unread = unreadCount(G);
   // replace: the sheet pushed a history entry when it opened; the destination takes its place
   const go = (to) => (e) => { e.preventDefault(); nav(to, { replace: true }); };
   return (
@@ -41,12 +32,13 @@ export default function MoreSheet({ onClose }) {
       <div className="sheet-scrim" onClick={onClose} aria-hidden="true" />
       <section className="sheet" role="dialog" aria-modal="true" aria-labelledby="more-title" ref={ref}>
         <div className="sheet-grip" aria-hidden="true" />
-        <div className="sheet-head"><h2 className="t-h2" id="more-title">More</h2><button type="button" className="btn btn-ghost" onClick={onClose}>Close</button></div>
-        <div className="sheet-tiles">
-          {tiles.map(([icon, to, label, sub, hot]) => to
-            ? <a key={icon} href={to} onClick={go(to)} className="tile"><span className={hot ? 'crim' : 'blu'}><Icon name={icon} size={26} /></span><span className="t-small tile-l">{tr(G, label)}</span><span className="t-micro faint">{sub}</span></a>
-            : <span key={icon} className="tile off" aria-disabled="true"><span className="blu"><Icon name={icon} size={26} /></span><span className="t-small tile-l">{tr(G, label)}</span><span className="t-micro faint">{sub}</span></span>)}
-        </div>
+        <div className="sheet-head"><h2 className="t-h2" id="more-title">{tn(G, 'More')}</h2><button type="button" className="btn btn-ghost" onClick={onClose}>Close</button></div>
+        <ul className="mlist">
+          {MORE_MAIN.map(([to, label, sub]) => <li key={to}><a href={to} onClick={go(to)} className="grow more-a"><span className="b6">{tn(G, label)}</span><br /><span className="l2">{sub}</span></a></li>)}
+        </ul>
+        {DEPTH_GROUPS.map(([g, links]) => (
+          <div key={g}><p className="mhead">{g}</p>
+            <div className="more-chips">{links.map(([to, label]) => <a key={to} href={to} onClick={go(to)} className="chip">{tn(G, label)}{to === '/news' && unread > 0 && <span className="badge">{unread}</span>}</a>)}</div></div>))}
       </section>
     </>
   );

@@ -1,19 +1,32 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useGame } from '../lib/store.jsx';
 import { Dot, Meter } from '../components/bits.jsx';
-import { Icon } from '../components/icons.jsx';
-import { NewsRow, ageOf, isPending, today } from '../components/news.jsx';
+import MScreen, { useTab } from '../components/MScreen.jsx';
+import { NewsRow, ageOf, isPending, today, kindOf, KINDS } from '../components/news.jsx';
 import { openDecisions, dueLabel } from '../components/DecisionSheet.jsx';
 import { ovr } from '../game/engine.js';
-import { ordinal } from '../game/game.js';
-import { seasonNo, fmtNRR, formDisp, stageName, tname, tshort, userNextFixture, nextUnplayed, boardMood } from '../lib/util.js';
+import { ordinal, effectLines } from '../game/game.js';
+import { fmtL } from '../game/engine.js';
+import { seasonNo, fmtNRR, formDisp, stageName, tname, tshort, userNextFixture, nextUnplayed, boardMood, useNarrow, nn } from '../lib/util.js';
+import { T, tn } from '../lib/i18n.js';
+import { lastMeeting } from '../game/depth.js';
 import { autosave } from '../lib/save.js';
-import { simUntilUser, simFixture, simToSeasonEnd, completeSquad, startSeason, savedMatchFor, quickSimUserMatch, startOffseason } from '../lib/flow.js';
+import { simUntilUser, simFixture, simToSeasonEnd, completeSquad, startSeason, savedMatchFor, quickSimUserMatch, startOffseason, matchPath, afterMatchRoute } from '../lib/flow.js';
 
 export function xiStatus(G) {
   const t = G.teams[G.user]; if (!t.xi || t.xi.length !== 11) return 'auto-pick';
   const os = t.xi.filter((id) => G.P(id).nat !== 'NEP').length;
   return G.validXI(G.user, t.xi) ? `${11 - os} + ${os} set` : 'needs attention';
+}
+
+// Entry buttons for the big occasions: playoff week, final week, the season review and the trophy.
+export function OccasionButtons({ f, sm }) {
+  const { G } = useGame(); const s = G.s; const out = [];
+  if (s.phase === 'playoffs') { if (f && f.stage === 'F') out.push(['/final', 'Final week', 'फाइनल हप्ता', true]); else out.push(['/playoffs', 'Playoff week', 'प्लेअफ हप्ता']); }
+  else if (f && f.stage === 'F') out.push(['/final', 'Final week', 'फाइनल हप्ता', true]);
+  if (s.phase === 'seasonEnd') { const h = s.history[s.history.length - 1]; if (h && h.champion === G.user) out.push(['/trophy', 'Trophy ceremony', 'ट्रफी समारोह', true]); out.push(['/review', 'Season review', 'सिजन समीक्षा']); }
+  if (!out.length) return null;
+  return <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>{out.map(([to, en, np, gold]) => <Link key={to} to={to} className={`btn${sm ? ' btn-sm' : ''}${gold ? ' occasion' : ''}`}>{T(G, en, np)}</Link>)}</div>;
 }
 
 const H1 = ({ children }) => <h1 className="t-h1 teams">{children}</h1>;
@@ -24,7 +37,7 @@ const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 
 // A portal heading with its "See all" link.
 function Head({ title, to, link }) {
-  return <div className="sechead"><h2 className="t-h2">{title}</h2>{to && <Link to={to} className="t-small seeall">{link}<Icon name="chevron" size={16} /></Link>}</div>;
+  return <div className="sechead"><h2 className="t-h2">{title}</h2>{to && <Link to={to} className="t-small seeall">{link} ›</Link>}</div>;
 }
 
 function DecisionPin() {
@@ -32,7 +45,7 @@ function DecisionPin() {
   if (!p.length || G.decisionsDue().length) return null;
   const before = (G.s.phase === 'league' || G.s.phase === 'playoffs') && userNextFixture(G);
   return (
-    <Link to="/news" className="pin p-pin" onClick={(e) => { e.preventDefault(); openDecisions(G, ui, update); }}><Icon name="alert" size={22} />
+    <Link to="/news" className="pin p-pin" onClick={(e) => { e.preventDefault(); openDecisions(G, ui, update); }}>
       <span className="pin-body"><span className="t-small b6">{plural(p.length, 'decision')} {before ? 'before your next match' : 'waiting'}</span><span className="t-micro">{clip(p[0].text, 64)}</span></span>
       <span className="t-small b6">Decide</span></Link>
   );
@@ -73,16 +86,16 @@ function Hero() {
       const form = (id) => (G.teams[id].form || []).slice(-3).join(' ') || '–';
       const due = G.decisionsDue(); const gated = due.length > 0;
       const decide = (id) => openDecisions(G, ui, update, id);
-      const goMatch = async () => { if (gated) { decide(); return; } if (!live) { if (before) toast('Simulating other matches…'); await simUntilUser(G); autosave(G); if (ui.live && ui.live.done) ui.live = null; } nav('/match'); };
-      const quick = async () => { if (gated) { decide(); return; } await simUntilUser(G); const ff = userNextFixture(G); if (ff) { ui.live = null; const m = await quickSimUserMatch(G, ff); autosave(G); toast(`${m.result.text}.`); } update(); };
+      const goMatch = async () => { if (gated) { decide(); return; } if (!live) { if (before) toast('Simulating other matches…'); await simUntilUser(G); autosave(G); if (ui.live && ui.live.done) ui.live = null; } nav(matchPath(G, f, live)); };
+      const quick = async () => { if (gated) { decide(); return; } await simUntilUser(G); const ff = userNextFixture(G); if (ff) { ui.live = null; const m = await quickSimUserMatch(G, ff); autosave(G); toast(`${m.result.text}.`); update(); nav(afterMatchRoute(G, ff)); return; } update(); };
       return (
         <Card>
           <p className="faint t-micro">Next match · {f.date}, {f.night ? '7:15 pm' : '3:00 pm'} · {f.stage === 'L' ? `Match ${f.n}` : stageName(f)}</p>
           <H1><span className="tm"><Dot id={f.home} big />{tshort(G, f.home)}</span><span className="faint" style={{ fontWeight: 400 }}>v</span><span className="tm"><Dot id={f.away} big />{tshort(G, f.away)}</span></H1>
-          <p className="t-small mut">{f.stage === 'L' && <>{pos(f.home)} v {pos(f.away)} · </>}Form <span className="board-f formstr">{form(f.home)}</span> v <span className="board-f formstr">{form(f.away)}</span></p>
+          <p className="t-small mut">{f.stage === 'L' && <>{pos(f.home)} v {pos(f.away)} · </>}Form <span className="board-f formstr">{form(f.home)}</span> v <span className="board-f formstr">{form(f.away)}</span>{lastMeeting(G, f.home, f.away) && <> · {lastMeeting(G, f.home, f.away)}</>}</p>
           {gated && <div className="gate">
             <p className="t-small crim b6">{plural(due.length, 'decision')} before this match</p>
-            {due.map((n) => <div key={n.id} className="gate-row"><span className="gate-ic" aria-hidden="true"><Icon name="alert" size={20} /></span>
+            {due.map((n) => <div key={n.id} className="gate-row"><span className="gate-ic" aria-hidden="true">!</span>
               <span className="gate-t"><span className="t-micro faint">{n.cat || 'Club'} · {dueLabel(G, n).replace(/^Before/, 'before').replace(/ · .*$/, '')}</span><span className="t-small b6">{n.title || n.text}</span>{n.sum && <span className="t-micro mut">{n.sum}</span>}</span>
               <button type="button" className="btn btn-primary btn-sm" onClick={() => decide(n.id)}>Decide</button></div>)}
             <p className="t-micro faint" style={{ padding: '8px 0 10px' }}>Not answering in time picks the cautious option for you, and the board notices.</p>
@@ -95,12 +108,13 @@ function Hero() {
           <div className="row" style={{ gap: 8, alignItems: 'center' }}>
             {!(ui.live && ui.live.started && !ui.live.done) && <button className="btn btn-ghost btn-sm" onClick={quick}>{live ? 'Quick sim the rest' : 'Quick sim'}</button>}
             {before > 0 && !live && <span className="faint t-micro">{before} other match{before > 1 ? 'es' : ''} will be simulated first.</span>}
+            <OccasionButtons f={f} sm />
           </div>
         </Card>);
     }
     if (nu) return (
       <Card><H1>{s.phase === 'playoffs' ? 'Playoffs' : 'League'} continue without you</H1><p className="mut">Next: {stageName(nu)}, {tname(G, nu.home)} v {tname(G, nu.away)}.</p>
-        <div className="acts"><button className="btn btn-primary btn-lg" onClick={busy(() => simFixture(G, nu))}>Simulate next match</button><button className="btn btn-lg" onClick={busy(() => simToSeasonEnd(G, false))}>Simulate to the end of the season</button></div></Card>);
+        <div className="acts"><button className="btn btn-primary btn-lg" onClick={busy(() => simFixture(G, nu))}>Simulate next match</button><button className="btn btn-lg" onClick={busy(() => simToSeasonEnd(G, false))}>Simulate to the end of the season</button></div><OccasionButtons /></Card>);
   }
   if (s.phase === 'seasonEnd') {
     const h = s.history[s.history.length - 1];
@@ -111,7 +125,7 @@ function Hero() {
         <table className="tbl plain compact"><tbody>
           <KV k="Platinum Cap"><td className="wrapcell">{h.runs[0][0]} · {h.runs[0][2]} runs</td></KV><KV k="Golden Cap"><td className="wrapcell">{h.wkts[0][0]} · {h.wkts[0][2]} wickets</td></KV>
           {h.emerging && <KV k="Emerging player"><td className="wrapcell">{h.emerging}</td></KV>}</tbody></table>
-        <div className="acts"><button className="btn btn-primary btn-lg" onClick={async () => { toast('Nepal play their winter internationals…'); await startOffseason(G); autosave(G); update(); nav('/offseason'); }}>Start the off-season</button>{s.offers && s.offers.length > 0 && <button className="btn btn-lg" onClick={() => nav('/club')}>Job offers</button>}</div></Card>);
+        <div className="acts"><button className="btn btn-primary btn-lg" onClick={async () => { toast('Nepal play their winter internationals…'); await startOffseason(G); autosave(G); update(); nav('/offseason'); }}>Start the off-season</button>{s.offers && s.offers.length > 0 && <button className="btn btn-lg" onClick={() => nav('/club')}>Job offers</button>}</div><OccasionButtons /></Card>);
   }
   const simple = (title, text, label, to) => <Card><H1>{title}</H1><p className="mut">{text}</p><div className="acts"><button className="btn btn-primary btn-lg" onClick={() => nav(to)}>{label}</button></div></Card>;
   if (s.phase === 'offseason') return simple('Off-season', `Players have aged a year. Review the changes, make trades, then move on to ${s.mega ? 'retention for the mega auction' : 'releases for the mini auction'}.`, 'Off-season summary', '/offseason');
@@ -245,7 +259,121 @@ function BoardPortal() {
   );
 }
 
+// ===== Phone: Today · Inbox · Club =====
+// The next match, decisions answered in place, and alerts.
+function MToday() {
+  const { G, ui, update, toast } = useGame(); const nav = useNavigate(); const s = G.s;
+  const f = (s.phase === 'league' || s.phase === 'playoffs') && !s.sacked ? userNextFixture(G) : null;
+  const pending = s.inbox.filter(isPending); const t = G.teams[G.user];
+  const answer = (n, i) => update(() => { G.applyEvent(n, i); autosave(G); toast(`${n.choices[i].l}.`); });
+  const st = G.standings(); const pos = (id) => ordinal(st.findIndex((x) => x.id === id) + 1);
+  const form = (id) => (G.teams[id].form || []).slice(-4).join(' ') || '–';
+  const inj = t.squad.map((id) => G.P(id)).filter((p) => p.inj);
+  const unread = s.inbox.filter((n) => !n.read && !isPending(n)).length;
+  const tasks = G.tasks();
+  return (
+    <>
+      {f ? <MNext f={f} pos={pos} form={form} /> : <div style={{ paddingTop: 12 }}><Hero /></div>}
+      {pending.length > 0 && <><p className="mhead">Needs your decision · {pending.length}</p>
+        <div className="stack" style={{ gap: 10 }}>{pending.slice(0, 4).map((n) => (
+          <div key={n.id} className="panel" style={{ padding: 14 }}>
+            <p className="b6">{n.title || n.text}</p>
+            <p className="t-small mut" style={{ marginTop: 2 }}>{n.sum || effectLines(G, n, 0).map((e) => e.text).join(' · ')}{n.due != null ? ` · ${dueLabel(G, n).replace(/^Before/, 'before')}` : ''}</p>
+            <div className="dchoice-row" style={n.choices.length > 2 ? { gridTemplateColumns: '1fr' } : undefined}>{n.choices.map((c, i) => <button key={i} type="button" className="btn" onClick={() => answer(n, i)}>{c.l}</button>)}</div>
+            <button type="button" className="linkbtn t-micro" onClick={() => openDecisions(G, ui, update, n.id)}>See every effect</button>
+          </div>))}</div></>}
+      <p className="mhead">Also today</p>
+      <ul className="mlist">
+        {tasks.map((x) => <li key={x.key}><Link to={x.to} className="grow" style={{ color: 'inherit', textDecoration: 'none' }}>{x.text}{x.sub && <><br /><span className="l2">{x.sub}</span></>}</Link><span className="faint" aria-hidden="true">›</span></li>)}
+        {inj.slice(0, 3).map((p) => <li key={p.id}><Link to={`/player/${p.id}`} className="grow" style={{ color: 'inherit', textDecoration: 'none' }}><span className="crim">{p.name}</span> out {p.inj} match{p.inj > 1 ? 'es' : ''}</Link></li>)}
+        {(s.promises || []).slice(0, 2).map((pr) => <li key={pr.id}><span className="grow">{promiseText(G, pr)}</span><span className={`t-small ${pr.matchesLeft <= 1 ? 'gld' : 'faint'}`}>{pr.matchesLeft <= 1 ? 'Due next match' : `${pr.matchesLeft} left`}</span></li>)}
+        <li><span className="grow">Board confidence {nn(G, t.board)}</span><span className="faint t-small">{boardMood(t.board)}</span></li>
+        {unread > 0 && <li><Link to="/?tab=inbox" replace className="linkbtn">{unread} more in Inbox</Link></li>}
+      </ul>
+    </>
+  );
+}
+function MNext({ f, pos, form }) {
+  const { G, ui, update, toast } = useGame(); const nav = useNavigate();
+  const due = G.decisionsDue(); const live = (ui.live && !ui.live.done && ui.live.started) || !!savedMatchFor(G, f);
+  const before = G.s.fixtures.filter((x) => !x.res && x.n < f.n).length;
+  const go = async () => { if (due.length) { openDecisions(G, ui, update); return; } if (!live) { if (before) toast('Simulating other matches…'); await simUntilUser(G); autosave(G); if (ui.live && ui.live.done) ui.live = null; } nav(matchPath(G, f, live)); };
+  const quick = async () => { if (due.length) { openDecisions(G, ui, update); return; } await simUntilUser(G); const ff = userNextFixture(G); if (ff) { ui.live = null; const m = await quickSimUserMatch(G, ff); autosave(G); toast(`${m.result.text}.`); update(); nav(afterMatchRoute(G, ff)); return; } update(); };
+  const T2 = ({ id }) => <span style={{ display: 'flex', alignItems: 'center' }}><Dot id={id} />{tname(G, id)}{f.stage === 'L' && <span className="faint t-small" style={{ fontWeight: 400, marginLeft: 8 }}>{pos(id)}</span>}</span>;
+  return (
+    <section className="stack" style={{ gap: 8, padding: '14px 0 16px', borderBottom: '1px solid var(--rule)' }}>
+      <p className="faint t-small">{f.date} {f.night ? '7:15 pm' : '3:00 pm'} · {f.stage === 'L' ? `Match ${f.n}` : stageName(f)} · Kirtipur</p>
+      <p style={{ fontSize: 20, lineHeight: '26px', fontWeight: 600, display: 'flex', flexDirection: 'column' }}><T2 id={f.home} /><T2 id={f.away} /></p>
+      <p className="t-small mut">Form <span className="board-f formstr">{form(f.home)}</span> v <span className="board-f formstr">{form(f.away)}</span> · XI {xiStatus(G)}</p>
+      {lastMeeting(G, f.home, f.away) && <p className="t-small faint">{lastMeeting(G, f.home, f.away)}</p>}
+      {due.length > 0 && <p className="t-small crim b6">{plural(due.length, 'decision')} before this match</p>}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: 8, marginTop: 4 }}>
+        <button type="button" className="btn btn-primary" style={{ minHeight: 46 }} onClick={go}>{due.length ? 'Answer to play' : live ? 'Back to the match' : 'Go to match'}</button>
+        <Link to="/squad" className="btn" style={{ minHeight: 46 }}>Review XI</Link>
+      </div>
+      {!(ui.live && ui.live.started && !ui.live.done) && <button type="button" className="btn btn-ghost btn-sm" style={{ alignSelf: 'flex-start' }} onClick={quick}>{live ? 'Quick sim the rest' : 'Quick sim'}{before > 0 && !live ? ` · ${before} other match${before > 1 ? 'es' : ''} first` : ''}</button>}
+      <OccasionButtons f={f} sm />
+    </section>
+  );
+}
+const MFILTERS = [['all', 'All', () => true], ['dec', 'Decisions', isPending], ['injury', 'Injuries', (n) => n.kind === 'injury'], ['news', 'News', (n) => !isPending(n) && !['match', 'injury'].includes(n.kind)], ['match', 'Results', (n) => n.kind === 'match']];
+function MInbox() {
+  const { G, ui, update } = useGame(); const nav = useNavigate(); const [flt, setFlt] = useTab(['all', 'dec', 'injury', 'news', 'match'], 'all', 'f');
+  const test = (MFILTERS.find((x) => x[0] === flt) || MFILTERS[0])[2]; const now = today(G);
+  const list = G.s.inbox.filter(test).slice(0, 60);
+  const when = (n) => { const a = ageOf(G, n, now); return a === 'Today' || a === 'Yesterday' ? a : n.d || `Season ${seasonNo(n.y)}`; };
+  const open = (n) => { if (isPending(n)) { openDecisions(G, ui, update, n.id); return; } update(() => { n.read = true; }); if (n.fix) nav(`/scorecard/${n.fix}`); };
+  const title = (n) => (G.s.lang === 'np' && n.ne ? n.ne : n.title || n.text);
+  return (
+    <>
+      <div className="seg" role="group" aria-label="Filter" style={{ margin: '12px 0 4px', display: 'flex', overflowX: 'auto', flexWrap: 'nowrap' }}>
+        {MFILTERS.map(([k, l]) => <button key={k} type="button" className={flt === k ? 'on' : ''} onClick={() => setFlt(k)}>{l}</button>)}</div>
+      <ul className="mlist">{list.map((n) => (
+        <li key={n.id} onClick={() => open(n)} style={{ cursor: 'pointer' }}>
+          <span className="grow"><span className={!n.read || isPending(n) ? 'b6' : ''}>{title(n)}</span>{G.s.lang === 'both' && n.ne && <span className="ne nrow-ne">{n.ne}</span>}<br /><span className="l2">{isPending(n) ? 'Decision' : KINDS[kindOf(n)] || 'News'} · {when(n)}{n.detail ? ` · ${n.detail.split('. ')[0].slice(0, 60)}` : ''}</span></span>
+          {isPending(n) && <span className="badge">!</span>}</li>))}
+        {!list.length && <li className="faint t-small">Nothing here.</li>}</ul>
+      <Link to="/news" className="t-small" style={{ display: 'inline-block', marginTop: 8 }}>Full inbox with every filter</Link>
+    </>
+  );
+}
+function MClub() {
+  const { G } = useGame(); const t = G.teams[G.user]; const st = G.standings();
+  const wage = t.squad.reduce((a, id) => a + G.P(id).salary, 0);
+  return (
+    <>
+      <section className="stack" style={{ gap: 8, paddingTop: 14 }}>
+        <p className="mhead" style={{ marginTop: 0 }}>Board objective</p>
+        <p className="b6">{(t.objective || { txt: '—' }).txt}</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }} className="t-small"><span className="mut">Confidence</span><span>{nn(G, t.board)} · {boardMood(t.board)}</span></div>
+        <Meter pct={t.board} blue />
+      </section>
+      <p className="mhead">Table</p>
+      <table className="tbl compact plain"><tbody>{st.slice(0, 4).map((r, i) => <tr key={r.id} className={`${r.id === G.user ? 'me' : ''}${i === 3 ? ' cut' : ''}`}><td style={{ paddingLeft: 0 }}>{i + 1}</td><td><Dot id={r.id} />{tshort(G, r.id)}</td><td className="r">{r.pts}</td><td className="r faint">{fmtNRR(r.nrr)}</td></tr>)}</tbody></table>
+      <Link to="/season" className="t-small" style={{ display: 'inline-block', marginTop: 8 }}>Full table</Link>
+      <p className="mhead">Money</p>
+      <ul className="mlist">
+        <li><span className="grow">Balance</span><span>{fmtL(t.balance)}</span></li>
+        <li><span className="grow">Wage bill</span><span>{fmtL(wage)}</span></li>
+        <li><span className="grow">Fan support</span><span>{Math.round(t.fans)} · {t.fans >= 70 ? 'Hot' : t.fans >= 55 ? 'Warm' : t.fans >= 40 ? 'Cool' : 'Cold'}</span></li>
+      </ul>
+      <Link to="/club" className="t-small" style={{ display: 'inline-block', marginTop: 8 }}>Club and finances</Link>
+    </>
+  );
+}
+function HomeMobile() {
+  const { G } = useGame(); const [tab, setTab] = useTab(['today', 'inbox', 'club'], 'today');
+  const dec = G.s.inbox.filter(isPending).length; const unread = G.s.inbox.filter((n) => !n.read && !isPending(n)).length;
+  return (
+    <MScreen label="Home sections" tab={tab} onTab={setTab} tabs={[['today', tn(G, 'Today'), dec], ['inbox', tn(G, 'Inbox'), unread], ['club', tn(G, 'Club')]]}>
+      {tab === 'today' && <MToday />}{tab === 'inbox' && <MInbox />}{tab === 'club' && <MClub />}
+    </MScreen>
+  );
+}
+
 export default function Home() {
+  const narrow = useNarrow();
+  if (narrow) return <HomeMobile />;
   return (
     <div className="wrap portals">
       <div className="pcol"><DecisionPin /><Hero /><Promises /><LastAnswer /><NewsPortal /><ResultsPortal /></div>

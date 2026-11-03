@@ -88,4 +88,8 @@ const INTL_CALENDAR=[
 // Opponents for generated winters: name and the strength of their generated XI.
 const INTL_OPPONENTS={odi:[['Scotland',74],['UAE',70],['USA',72],['Oman',70],['Namibia',72],['Netherlands',75],['Canada',68]],t20i:[['Netherlands',75],['UAE',70],['Oman',70],['Hong Kong',66],['Ireland',77],['Zimbabwe',78],['Papua New Guinea',65],['Scotland',74]]};
 export {INTL_CALENDAR,INTL_OPPONENTS};
+// Real playoff meetings that are verified (the two finals from HISTORY, and 2025 Qualifier 2). Only these
+// seed the head-to-head line; everything after the save starts comes from the game.
+const REAL_MEETINGS=[{y:2024,stage:'F',a:'JB',b:'SR',winner:'JB'},{y:2025,stage:'Q2',a:'LL',b:'BK',winner:'LL'},{y:2025,stage:'F',a:'LL',b:'SR',winner:'LL'}];
+export {REAL_MEETINGS};
 export {NE_TEAM,TEAMS,SQUADS,FREE_NEP,FREE_OS,HISTORY,FIX2026,PLAYOFF_DATES2026,NEP_NAMES,PROV_BIAS,OS_NAMES,COUNTRY_NAMES,PROVINCES};

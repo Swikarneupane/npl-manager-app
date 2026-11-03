@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Matchday build-up</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl" data-theme="{{theme}}" style="min-height: 1200px">
+  <header class="top">
+    <span class="brand">NPL Manager</span>
+    <span class="tm"><i class="dot t-ll"></i>Lumbini Lions</span>
+    <span class="kv"><span>Season</span><span>3 · 2026</span></span>
+    <span class="phase"><b>Matchday</b> · 4 h to the toss</span>
+    <span class="spacer"></span>
+    <span class="kv"><span>Domestic purse</span><span class="num">Rs 18 L</span></span>
+    <span class="kv"><span>Overseas purse</span><span class="num">Rs 9 L</span></span>
+  </header>
+  <div class="shell">
+    <nav class="nav" aria-label="Main">
+      <a href="Home.dc.html">Home</a>
+      <a href="Squad.dc.html">Squad</a>
+      <a href="Prematch.dc.html" class="on" aria-current="page">Match <small>Build-up</small></a>
+      <a href="Table.dc.html">Fixtures</a>
+      <a href="Table.dc.html">Table</a>
+      <span class="off" aria-disabled="true">Auction <small>Off-season</small></span>
+      <hr>
+      <a href="History.dc.html">Stats</a>
+      <a href="History.dc.html">History</a>
+      <a href="Finance.dc.html">Club</a>
+      <a href="Settings.dc.html">Settings</a>
+    </nav>
+    <main class="main">
+      <div style="max-width: 1220px">
+        <div class="pagehead" style="margin-bottom: 14px">
+          <div class="stack" style="gap: 4px">
+            <p class="faint t-small">Tonight 7:15 pm · Match 17 · TU International Cricket Ground, Kirtipur</p>
+            <h1 class="t-h1" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px"><span style="display: flex; align-items: center"><i class="dot t-ll"></i>Lumbini Lions</span><span class="faint" style="font-weight: 400">v</span><span style="display: flex; align-items: center"><i class="dot t-bk"></i>Biratnagar Kings</span></h1>
+          </div>
+          <p class="mut t-small">2nd v 4th · a win keeps you in the top two</p>
+        </div>
+
+        <ol class="steps" aria-label="Build-up steps">
+          <sc-for list="{{steps}}" as="s" hint-placeholder-count="5">
+            <li><button type="button" class="{{s.cls}}" onClick="{{s.pick}}" aria-current="{{s.cur}}"><span class="n">{{s.n}}</span>{{s.label}}</button></li>
+          </sc-for>
+        </ol>
+
+        <div class="split" style="margin-top: 28px; gap: 40px; grid-template-columns: minmax(0,1.7fr) minmax(0,1fr)">
+          <section>
+            <!-- 1 OPPOSITION -->
+            <sc-if value="{{s1}}" hint-placeholder-val="{{ true }}">
+              <div class="stack" style="gap: 24px">
+                <div>
+                  <p class="faint t-small">Analyst's report · last 4 Biratnagar matches</p>
+                  <h2 class="t-h2" style="margin-top: 4px">Biratnagar win when Lamichhane strangles the middle overs</h2>
+                  <p class="mut" style="margin-top: 6px; max-width: 680px">They have won 2 of 4. In both wins Lamichhane went for under 6 an over from overs 7 to 14 and took 2 wickets or more. Take him on early or see him out and attack the other end.</p>
+                </div>
+                <div>
+                  <h3 class="sec">Danger players</h3>
+                  <div class="tblwrap">
+                    <table class="tbl compact">
+                      <thead><tr><th>Player</th><th>Role</th><th class="r">Season</th><th>Threat</th><th>How to handle him</th></tr></thead>
+                      <tbody>
+                        <tr><td class="name">Sandeep Lamichhane (c)</td><td><span class="role">BOWL</span></td><td class="r">8 wkts · econ 6.1</td><td class="crim">High</td><td class="mut">Sweep and use the crease; his googly is less accurate to left-handers</td></tr>
+                        <tr><td class="name">David Warner</td><td><span class="role">BAT</span></td><td class="r">138 runs · SR 151</td><td class="crim">High</td><td class="mut">Off-spin in the powerplay: out twice to it this season</td></tr>
+                        <tr><td class="name">Sikandar Raza</td><td><span class="role">AR</span></td><td class="r">96 runs · 5 wkts</td><td>Medium</td><td class="mut">Bowls overs 12–16; attack him, he concedes 9.4 at the death</td></tr>
+                        <tr><td class="name">Shakib Al Hasan</td><td><span class="role">AR</span></td><td class="r">4 wkts · econ 6.8</td><td>Medium</td><td class="mut">Opens the bowling; see out his first two overs</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <div>
+                  <h3 class="sec">Matchups to target · tap to add to your plan</h3>
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px,100%),1fr)); gap: 10px">
+                    <sc-for list="{{matchups}}" as="m" hint-placeholder-count="4">
+                      <button type="button" class="choice {{m.cls}}" onClick="{{m.toggle}}" aria-pressed="{{m.on}}">
+                        <span style="font-weight: 600">{{m.title}}</span>
+                        <span class="fx">{{m.stat}}</span>
+                        <span class="fx">{{m.state}}</span>
+                      </button>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- 2 CONDITIONS -->
+            <sc-if value="{{s2}}" hint-placeholder-val="{{ false }}">
+              <div class="stack" style="gap: 24px">
+                <div>
+                  <p class="faint t-small">Groundsman's note · 11:40 am</p>
+                  <h2 class="t-h2" style="margin-top: 4px">Dry surface, turn from over 10, heavy dew after 9 pm</h2>
+                </div>
+                <table class="tbl plain">
+                  <tbody>
+                    <tr><td style="padding-left: 0" class="mut">Pitch</td><td>Dry, cracks at the Kirtipur hill end · spinners get 2× turn after over 10</td></tr>
+                    <tr><td style="padding-left: 0" class="mut">Dew</td><td>Heavy from about 9 pm · wet ball for the side bowling second</td></tr>
+                    <tr><td style="padding-left: 0" class="mut">Rain</td><td>20% chance in the second innings · DLS possible</td></tr>
+                    <tr><td style="padding-left: 0" class="mut">Toss this season</td><td>Side chasing has won 10 of 16 night games</td></tr>
+                    <tr><td style="padding-left: 0" class="mut">Par score</td><td>164 · first-innings average at night this season</td></tr>
+                  </tbody>
+                </table>
+                <div class="panel stack" style="gap: 6px">
+                  <p style="font-weight: 600">Assistant: bowl first if you win the toss</p>
+                  <p class="mut t-small">Dew will make Lamichhane's googly hard to grip later. Pick two spinners, but have them bowl out by over 15.</p>
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- 3 SELECTION -->
+            <sc-if value="{{s3}}" hint-placeholder-val="{{ false }}">
+              <div class="stack" style="gap: 22px">
+                <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px">
+                  <h2 class="t-h2">XI and Impact Player list</h2>
+                  <a href="Squad.dc.html" class="btn btn-sm">Edit XI in Squad</a>
+                </div>
+                <div class="cols" style="grid-template-columns: repeat(auto-fit, minmax(min(300px,100%),1fr)); gap: 28px">
+                  <div>
+                    <h3 class="sec">Playing XI · 7 Nepali, 4 overseas</h3>
+                    <ol class="t-small" style="margin: 0; padding-left: 20px; line-height: 26px">
+                      <li>Rohit Paudel (c)</li><li>Aasif Sheikh (wk)</li><li>Charith Asalanka</li><li>Bibek Thapa Magar</li><li>Niroshan Dickwella</li><li>Jimmy Neesham <span class="crim">· fitness 88%</span></li><li>Gulshan Jha</li><li>Lalit Rajbanshi</li><li>Suman Tamang</li><li>Sushant Rai</li><li>Ruben Trumpelmann</li>
+                    </ol>
+                  </div>
+                  <div>
+                    <h3 class="sec">Impact Player substitutes · name 5</h3>
+                    <ul class="mlist">
+                      <li style="padding: 8px 0"><span class="grow">Liam Carver <span class="role">BOWL</span></span><span class="faint t-small">overseas · only if 3 OS in XI</span></li>
+                      <li style="padding: 8px 0"><span class="grow">Hemant Dhami <span class="role">BAT</span></span><span class="faint t-small">extra batting</span></li>
+                      <li style="padding: 8px 0"><span class="grow">Nabin Chaudhary <span class="role">AR</span></span><span class="faint t-small">spin option</span></li>
+                      <li style="padding: 8px 0"><span class="grow">Pratik Bhandari <span class="role">WK</span></span><span class="faint t-small">cover keeper</span></li>
+                      <li style="padding: 8px 0"><span class="grow">Dewald Moller <span class="role">BAT</span></span><span class="faint t-small">overseas</span></li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="panel" style="padding: 12px 16px"><p class="t-small"><b>Hemant Dhami</b> has been dropped for 3 games. <span class="mut">Happiness falling; he asked for a chat. Seeing him before the game steadies him.</span></p></div>
+              </div>
+            </sc-if>
+
+            <!-- 4 GAME PLAN -->
+            <sc-if value="{{s4}}" hint-placeholder-val="{{ false }}">
+              <div class="stack" style="gap: 18px">
+                <h2 class="t-h2">Game plan by phase</h2>
+                <div class="tblwrap">
+                  <table class="tbl">
+                    <thead><tr><th>Phase</th><th>When batting</th><th>When bowling</th></tr></thead>
+                    <tbody>
+                      <tr><td class="name">Powerplay · 1–6</td><td><select class="input" aria-label="Powerplay batting"><option>Attack · see out Shakib</option><option>Normal</option><option>Defend</option></select></td><td><select class="input" aria-label="Powerplay bowling"><option>Off-spin to Warner · Asalanka 2 overs</option><option>Pace up front</option></select></td></tr>
+                      <tr><td class="name">Middle · 7–15</td><td><select class="input" aria-label="Middle batting"><option>See out Lamichhane · attack Raza</option><option>Attack all</option><option>Rotate</option></select></td><td><select class="input" aria-label="Middle bowling"><option>Spin both ends · Lalit, Gulshan</option><option>Mixed</option></select></td></tr>
+                      <tr><td class="name">Death · 16–20</td><td><select class="input" aria-label="Death batting"><option>All-out from 17</option><option>Attack</option></select></td><td><select class="input" aria-label="Death bowling"><option>Trumpelmann 2 · Sushant 2 · wide yorkers</option><option>Bouncers</option></select></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p class="mut t-small">These become the in-match defaults. You only change them when a key moment asks you to.</p>
+                <div class="panel stack" style="gap: 6px">
+                  <p style="font-weight: 600">Captain's view</p>
+                  <p class="pull" style="font-size: 15px; line-height: 23px">“I'd rather open with Lalit than pace. Warner hates spin early.”<cite>Rohit Paudel · trust in you 74</cite></p>
+                  <div class="row" style="gap: 8px"><button type="button" class="btn btn-sm">Agree</button><button type="button" class="btn btn-sm">Overrule</button><button type="button" class="btn btn-sm">One over, then pace</button></div>
+                </div>
+              </div>
+            </sc-if>
+
+            <!-- 5 TEAM TALK -->
+            <sc-if value="{{s5}}" hint-placeholder-val="{{ false }}">
+              <div class="stack" style="gap: 22px">
+                <div>
+                  <h2 class="t-h2">Team talk</h2>
+                  <p class="mut" style="margin-top: 4px">Dressing room mood: <b style="color: var(--ink)">confident</b>. A win over Kings last time is fresh; three young players have never played Lamichhane.</p>
+                </div>
+                <div>
+                  <h3 class="sec">Tone</h3>
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px,100%),1fr)); gap: 10px">
+                    <sc-for list="{{tones}}" as="t" hint-placeholder-count="4">
+                      <button type="button" class="choice {{t.cls}}" onClick="{{t.pick}}" aria-pressed="{{t.on}}"><span style="font-weight: 600">{{t.label}}</span><span class="fx">“{{t.line}}”</span><span class="fx">{{t.fx}}</span></button>
+                    </sc-for>
+                  </div>
+                </div>
+                <div>
+                  <h3 class="sec">A word with</h3>
+                  <ul class="mlist">
+                    <li><span class="grow"><b style="font-weight: 600">Gulshan Jha</b> <span class="faint t-small">20 · first game against Lamichhane · nervous</span></span><select class="input" aria-label="Word with Gulshan Jha"><option>Back yourself</option><option>Play your game</option><option>Say nothing</option></select></li>
+                    <li><span class="grow"><b style="font-weight: 600">Jimmy Neesham</b> <span class="faint t-small">36 · fitness 88%</span></span><select class="input" aria-label="Word with Jimmy Neesham"><option>Lead the young ones</option><option>Look after yourself</option><option>Say nothing</option></select></li>
+                    <li><span class="grow"><b style="font-weight: 600">Hemant Dhami</b> <span class="faint t-small">dropped · unhappy</span></span><select class="input" aria-label="Word with Hemant Dhami"><option>Your chance will come</option><option>Earn it in training</option><option>Say nothing</option></select></li>
+                  </ul>
+                </div>
+                <p class="faint t-small">Reactions show as body language when the players walk out: nods, shrugs, silence.</p>
+              </div>
+            </sc-if>
+          </section>
+
+          <aside class="stack" style="gap: 20px">
+            <div class="panel stack" style="gap: 10px">
+              <h2 class="sec" style="margin: 0">Ready for the toss?</h2>
+              <ul class="mlist">
+                <sc-for list="{{steps}}" as="s" hint-placeholder-count="5">
+                  <li style="min-height: 36px; padding: 6px 0"><span class="grow">{{s.label}}</span><span class="t-small {{s.doneCls}}">{{s.doneText}}</span></li>
+                </sc-for>
+              </ul>
+              <button type="button" class="btn btn-primary btn-lg" onClick="{{next}}">{{nextLabel}}</button>
+              <button type="button" class="btn btn-ghost">Let the assistant do the rest</button>
+            </div>
+            <div class="stack" style="gap: 8px">
+              <h2 class="sec" style="margin: 0">Tonight's pulse</h2>
+              <p class="t-small"><b>Sold out</b> · 2,000 more than the last home game</p>
+              <p class="t-small mut">“Paudel against Lamichhane: the national captain against his national-team leg-spinner.” <span class="faint">· match preview</span></p>
+              <p class="t-small mut">Fans' poll: 61% back Lumbini</p>
+            </div>
+            <a href="Press.dc.html" class="t-small">Pre-match press conference · 3 questions</a>
+          </aside>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"step":{"editor":"int","min":1,"max":5,"default":1},"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { step:null, seen:[1], targets:['lefty'], tone:'calm' }; }
+  renderVals() {
+    const s = this.state;
+    const step = s.step ?? this.props.step ?? 1;
+    const L = ['Opposition','Conditions','Selection','Game plan','Team talk'];
+    const go = (n) => this.setState({ step:n, seen: s.seen.includes(n) ? s.seen : s.seen.concat([n]) });
+    const steps = L.map((l, i) => { const n = i + 1, on = step === n, done = s.seen.includes(n) && !on; return { n, label:l, cls: on ? 'on' : (done ? 'done' : ''), cur: on ? 'step' : 'false', pick: () => go(n), doneText: s.seen.includes(n) ? 'Done' : 'Assistant', doneCls: s.seen.includes(n) ? 'blu' : 'faint' }; });
+    const M = [['lefty','Gulshan Jha v Lamichhane','Left-handers score 8.2 an over off him; right-handers 5.4'],['warner','Asalanka (off-spin) v Warner','Warner averages 14 against off-spin in the powerplay'],['raza','Attack Raza at the death','He concedes 9.4 an over from over 16'],['shakib','See out Shakib early','His first two overs: econ 5.1; after that 8.0']];
+    const matchups = M.map(m => { const on = s.targets.includes(m[0]); return { title:m[1], stat:m[2], on, cls: on ? 'on' : '', state: on ? 'In your plan' : 'Tap to add', toggle: () => this.setState({ targets: on ? s.targets.filter(x => x !== m[0]) : s.targets.concat([m[0]]) }) }; });
+    const T = [['calm','Calm','Same as the last game. Enjoy it.','Steady composure for everyone'],['fired','Fired up','They beat us at home last year. Not tonight.','Veterans up; nervous players may rush'],['pressure','Pressure on','Top two is on the line. I expect a win.','Leaders respond; youngsters tighten up'],['nopressure','No pressure','Nothing to lose. Play with freedom.','Young players relax; veterans may switch off']];
+    const tones = T.map(t => ({ label:t[1], line:t[2], fx:t[3], on: s.tone === t[0], cls: s.tone === t[0] ? 'on' : '', pick: () => this.setState({ tone: t[0] }) }));
+    return { theme: this.props.theme ?? 'light', steps, matchups, tones,
+      s1: step === 1, s2: step === 2, s3: step === 3, s4: step === 4, s5: step === 5,
+      next: () => go(Math.min(5, step + 1)), nextLabel: step < 5 ? 'Next: ' + L[step] : 'Go to the toss' };
+  }
+}
+</script>
+</body>
+</html>

@@ -2,6 +2,16 @@ import {NE_TEAM,TEAMS,SQUADS,FREE_NEP,FREE_OS,HISTORY,FIX2026,PLAYOFF_DATES2026,
 import {NEP_INTL,OS_INTL_STATUS,CONTRACTS_2026} from './intl-data.js';
 import {FREE_OS_2,OS_INTL_STATUS_2} from './os-extra.js';
 import {R,ri,rf,pick,clamp,shuffle,isSpin,isPace,TYPE_LABEL,fmtL,ovr,calcValue,mkPlayer,Match,setPID,getPID} from './engine.js';
+import * as Depth from './depth.js';
+import * as Matchday from './matchday.js';
+import * as Club from './club.js';
+import * as Office from './office.js';
+import * as Living from './living.js';
+import * as World from './world.js';
+import * as Occasions from './occasions.js';
+// Phase 2 modules; each may export migrate, afterMatch, seasonStart, seasonEnd, offseason, auctionSetup,
+// and todayTasks (items for the Home "today" list).
+const MODULES=[Depth,Matchday,Occasions,Club,Office,Living,World];
 // ===== Game state & league logic =====
 const SLABS={NEP:[12,9,6],OS:[30,22,15]};
 const BOWL_PHASES={pp:6,mid:9,death:5}, PHASE_CAP={pp:3,mid:5,death:3};
@@ -9,9 +19,16 @@ const BOWL_PHASES={pp:6,mid:9,death:5}, PHASE_CAP={pp:3,mid:5,death:3};
 const NEEDS=[['wk','Wicketkeepers','Keeper',2],['open','Openers','Opener',2],['pace','Pace bowlers','Pace',3],['spin','Spinners','Spin',2],['ar','All-rounders','All-rounder',2]];
 function needRoles(p){ const r=[]; if(p.role==='WK') r.push('wk'); if((p.role==='BAT'||p.role==='WK')&&p.bat>=60) r.push('open');
   if(p.bowl>=55&&isPace(p.type)) r.push('pace'); if(p.bowl>=55&&isSpin(p.type)) r.push('spin'); if(p.role==='AR') r.push('ar'); return r; }
-// Backroom staff: batting coach, bowling coach, physio. Level 1-5, wage by level, 2-season contracts.
-const STAFF_POSTS=[['bat','Batting coach'],['bowl','Bowling coach'],['physio','Physio']];
+// Backroom staff: nine posts. Numeric level 1-4 (shown as grade D-A; older saves may hold a level-5 'A'),
+// wage by level (support posts at half), 2-season contracts. staffLevel() stays numeric: 0 = vacant.
+const STAFF_POSTS=[['assistant','Assistant manager'],['bat','Batting coach'],['bowl','Bowling coach'],['spin','Spin coach'],['field','Fielding coach'],['analyst','Analyst'],['physio','Physio'],['scout','Head scout'],['mental','Mental-skills coach']];
 const STAFF_WAGE=[0,3,5,8,10,12];
+const STAFF_CORE=new Set(['assistant','bat','bowl','physio']);
+const staffWage=(post,level)=>STAFF_CORE.has(post)?STAFF_WAGE[level]:STAFF_WAGE[level]/2;
+const gradeOf=(L)=>L>=4?'A':L===3?'B':L===2?'C':L>=1?'D':'';
+const STAFF_SPEC={assistant:['Match reading','Man-management','Game plans','Selection calls'],bat:['Against spin','Young batters','Power hitting','Technique against pace'],bowl:['Seam','Workload','Death bowling','Yorkers and slower balls'],
+  spin:['Leg-spin','Finger spin','Variations','Left-arm orthodox'],field:['Catching drills','Ground fielding','Throwing arms'],analyst:['Matchups','Opposition reports','Phase data'],physio:['Injury prevention','Rehab','Recovery'],
+  scout:['Koshi and Madhesh','Bagmati and Gandaki','Lumbini and Karnali','Sudurpaschim','Overseas leagues'],mental:['Composure under pressure','Young players','Big games']};
 const STAFF_NAT=['NEP','NEP','NEP','IND','ENG','AUS','SA','NZ','SL','PAK'];
 // International layer: contract bonuses in Nepal selection, and the size of each grade (CAN 2026).
 const GRADE_BONUS={'A+':6,A:4,B:3,C:2,D:1}; const GRADES=['A+','A','B','C','D']; const GRADE_SIZES=[['A+',3],['A',4],['B',5],['C',11],['D',15]];
@@ -19,6 +36,8 @@ const GRADE_BONUS={'A+':6,A:4,B:3,C:2,D:1}; const GRADES=['A+','A','B','C','D'];
 const DIFFICULTY={easy:{label:'Easy',bid:0.85,rate:-2,sack:20},normal:{label:'Normal',bid:1,rate:0,sack:30},hard:{label:'Hard',bid:1.15,rate:2,sack:40}};
 const roundL=(x)=>x<10?Math.round(x*2)/2:Math.round(x);
 const OS_CAP=150, DOM_CAP=90, MAX_OS=8, MIN_OS=6, MAX_SQUAD=22, MIN_SQUAD=18;
+// Lowest base price for each kind of player: the reserve kept back for every slot still to fill.
+const MIN_BASE={NEP:2,OS:3};
 const PERSONAS=['Big spender','Balanced','Bargain hunter','Youth builder','Loyalist','Balanced','Big spender','Bargain hunter'];
 const MONTHS={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
 // "Nov 3" -> epoch ms for that day; null for labels that are not dates ("Off-season").
@@ -67,7 +86,17 @@ class Game{
     // decisions from older saves: give them a title, a deadline (the user's next match) and a cautious choice
     const nf=s.fixtures&&s.user?this.userNext():null;
     for(const n of s.inbox) if(n.choices&&!n.done){ n.title??=n.text; if(n.due===undefined) n.due=nf?nf.n:null; n.safe??=cautiousIndex(n); }
+    this.hook('migrate');
   }
+  // Calls a lifecycle hook on every phase 2 module that defines it.
+  hook(name,...args){ for(const M of MODULES) if(typeof M[name]==='function') M[name](this,...args); }
+  // Today's tasks from every module: [{key, text, sub?, to}], most urgent first as each module orders them.
+  tasks(){ const out=[]; for(const M of MODULES) if(typeof M.todayTasks==='function'){ try{ out.push(...(M.todayTasks(this)||[])); }catch(e){ console.error(e); } } return out; }
+  logDecision(kind,title,pick,outcome,extra){ return Depth.logDecision(this,kind,title,pick,outcome,extra); }
+  recMu(bat,bowl,runs,out){ Depth.recordMatchup(this,bat,bowl,runs,out); }
+  // A fixture's date as epoch ms, and the in-game today (the latest match played, or null outside the season).
+  dayOf(f){ return f?dayTime(f.date,this.year):null; }
+  todayTime(){ return dayTime(this.dayLabel(),this.year); }
   get players(){return this.s.players;} get teams(){return this.s.teams;} get user(){return this.s.user;} get year(){return this.s.year;}
   P(id){return this.s.players[id];}
   diff(){ return DIFFICULTY[this.s.settings&&this.s.settings.difficulty]||DIFFICULTY.normal; }
@@ -90,7 +119,7 @@ class Game{
     s.pid=getPID();
     for(const p of Object.values(s.players)) G.initIntl(p);
     for(const tid in s.teams) s.staff[tid]=G.genStaffTeam(tid);
-    G.setObjectives(); G.makeFixtures2026();
+    G.setObjectives(); G.makeFixtures2026(); G.hook('migrate');
     G.news(`Welcome to ${s.teams[userTeam].name}. The 2026 season (NPL Season 3) starts on October 26 at Kirtipur.`,'board');
     G.news(`The ICC has sanctioned the NPL. Squads may now carry 6 to 8 overseas players, with exactly 4 in the playing XI.`,'league');
     return G;
@@ -162,7 +191,7 @@ class Game{
     return top.concat(tail).map(p=>p.id);
   }
   // ===== Backroom staff =====
-  // s.staff[teamId] = {bat, bowl, physio}; each is {name, nat, level, wage, until} or null when vacant.
+  // s.staff[teamId] = {assistant, bat, ...}; each is {name, nat, level, grade, wage, until, spec, op} or null when vacant.
   staffLevel(tid,post){ const x=this.s.staff&&this.s.staff[tid]&&this.s.staff[tid][post]; return x?x.level:0; }
   // Staff are fictional: a generated name that matches any player in the game is rolled again.
   genStaffName(post){ const players=new Set(Object.values(this.players).map(p=>p.name)), staff=new Set();
@@ -172,37 +201,44 @@ class Game{
       if(nat==='NEP'){ const pr=pick(Object.keys(NEP_NAMES)); name=pick(NEP_NAMES[pr].f)+' '+pick(NEP_NAMES[pr].l); }
       else { const pool=OS_NAMES[nat]||OS_NAMES.ENG; name=pick(pool.f)+' '+pick(pool.l); } } while((players.has(name)||staff.has(name))&&g++<200);
     if(players.has(name)) name=name.split(' ')[0]+' '+pick(['Sharma','Basnet','Pant','Gurung','Joshi'])+'-'+pick(['Rana','Thapa','Karki']);
-    if(post==='physio'&&R()<0.35) name='Dr. '+name; return {name,nat}; }
-  genStaff(post,level){ const until=this.year+1; return {...this.genStaffName(post),level,wage:STAFF_WAGE[level],until}; }
-  // AI teams: levels follow how much the owners spend; the user starts with level-2 staff in all three posts.
-  genStaffTeam(tid){ const T=this.teams[tid]; const lv=()=>{ if(tid===this.user) return 2; const b=T&&T.persona==='Big spender'?1:T&&T.persona==='Bargain hunter'?-1:0; return clamp(ri(1,4)+b,1,5); };
-    const o={}; for(const [k] of STAFF_POSTS) o[k]=this.genStaff(k,lv()); return o; }
-  staffWages(tid){ const st=this.s.staff[tid]||{}; return STAFF_POSTS.reduce((a,[k])=>a+(st[k]?st[k].wage:0),0); }
+    if((post==='physio'||post==='mental')&&R()<0.35) name='Dr. '+name; return {name,nat}; }
+  genStaff(post,level){ const until=this.year+1; level=clamp(level,1,5);
+    return {...this.genStaffName(post),level,grade:gradeOf(level),wage:staffWage(post,level),until,spec:pick(STAFF_SPEC[post]||['General']),op:ri(50,65)}; }
+  // AI teams: levels follow how much the owners spend; the user starts with level-2 (grade C) staff in
+  // every post except the mental-skills coach, which is left for the first hire.
+  genStaffTeam(tid){ const T=this.teams[tid]; const lv=()=>{ if(tid===this.user) return 2; const b=T&&T.persona==='Big spender'?1:T&&T.persona==='Bargain hunter'?-1:0; return clamp(ri(1,3)+b,1,4); };
+    const o={}; for(const [k] of STAFF_POSTS) o[k]=tid===this.user&&k==='mental'?null:this.genStaff(k,lv()); return o; }
+  staffWages(tid){ const st=this.s.staff[tid]||{}; return Math.round(STAFF_POSTS.reduce((a,[k])=>a+(st[k]?st[k].wage:0),0)*10)/10; }
   // Staff can be hired, replaced or released between seasons only.
   staffWindow(){ return ['preseason','offseason','retention','auction'].includes(this.s.phase); }
-  // Three candidates per post, one low, one mid, one high level; new ones each off-season.
-  staffCandidates(post){ const P=this.s.staffPool; if(!P[post]||P[post].year!==this.year){ const lv=[ri(1,2),ri(3,4),ri(4,5)]; P[post]={year:this.year,list:lv.map(l=>this.genStaff(post,l))}; } return P[post].list; }
+  // Three candidates per post, one low, one mid, one high grade; new ones each off-season.
+  staffCandidates(post){ const P=this.s.staffPool; if(!P[post]||P[post].year!==this.year){ const lv=[ri(1,2),ri(2,3),ri(3,4)]; P[post]={year:this.year,list:lv.map(l=>this.genStaff(post,l))}; } return P[post].list; }
   // Release fee: half the wage still owed (seasons not yet paid; the coming season counts until it starts).
   releaseCost(tid,post){ const x=this.s.staff[tid][post]; if(!x) return 0; const unpaid=this.s.phase==='league'||this.s.phase==='playoffs'||this.s.phase==='seasonEnd'?0:1;
     const seasons=Math.max(0,x.until-this.year+unpaid); return Math.round(x.wage*seasons*0.5*10)/10; }
   releaseStaff(post,quiet){ const t=this.teams[this.user]; const x=this.s.staff[this.user][post]; if(!x) return 0; if(!this.staffWindow()) return null;
     const cost=this.releaseCost(this.user,post); t.balance-=cost; t.staffFees=(t.staffFees||0)+cost; this.s.staff[this.user][post]=null;
-    if(!quiet) this.news(`${x.name} leaves as ${STAFF_POSTS.find(p=>p[0]===post)[1].toLowerCase()}${cost?`. Release fee: ${fmtL(cost)}`:''}.`,'board'); return cost; }
+    // colleagues notice when one of them is let go
+    for(const k in this.s.staff[this.user]){ const y=this.s.staff[this.user][k]; if(y) y.op=clamp((y.op??55)-3,0,100); }
+    if(!quiet) this.news(`${x.name} leaves as ${STAFF_POSTS.find(p=>p[0]===post)[1].toLowerCase()}${cost?`. Release fee: ${fmtL(cost)}`:''}.`,'staff'); return cost; }
   hireStaff(post,i){ if(!this.staffWindow()) return 'Staff can be hired in the pre-season and off-season.';
     const c=this.staffCandidates(post)[i]; if(!c) return 'That candidate is no longer available.'; const t=this.teams[this.user];
     if(t.balance<c.wage) return 'The club balance cannot cover his wage.';
     const old=this.s.staff[this.user][post]; const fee=old?this.releaseStaff(post,true):0;
-    this.s.staff[this.user][post]={...c,until:this.year+1}; this.s.staffPool[post].list.splice(i,1);
-    this.news(`${c.name} joins as ${STAFF_POSTS.find(p=>p[0]===post)[1].toLowerCase()} (level ${c.level}, ${fmtL(c.wage)} a season, until ${this.year+1})${old?`, replacing ${old.name}${fee?` (release fee ${fmtL(fee)})`:''}`:''}.`,'board');
+    this.s.staff[this.user][post]={...c,until:this.year+1,op:clamp((c.op??55)+(c.iv?5:0),0,100)}; delete this.s.staff[this.user][post].iv; this.s.staffPool[post].list.splice(i,1);
+    this.news(`${c.name} joins as ${STAFF_POSTS.find(p=>p[0]===post)[1].toLowerCase()} (grade ${gradeOf(c.level)}, ${fmtL(c.wage)} a season, until ${this.year+1})${old?`, replacing ${old.name}${fee?` (release fee ${fmtL(fee)})`:''}`:''}.`,'staff');
+    this.logDecision('staff',`Hire a ${STAFF_POSTS.find(p=>p[0]===post)[1].toLowerCase()}`,`${c.name}, grade ${gradeOf(c.level)}`,`${fmtL(c.wage)} a season until ${this.year+1}`);
     return null; }
   // Off-season: contracts that ran out leave; AI teams hire replacements straight away.
   staffTurnover(){ for(const tid in this.teams){ const st=this.s.staff[tid]||(this.s.staff[tid]={});
-    for(const [k,label] of STAFF_POSTS){ const x=st[k]; if(!x||x.until>=this.year) continue;
-      if(tid===this.user){ st[k]=null; this.news(`${x.name}'s contract as ${label.toLowerCase()} has ended. The post is vacant: hire a replacement on the Staff page.`,'board'); }
-      else st[k]=this.genStaff(k,clamp(x.level+ri(-1,1),1,5)); } }
+    for(const [k,label] of STAFF_POSTS){ const x=st[k]; if(x===undefined&&tid!==this.user){ st[k]=this.genStaff(k,ri(1,3)); continue; } if(!x||x.until>=this.year) continue;
+      if(tid===this.user){ st[k]=null; this.news(`${x.name}'s contract as ${label.toLowerCase()} has ended. The post is vacant: hire a replacement on the Staff page.`,'staff'); }
+      else st[k]=this.genStaff(k,clamp(x.level+ri(-1,1),1,4)); } }
     this.s.staffPool={}; }
   // Injury length after the physio: L/2 matches shorter (rounded, at least 1); a match longer with no physio.
-  injuryLength(tid,base){ const L=this.staffLevel(tid,'physio'); return L? Math.max(1,base-Math.round(L/2)) : base+1; }
+  // The gym and recovery centre (a board facility) takes another match off longer injuries for the user.
+  injuryLength(tid,base){ const L=this.staffLevel(tid,'physio'); let n=L? Math.max(1,base-Math.round(L/2)) : base+1;
+    if(tid===this.user&&this.s.facilities&&this.s.facilities.gym&&n>=2) n--; return n; }
   // ===== International layer =====
   // p.intl = {t20i, odi, debut, grade, gradeYear, real}: caps at game start (null = not verified), from intl-data.js.
   // p.intlG = caps won in this game; p.intlLog = Nepal games played in this game.
@@ -420,7 +456,9 @@ class Game{
   }
   nextFixture(){ return this.s.fixtures.find(f=>!f.res); }
   // ===== Playing matches =====
-  newMatch(f){ return new Match(this,f.home,f.away,{lang:this.s.lang,night:f.night,stage:f.stage,dew:this.dewFor(f)}); }
+  // beforeMatch(G, f, opt) lets modules add match options (team talk, moods, a hostile crowd) and apply
+  // the training week before the first ball. A resumed match is restored, not rebuilt, so it runs once.
+  newMatch(f){ const opt={lang:this.s.lang,night:f.night,stage:f.stage,dew:this.dewFor(f)}; this.hook('beforeMatch',f,opt); return new Match(this,f.home,f.away,opt); }
   // Dew is decided once per fixture so the scout report and the match agree.
   dewFor(f){ if(f.dew===undefined) f.dew=!!f.night&&R()<0.6; return f.dew; }
   async playFixture(f,hooks){
@@ -486,6 +524,7 @@ class Game{
     // bowling economy by phase for each side this season (scout report)
     for(const inn of m.inns){ if(!inn.phx) continue; const E=((this.s.phaseEco[y]??={})[inn.bowl]??={pp:[0,0],mid:[0,0],death:[0,0]}); for(const k in inn.phx){ E[k][0]+=inn.phx[k][0]; E[k][1]+=inn.phx[k][1]; } }
     for(const side of [m.home,m.away]){ const t=this.teams[side]; t.form=(t.form||[]).concat([res.winner===side?'W':res.winner?'L':'–']).slice(-5); }
+    this.hook('afterMatch',m,f);
     this.s.pid=getPID();
   }
   st(p,y){ p.stats[y]=p.stats[y]||{m:0,inn:0,r:0,b:0,no:0,f:0,s:0,hs:0,hsNo:false,ff:0,h:0,bb:0,rc:0,w:0,bw:0,br:999,ct:0,mom:0,team:p.team}; if(p.team) p.stats[y].team=p.team; return p.stats[y]; }
@@ -549,7 +588,10 @@ class Game{
     if(fx.promise&&fx.pid&&fx.promise!==true) this.addPromise(fx.pid,fx.promise);
     n.done=true; n.picked=c.l; n.read=true;
     n.outcome=effectLines(this,n,ci).filter(e=>e.tone!=='mut').map(e=>e.text).join('. ');
-    if(auto){ n.auto=true; t.board=clamp(t.board-2,0,100); n.outcome=(n.outcome?n.outcome+'. ':'')+'Board confidence −2 for not answering'; }
+    // with "Let the assistant decide" on, a deadline pick is the assistant's answer, not a missed one
+    if(auto&&this.s.settings&&this.s.settings.assistant){ n.auto=true; n.assistant=true; n.outcome=(n.outcome?n.outcome+'. ':'')+'The assistant decided'; }
+    else if(auto){ n.auto=true; t.board=clamp(t.board-2,0,100); n.outcome=(n.outcome?n.outcome+'. ':'')+'Board confidence −2 for not answering'; }
+    this.logDecision(n.story?'story':'event',n.title||n.text,auto?`${c.l} (not answered in time)`:c.l,n.outcome,{cat:n.cat||null,pid:fx.pid||null});
   }
   // Unanswered decisions whose deadline has passed take the cautious option, and the board notices.
   expireDecisions(uptoN){
@@ -569,11 +611,13 @@ class Game{
   checkPromises(xi){
     const keep=[];
     for(const pr of this.s.promises){
+      if(pr.kind!=='start'&&pr.kind!=='debut'){ keep.push(pr); continue; } // judged by the module that made it
       const p=this.P(pr.pid); if(!p||p.team!==this.user||p.retired) continue;
-      if(xi.includes(pr.pid)){ this.news(`Promise kept: ${p.name} ${pr.kind==='debut'?'made his NPL debut':'started, as you promised'}.`,'board'); continue; }
+      const logP=(result)=>(this.s.promiseLog??=[]).push({pid:pr.pid,kind:pr.kind,text:pr.kind==='debut'?`Give ${p.name} a debut`:`Start ${p.name}`,y:this.year,result});
+      if(xi.includes(pr.pid)){ logP('kept'); this.news(`Promise kept: ${p.name} ${pr.kind==='debut'?'made his NPL debut':'started, as you promised'}.`,'board'); continue; }
       if(!this.available(p)){ const nx=this.userNext(); if(nx) pr.dueFixture=Math.max(pr.dueFixture,nx.n); keep.push(pr); continue; } // injured, NOC or national duty: not his manager's fault
       pr.matchesLeft--;
-      if(pr.matchesLeft<=0){ const t=this.teams[this.user]; p.morale=clamp(p.morale-20,0,100); t.board=clamp(t.board-4,0,100);
+      if(pr.matchesLeft<=0){ const t=this.teams[this.user]; p.morale=clamp(p.morale-20,0,100); t.board=clamp(t.board-4,0,100); logP('broken'); p.happy=clamp((p.happy??70)-20,0,100); p.happyWhy='A promise you broke';
         this.news(`Promise broken: ${p.name} ${pr.kind==='debut'?'is still waiting for his debut':'did not start'}. His morale −20, board confidence −4.`,'board'); continue; }
       keep.push(pr);
     }
@@ -626,6 +670,7 @@ class Game{
     this.news(`${this.teams[champ].name} are the ${y} NPL champions!`,'league',{detail:`${final.res.text}. Player of the tournament: ${h.pot}. Platinum Cap: ${h.runs[0][0]} (${h.runs[0][2]} runs). Golden Cap: ${h.wkts[0][0]} (${h.wkts[0][2]} wickets).`,ne:`${NE_TEAM[champ]} ${y} को एनपीएल च्याम्पियन!`});
     this.boardReview(champ,runner,st);
     this.s.phase='seasonEnd';
+    this.hook('seasonEnd',champ);
     return h;
   }
   boardReview(champ,runner,st){
@@ -636,7 +681,11 @@ class Game{
     if(effRank<=obj.rank) delta+=14; else delta-= 6*(effRank-obj.rank);
     if(champ===u) delta+=18;
     if(t.balance<0) delta-=6;
+    // the five pillars (results, finances, fans, youth, conduct) and the club's secondary objectives
+    const pil=Office.pillarDelta?Office.pillarDelta(this):0, sec=Office.reviewObjectives?Office.reviewObjectives(this,effRank,obj):0;
+    delta+=clamp(pil+sec,-8,8); // the pillars refine the verdict; results still decide it
     t.board=clamp(t.board+delta,0,100);
+    this.s.lastReview={y:this.year,pos,effRank,champ:champ===u,runner:runner===u,obj:{...obj},delta,pil,sec,board:t.board};
     const M=this.s.manager; M.rep=clamp(M.rep+(champ===u?15:madeFinal?8:madePO?4:-3),0,100);
     M.career.push({year:this.year,team:u,pos,champ:champ===u,runner:runner===u});
     this.news(`Board review: you finished ${ordinal(pos)}${champ===u?' and won the title':runner===u?' and reached the final':''}. Objective was "${obj.txt}". Board confidence is now ${t.board}%.`,'board');
@@ -653,7 +702,7 @@ class Game{
   startOffseason(){
     this.s.offStep='retire';
     this.expireDecisions(Infinity);
-    if(this.s.promises.length){ this.news(`The season ended with ${this.s.promises.length} promise${this.s.promises.length>1?'s':''} still open. They lapse without penalty.`,'board'); this.s.promises=[]; }
+    { const lapse=this.s.promises.filter(pr=>pr.kind==='start'||pr.kind==='debut'); if(lapse.length){ this.news(`The season ended with ${lapse.length} promise${lapse.length>1?'s':''} still open. They lapse without penalty.`,'board'); this.s.promises=this.s.promises.filter(pr=>!lapse.includes(pr)); } }
     const y=this.year; const retired=[]; const nep=[], os=[];
     for(const p of Object.values(this.players)){
       if(p.retired) continue;
@@ -688,6 +737,7 @@ class Game{
     this.s.mega = this.year===this.s.settings.nextMega;
     this.s.newPlayers=newNames.map(p=>p.id); this.s.lastRetired=retired.map(p=>p.id);
     this.s.phase='offseason';
+    this.hook('migrate'); this.hook('offseason');
   }
   develop(p){
     const o=ovr(p); let d;
@@ -700,11 +750,17 @@ class Game{
     else if(p.role==='BOWL') p.bowl=clamp(Math.round(p.bowl+d*(p.focus==='Batting'?0.8:1)),10,96);
     else { p.bat=clamp(Math.round(p.bat+d*fBat*0.8+rf(-0.5,0.5)),10,96); p.bowl=clamp(Math.round(p.bowl+d*fBowl*0.8+rf(-0.5,0.5)),10,96); }
     if(p.focus==='Fitness') p.field=clamp(p.field+1,30,95);
-    // coaches: players under 26 get +round(L/2) a season in their discipline, up to potential
-    if(t&&p.age<26){ const Lb=this.staffLevel(p.team,'bat'), Lw=this.staffLevel(p.team,'bowl'); let extra=0;
+    // coaches: players under 26 get +round(L/2) a season in their discipline, up to potential. Pace bowlers
+    // work with the bowling coach; spinners with the spin coach (or half the bowling coach's effect without one).
+    if(t&&p.age<26){ const Lb=this.staffLevel(p.team,'bat'), Lw=this.staffLevel(p.team,'bowl'), Ls=this.staffLevel(p.team,'spin'); let extra=0;
+      const Lbw=isSpin(p.type)?(Ls||Math.floor(Lw/2)):Lw;
       if(Lb&&(p.role==='BAT'||p.role==='WK'||p.role==='AR')){ const add=Math.min(Math.round(Lb/2),Math.max(0,p.pot-ovr(p))); p.bat=clamp(p.bat+add,10,96); extra+=add; }
-      if(Lw&&(p.role==='BOWL'||p.role==='AR')){ const add=Math.min(Math.round(Lw/2),Math.max(0,p.pot-ovr(p))); p.bowl=clamp(p.bowl+add,10,96); extra+=add; }
+      if(Lbw&&(p.role==='BOWL'||p.role==='AR')){ const add=Math.min(Math.round(Lbw/2),Math.max(0,p.pot-ovr(p))); p.bowl=clamp(p.bowl+add,10,96); extra+=add; }
+      // indoor nets (a board facility): one more step for the user's young players, up to potential
+      if(p.team===this.user&&p.age<24&&this.s.facilities&&this.s.facilities.nets){ const add=Math.min(1,Math.max(0,p.pot-ovr(p))); if(add){ if(p.role==='BOWL'||(p.role==='AR'&&p.bowl>p.bat)) p.bowl=clamp(p.bowl+add,10,96); else p.bat=clamp(p.bat+add,10,96); extra+=add; } }
       d+=extra; p.coachDev=extra; } else p.coachDev=0;
+    // fielding coach: under-30s gain fielding (grade A or B every season, C and D some seasons)
+    if(t&&p.age<30){ const Lf=this.staffLevel(p.team,'field'); if(Lf&&(Lf>=3||R()<Lf/4)) p.field=clamp((p.field||50)+1,30,95); }
     p.lastDev=d;
   }
   // AI trades are skipped; user trade proposals:
@@ -745,6 +801,9 @@ class Game{
       t.releaseSel=rel.sort((a,b)=>keep(a)-keep(b)).slice(0,6).map(p=>p.id); }
   }
   applyRetention(){
+    const ctx={}; this.hook('beforeRetention',ctx); this.applyRetentionCore(); this.hook('afterRetention',ctx);
+  }
+  applyRetentionCore(){
     const mega=this.s.mega; const costs=SLABS;
     for(const tid in this.teams){
       const t=this.teams[tid];
@@ -767,7 +826,7 @@ class Game{
   category(p){ const o=ovr(p); if(p.nat==='NEP') return p.uncapped?'Uncapped':o>=68?'Category A':o>=60?'Category B':'Category C'; return o>=78?'Overseas marquee':'Overseas'; }
   incr(p,bid){ if(p.nat==='NEP') return bid<10?0.5:bid<20?1:2; return bid<20?1:bid<50?2:5; }
   setupAuction(){
-    const pool=Object.values(this.players).filter(p=>!p.team&&!p.retired);
+    const pool=Object.values(this.players).filter(p=>!p.team&&!p.retired&&!p.academy);
     const top=pool.filter(p=>ovr(p)>=72).sort((a,b)=>ovr(b)-ovr(a)).slice(0,10);
     const rest=pool.filter(p=>!top.includes(p));
     const sets=[['Marquee set',top]];
@@ -779,7 +838,15 @@ class Game{
     this.s.auction={kind:this.s.mega?'mega':'mini',lots,i:0,cur:null,sold:[],unsold:[],accel:false,log:[],prep:true};
     for(const tid in this.teams){ this.teams[tid].maxBids={}; }
     this.s.phase='auction';
+    this.hook('auctionSetup');
   }
+  // Slots a team must still fill: overseas to the minimum 6, and Nepali for the rest of the 18.
+  requiredSlots(tid){ const t=this.teams[tid]; const os=this.osCount(tid); const osNeed=Math.max(0,MIN_OS-os); const total=Math.max(0,MIN_SQUAD-t.squad.length); return {os:osNeed,nep:Math.max(0,total-osNeed),total}; }
+  // The most a team can bid on this lot: the purse it comes out of (overseas lots use the overseas
+  // purse) minus a reserve, at the lowest base price, for every other slot it is still required to fill.
+  lotMax(tid,p){ if(!this.canAdd(tid,p)) return 0; const n=this.requiredSlots(tid); const os=p.nat!=='NEP';
+    const others=Math.max(0,(os?n.os:n.nep)-1); const reserve=others*(os?MIN_BASE.OS:MIN_BASE.NEP);
+    const purse=os?this.teams[tid].osPurse:this.teams[tid].purse; return Math.max(0,Math.floor((purse-reserve)*2)/2); }
   slotsNeeded(tid){ const t=this.teams[tid]; const os=this.osCount(tid); const nep=t.squad.length-os; return {nep:Math.max(0,12-nep),os:Math.max(0,MIN_OS-os),total:Math.max(0,MIN_SQUAD-t.squad.length)}; }
   canAdd(tid,p){ const t=this.teams[tid]; const os=this.osCount(tid); if(t.squad.length>=MAX_SQUAD) return false; if(p.nat!=='NEP'&&os>=MAX_OS) return false; if(p.nat==='NEP'&&(t.squad.length-os)>=14) return false; return true; }
   budgetOf(tid,p){ const t=this.teams[tid]; return p.nat==='NEP'?t.purse:t.osPurse; }
@@ -816,7 +883,7 @@ class Game{
   toggleShortlist(pid){ const i=this.s.shortlist.findIndex(e=>e.pid===pid); if(i>=0){ this.s.shortlist.splice(i,1); return false; } this.s.shortlist.push({pid,max:0,priority:'B'}); return true; }
   setShortlist(pid,patch){ let e=this.slEntry(pid); if(!e){ e={pid,max:0,priority:'B'}; this.s.shortlist.push(e); } Object.assign(e,patch); if(e.max<0) e.max=0; return e; }
   // The auction pool: lots in order, or before setup, everyone without a club.
-  auctionPool(){ const A=this.s.auction; if(A&&A.lots) return A.lots.map(l=>this.P(l.pid)); return Object.values(this.players).filter(p=>!p.team&&!p.retired); }
+  auctionPool(){ const A=this.s.auction; if(A&&A.lots) return A.lots.map(l=>this.P(l.pid)); return Object.values(this.players).filter(p=>!p.team&&!p.retired&&!p.academy); }
   // Sum of max bids per purse, and what still needs attention.
   budgetCheck(){ const t=this.teams[this.user]; const r={os:{sum:0,purse:t.osPurse},dom:{sum:0,purse:t.purse},warn:[]};
     for(const e of this.s.shortlist){ const p=this.P(e.pid); if(!p||p.team) continue; const k=p.nat==='NEP'?'dom':'os'; r[k].sum+=e.max||0;
@@ -833,7 +900,7 @@ class Game{
     const cap={os:t.osPurse,dom:t.purse}; const left={os:t.osPurse,dom:t.purse};
     const live=()=>this.s.shortlist.map(e=>({e,p:this.P(e.pid)})).filter(x=>x.p&&!x.p.team);
     for(const {e,p} of live()) left[p.nat==='NEP'?'dom':'os']-=e.max||0;
-    const taken=new Set(this.s.shortlist.map(e=>e.pid)); const pool=this.auctionPool().filter(p=>p&&!p.team&&!p.retired&&this.canAdd(this.user,p));
+    const taken=new Set(this.s.shortlist.map(e=>e.pid)); const pool=this.auctionPool().filter(p=>p&&!p.team&&!p.retired&&!p.academy&&this.canAdd(this.user,p));
     const kind=p=>p.nat==='NEP'?'dom':'os';
     const score=(p,lp)=>ovr(p)-25*((lp[0]+lp[1])/2)/Math.max(10,cap[kind(p)]);
     const take=(p,lp)=>{ left[kind(p)]-=lp[1]; taken.add(p.id); this.s.shortlist.push({pid:p.id,max:lp[1],priority:added.length<2?'A':'B'}); added.push(p.id); };
@@ -842,7 +909,7 @@ class Game{
     const LP=new Map(pool.map(p=>[p.id,this.likelyPrice(p)]));
     // slots can also be filled after the auction: overseas free agents who are not lots sign at their value in
     // the pre-season window, Nepali ones at base price, so they count towards the cheapest way to fill a slot
-    const inLots=new Set(pool.map(p=>p.id)); const later=Object.values(this.players).filter(p=>!p.team&&!p.retired&&!inLots.has(p.id)&&this.canAdd(this.user,p));
+    const inLots=new Set(pool.map(p=>p.id)); const later=Object.values(this.players).filter(p=>!p.team&&!p.retired&&!p.academy&&!inLots.has(p.id)&&this.canAdd(this.user,p));
     for(const p of later){ const pr=p.nat==='NEP'?this.basePrice(p):p.value; LP.set(p.id,[pr,pr]); }
     const fillers=pool.concat(later);
     const reserve=(k,cand,lowP)=>{ const os=this.osCount(this.user)+live().filter(x=>x.p.nat!=='NEP').length, sq=t.squad.length+live().length;
@@ -870,7 +937,7 @@ class Game{
     let tot=cands.reduce((a,x)=>a+x[1],0), r=R()*tot; let pickT=cands[0][0]; for(const x of cands){ r-=x[1]; if(r<=0){pickT=x[0];break;} }
     c.bid=nb; c.leader=pickT; c.hist.push([pickT,nb]); return {type:'bid',team:pickT,amount:nb};
   }
-  userBid(amount){ const c=this.s.auction.cur; const p=this.P(c.pid); const nb=amount&&amount>this.nextBidAmount()?amount:this.nextBidAmount(); if(!this.canAdd(this.user,p)) return 'Your squad has no room for this player.'; if(nb>this.budgetOf(this.user,p)) return 'You cannot afford that bid.'; c.bid=nb; c.leader=this.user; c.hist.push([this.user,nb]); return null; }
+  userBid(amount){ const c=this.s.auction.cur; const p=this.P(c.pid); const nb=amount&&amount>this.nextBidAmount()?amount:this.nextBidAmount(); if(!this.canAdd(this.user,p)) return 'Your squad has no room for this player.'; if(nb>this.budgetOf(this.user,p)) return 'You cannot afford that bid.'; if(nb>this.lotMax(this.user,p)) return `Over your limit: your max on this lot is ${fmtL(this.lotMax(this.user,p))}.`; c.bid=nb; c.leader=this.user; c.hist.push([this.user,nb]); return null; }
   hammer(){
     const A=this.s.auction,c=A.cur; const p=this.P(c.pid);
     if(c.leader){ this.signPlayer(p,c.leader,c.bid); A.sold.push({pid:p.id,team:c.leader,price:c.bid,set:c.set}); }
@@ -895,7 +962,7 @@ class Game{
     // accelerated fill for AI teams to minimums
     // Nepali slots only: overseas free agents stay open for the user's pre-season window, and the AI
     // teams sign theirs in aiPreseason() when the user starts the season.
-    const pool=()=>Object.values(this.players).filter(p=>!p.team&&!p.retired&&p.nat==='NEP');
+    const pool=()=>Object.values(this.players).filter(p=>!p.team&&!p.retired&&!p.academy&&p.nat==='NEP');
     for(const tid in this.teams){ if(tid===this.user) continue; this.fillSquad(tid,pool); }
     A.done=true; this.s.shortlist=[];
   }
@@ -919,7 +986,7 @@ class Game{
     }
   }
   startSeason(){
-    const poolFn=()=>Object.values(this.players).filter(p=>!p.team&&!p.retired);
+    const poolFn=()=>Object.values(this.players).filter(p=>!p.team&&!p.retired&&!p.academy);
     for(const tid in this.teams){ if(this.teams[tid].squad.length<MIN_SQUAD) this.fillSquad(tid,poolFn); }
     for(const tid in this.teams){ const t=this.teams[tid]; const wages=t.squad.reduce((a,id)=>a+this.P(id).salary,0);
       // staff wages come from the balance; release fees already paid in the off-season are shown with them
@@ -931,18 +998,20 @@ class Game{
     this.drawNationalDuty();
     this.setObjectives(); this.s.phase='league';
     const t=this.teams[this.user]; this.news(`Season ${this.year} begins. The board's objective: ${t.objective.txt}.`,'board');
+    this.hook('seasonStart');
   }
   // Pre-season overseas signing window
-  osFreeAgents(){ return Object.values(this.players).filter(p=>!p.team&&!p.retired&&p.nat!=='NEP').sort((a,b)=>ovr(b)-ovr(a)); }
+  osFreeAgents(){ return Object.values(this.players).filter(p=>!p.team&&!p.retired&&!p.academy&&p.nat!=='NEP').sort((a,b)=>ovr(b)-ovr(a)); }
   signFA(pid,tid){ const p=this.P(pid); tid=tid||this.user; if(!this.canAdd(tid,p)) return 'No squad room.'; const price=p.nat==='NEP'?this.basePrice(p):p.value; if(price>this.budgetOf(tid,p)) return 'Not enough budget.'; this.signPlayer(p,tid,price); return null; }
   releasePlayer(pid){ const p=this.P(pid); const t=this.teams[p.team]; t.squad=t.squad.filter(x=>x!==pid); p.prevTeam=p.team; p.team=null; if(t.xi) t.xi=t.xi.filter(x=>x!==pid); this.recalcPurse(t.id); }
   aiPreseason(){
     const signed={};
     for(const tid in this.teams){ if(tid===this.user) continue; let g=0; while(this.osCount(tid)<MIN_OS && g++<10){ const c=this.osFreeAgents().filter(p=>p.value<=this.teams[tid].osPurse&&this.canAdd(tid,p)); if(!c.length) break; const p= R()<0.6? c[0]: pick(c.slice(0,6)); this.signFA(p.id,tid); (signed[tid]=signed[tid]||[]).push(`${p.name} (${fmtL(p.value)})`); }
-      const pool=()=>Object.values(this.players).filter(p=>!p.team&&!p.retired); this.fillSquad(tid,pool); }
+      const pool=()=>Object.values(this.players).filter(p=>!p.team&&!p.retired&&!p.academy); this.fillSquad(tid,pool); }
     const k=Object.keys(signed); if(k.length) this.news(`Overseas signings: ${k.length} franchise${k.length>1?'s':''} strengthen${k.length>1?'':'s'} up`,'signing',{detail:k.map(t=>`${this.teams[t].name}: ${signed[t].join(', ')}`).join('. ')+'.',ne:'विदेशी खेलाडी अनुबन्ध'});
   }
 }
 function ordinal(n){const s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);}
 function careerOf(p){ const c={m:0,inn:0,r:0,b:0,no:0,f:0,s:0,hs:0,ff:0,h:0,bb:0,rc:0,w:0,bw:0,br:999,ct:0,mom:0}; for(const y in p.stats){const s=p.stats[y]; for(const k of ['m','inn','r','b','no','f','s','ff','h','bb','rc','w','ct','mom']) c[k]+=s[k]; if(s.hs>c.hs)c.hs=s.hs; if(s.bw>c.bw||(s.bw===c.bw&&s.br<c.br)){c.bw=s.bw;c.br=s.br;}} return c; }
-export {Game,DIFFICULTY,STAFF_POSTS,STAFF_WAGE,careerOf,ordinal,effectLines,cautiousIndex,BOWL_PHASES,PHASE_CAP,NEEDS,needRoles,OS_CAP,DOM_CAP,MAX_OS,MIN_OS,SLABS,MAX_SQUAD,MIN_SQUAD};
+export {dayTime,MIN_BASE};
+export {Game,DIFFICULTY,STAFF_POSTS,STAFF_WAGE,STAFF_SPEC,gradeOf,staffWage,careerOf,ordinal,effectLines,cautiousIndex,BOWL_PHASES,PHASE_CAP,NEEDS,needRoles,OS_CAP,DOM_CAP,MAX_OS,MIN_OS,SLABS,MAX_SQUAD,MIN_SQUAD};

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Press conference</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl" data-theme="{{theme}}" style="min-height: 960px">
+  <header class="top">
+    <span class="brand">NPL Manager</span>
+    <span class="tm"><i class="dot t-ll"></i>Lumbini Lions</span>
+    <span class="kv"><span>Season</span><span>3 · 2026</span></span>
+    <span class="phase"><b>Matchday</b> · press room</span>
+    <span class="spacer"></span>
+    <a href="Prematch.dc.html" class="btn btn-sm btn-ghost">Back to build-up</a>
+  </header>
+  <main style="max-width: 1180px; margin: 0 auto; padding: 36px 32px 56px">
+    <div class="split" style="gap: 48px; grid-template-columns: minmax(0,1.6fr) minmax(0,1fr)">
+      <section class="stack" style="gap: 22px">
+        <div class="stack" style="gap: 4px">
+          <p class="faint t-small">Pre-match press conference · Kirtipur media room · question {{qn}} of 3</p>
+          <div class="meter" style="max-width: 240px"><i style="width: {{pct}}"></i></div>
+        </div>
+
+        <sc-if value="{{asking}}" hint-placeholder-val="{{ true }}">
+          <div class="stack" style="gap: 6px">
+            <p class="faint t-small">{{q.who}}</p>
+            <p style="font-size: 24px; line-height: 33px; font-weight: 500; letter-spacing: -0.01em; text-wrap: pretty">“{{q.text}}”</p>
+          </div>
+          <div class="stack" style="gap: 10px">
+            <sc-for list="{{q.answers}}" as="a" hint-placeholder-count="3">
+              <button type="button" class="choice" onClick="{{a.pick}}">
+                <span style="font-weight: 600">{{a.tone}}</span>
+                <span style="color: var(--ink-2)">“{{a.text}}”</span>
+                <span class="fx">{{a.fx}}</span>
+              </button>
+            </sc-for>
+            <button type="button" class="btn btn-ghost" style="align-self: flex-start" onClick="{{skip}}">Send the assistant instead</button>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{finished}}" hint-placeholder-val="{{ false }}">
+          <div class="stack" style="gap: 10px">
+            <h1 class="t-h2">That's all, thank you.</h1>
+            <p class="mut">The headlines are written. Effects apply before the toss.</p>
+            <ul class="mlist">
+              <sc-for list="{{log}}" as="l" hint-placeholder-count="3">
+                <li><span class="grow">{{l.q}}<br><span class="l2">You: {{l.tone}} · {{l.room}}</span></span></li>
+              </sc-for>
+            </ul>
+            <div class="row" style="gap: 8px"><a href="Prematch.dc.html" class="btn btn-primary">Back to the build-up</a><button type="button" class="btn" onClick="{{reset}}">Start again</button></div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{hasLast}}" hint-placeholder-val="{{ false }}">
+          <p class="t-small mut ev-new" style="font-style: italic">{{lastRoom}}</p>
+        </sc-if>
+      </section>
+
+      <aside class="stack" style="gap: 20px">
+        <div class="panel stack" style="gap: 12px">
+          <h2 class="sec" style="margin: 0">What your answers have moved</h2>
+          <sc-for list="{{meters}}" as="m" hint-placeholder-count="4">
+            <div class="stack" style="gap: 4px">
+              <div style="display: flex; justify-content: space-between" class="t-small"><span class="mut">{{m.label}}</span><span class="{{m.cls}}">{{m.delta}}</span></div>
+              <div class="meter blue"><i style="width: {{m.w}}"></i></div>
+            </div>
+          </sc-for>
+        </div>
+        <div class="stack" style="gap: 6px">
+          <h2 class="sec" style="margin: 0">Across town</h2>
+          <p class="pull" style="font-size: 15px; line-height: 23px">“Their batters still can't pick the googly. Ask them.”<cite>Biratnagar assistant coach (generated staff), this morning</cite></p>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { i:0, log:[], fx:{ morale:0, fans:0, board:0, rival:0 } }; }
+  renderVals() {
+    const s = this.state;
+    const Q = [
+      { who:'TV reporter', text:'You knocked Biratnagar out in Qualifier 2 last year. Do they owe you one tonight?', answers:[
+        ['Confident','We beat them when it mattered. We will again.', { morale:6, fans:4, rival:-8 }, 'Rival manager will take it personally', 'A few reporters glance at each other.'],
+        ['Respectful','They are a fine side. Last year means nothing tonight.', { morale:2, board:2, rival:4 }, 'Calm, safe, no headline', 'Pens barely move. Nobody will print that.'],
+        ['Deflect','I am only thinking about our own cricket.', { board:1 }, 'Nothing changes', 'A shrug from the front row.']] },
+      { who:'Newspaper columnist', text:'Hemant Dhami has been left out three games running. Is his time at Lumbini over?', answers:[
+        ['Back him publicly','Hemant is part of our plans. His chance is coming.', { morale:4, fans:2 }, 'Dhami happier; he will expect a game soon', 'The columnist nods and writes it down.'],
+        ['Honest','He knows what he has to do in training.', { board:3, morale:-3 }, 'Dhami unsettled; board likes the standard', 'A murmur. That will be tomorrow’s back page.'],
+        ['No comment','I don’t talk about individuals before a game.', {}, 'Nothing changes, the story runs anyway', 'Someone mutters “so that’s a yes”.']] },
+      { who:'Radio host', text:'Biratnagar’s assistant coach says your batters can’t pick a googly. Your response?', answers:[
+        ['Rise to it','He can bowl it to us tonight and find out.', { morale:5, fans:6, rival:-10 }, 'Big headline; batters fired up, more pressure on them', 'The room laughs. Cameras flash.'],
+        ['Praise them','Their spinners are the best in the league. We respect them.', { board:2, rival:6 }, 'Rival calmer; your batters less fired up', 'Polite applause at the back.'],
+        ['Joke','I’ll ask Rohit. He faced him for Nepal long enough.', { fans:4, morale:2 }, 'Light mood in the dressing room', 'Laughter, even from the Biratnagar press officer.']] }
+    ];
+    const done = s.i >= Q.length;
+    const answer = (a) => { const fx = Object.assign({}, s.fx); Object.keys(a[2]).forEach(k => fx[k] += a[2][k]); this.setState({ i: s.i + 1, fx, log: s.log.concat([{ q: Q[s.i].text, tone: a[0], room: a[4] }]) }); };
+    const q = done ? { who:'', text:'', answers:[] } : Object.assign({}, Q[s.i], { answers: Q[s.i].answers.map(a => ({ tone:a[0], text:a[1], fx:a[3], pick: () => answer(a) })) });
+    const base = { morale:68, fans:64, board:72, rival:50 };
+    const L = { morale:'Squad morale', fans:'Fan support', board:'Board confidence', rival:'Rival manager’s respect' };
+    const meters = Object.keys(L).map(k => { const d = s.fx[k]; return { label:L[k], w: Math.max(0, Math.min(100, base[k] + d)) + '%', delta: d === 0 ? 'no change' : (d > 0 ? '+' + d : '' + d), cls: d > 0 ? 'up t-small' : (d < 0 ? 'down t-small' : 'faint t-small') }; });
+    const last = s.log.length ? s.log[s.log.length - 1].room : '';
+    return { theme: this.props.theme ?? 'light', q, qn: Math.min(s.i + 1, 3), pct: Math.round(s.i / 3 * 100) + '%', asking: !done, finished: done,
+      log: s.log, meters, hasLast: !done && !!last, lastRoom: last,
+      skip: () => answer(Q[s.i].answers[1]), reset: () => this.setState({ i:0, log:[], fx:{ morale:0, fans:0, board:0, rival:0 } }) };
+  }
+}
+</script>
+</body>
+</html>

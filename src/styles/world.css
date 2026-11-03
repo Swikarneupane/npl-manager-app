@@ -1,0 +1,43 @@
+/* World cricket screens: digest, international centre, World Cup, rankings. Colours come from the theme variables. */
+.wd-split{margin-top:24px;gap:40px;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)}
+.wd-th{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.wd-tabs{margin-top:18px;background:transparent;align-items:center;gap:6px}
+.wd-tabs button[role=tab]{flex:0 0 auto}
+.wd-hero{padding:22px 26px}
+.wd-hero-in{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px}
+.wd-hero-t{font-size:44px;line-height:1}
+.wd-flagline{display:flex;align-items:center;gap:8px}
+.wd-flag{display:inline-block;width:10px;height:12px;background:var(--crimson-solid);clip-path:polygon(0 0,100% 45%,35% 45%,100% 100%,0 100%)}
+.wd-occ{padding:26px 30px;border-radius:12px}
+.wd-occ-t{font-size:50px;line-height:1}
+.wd-fans{margin-top:14px;color:var(--board-ink-2);font-style:italic}
+.board,.m-actions,.wd .row{--wd-gold:color-mix(in srgb,var(--gold) 45%,var(--board-ink))}
+.wd-gold{background:var(--wd-gold);border-color:var(--wd-gold);color:var(--board-bg)}
+.wd-gold:hover{filter:brightness(1.05)}
+.wd-ghost{background:transparent;color:var(--board-ink);border-color:var(--board-rule)}
+.wd-path{list-style:none;margin:0;padding:0}
+.wd-path li{display:grid;grid-template-columns:170px minmax(0,1fr);gap:16px;padding:12px 0;border-bottom:1px solid var(--rule)}
+.wd-path li:last-child{border-bottom:0}
+.wd-path li.on{background:var(--blue-soft);padding-left:8px}
+.wd-fx{list-style:none;margin:0;padding:0;font-size:13.5px;line-height:20px;color:var(--ink-2)}
+.wd-fx li{padding:2px 0}
+.wd-fx .blu,.wd-fx .crim{font-weight:600}
+.wd-acc{display:block;margin-top:6px;color:var(--ink-2)}
+.wd-score{border-radius:0;border-width:0 0 1px;padding:12px 16px;box-shadow:inset 0 -2px 0 var(--gold)}
+.wd .wd-score{border-radius:10px;border-width:1px}
+.wd-big{font-size:46px;line-height:.95}
+.wd-wp{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;margin-top:8px}
+.wd-ev{grid-template-columns:38px minmax(0,1fr);gap:4px 10px}
+.wd-mhero{padding:10px 16px 0}
+.wd-mhero .board{padding:14px 16px}
+.wd-mhero .wd-hero-t,.wd-mhero .wd-occ-t{font-size:28px}
+.wd-mhero .cells{gap:8px 18px}
+.wd-mhero .mid{font-size:22px}
+.wd-mhero .wd-fans{display:none}
+@media (max-width:759px){
+  .wd-split{grid-template-columns:minmax(0,1fr);gap:24px;margin-top:12px}
+  .wd-path li{grid-template-columns:minmax(0,1fr);gap:2px}
+}
+.wd-dg td{white-space:normal}
+.wd-dg td:first-child,.wd-dg td:last-child,.wd-dg td:nth-child(5){white-space:nowrap}
+.wd-dg td,.wd-dg th{padding-left:10px;padding-right:10px}

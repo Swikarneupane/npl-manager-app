@@ -6,6 +6,7 @@ import { TEAMS, HISTORY } from '../game/data.js';
 import { Dot, Seg } from '../components/bits.jsx';
 import { saveLocal } from '../lib/save.js';
 import { downloadSave } from '../lib/cloud.js';
+import { CHALLENGES, applyChallenge } from '../game/living.js';
 
 const MODES = [['ball', 'Every ball', 'You call each delivery.'], ['over', 'Every over', 'Pause at the end of each over.'], ['key', 'Key moments', 'Plays on, pauses for wickets, DRS and the death overs.'], ['quick', 'Quick sim', 'Straight to the result.']];
 
@@ -21,6 +22,8 @@ export default function NewGame() {
   const [lang, setLang] = useState('en');
   const [mode, setMode] = useState('key');
   const [code, setCode] = useState('');
+  const [challenge, setChallenge] = useState('');
+  const pickChallenge = (k) => { setChallenge(k); const c = CHALLENGES.find((x) => x.k === k); if (c && c.team) setTeam(c.team); };
   const preview = useMemo(() => Game.create('LL', {}), []);
   const strs = useMemo(() => TEAMS.map((t) => preview.strength(t.id)), [preview]);
   const mx = Math.max(...strs), mn = Math.min(...strs);
@@ -31,6 +34,7 @@ export default function NewGame() {
   const start = () => {
     // pre-season fairness: the AI teams sign their overseas players when you start the season, not before
     const G = Game.create(team, { lang, manager: name || 'Manager', mode, difficulty });
+    if (challenge) applyChallenge(G, challenge);
     ui.live = null; saveLocal(G); setG(G); nav('/');
   };
   const loadCode = async () => {
@@ -54,7 +58,7 @@ export default function NewGame() {
                 const note = x.id === h25.champion ? 'Champions' : x.id === h25.runner ? 'Runners-up' : '';
                 return (
                   <tr key={x.id} className={team === x.id ? 'me' : ''}>
-                    <td className="name"><label className="chk" style={{ minHeight: 28 }}><input type="radio" name="franchise" checked={team === x.id} onChange={() => setTeam(x.id)} /><span style={{ display: 'flex', alignItems: 'center' }}><Dot id={x.id} />{x.name}</span></label></td>
+                    <td className="name"><label className="chk" style={{ minHeight: 28 }}><input type="radio" name="franchise" checked={team === x.id} onChange={() => { setTeam(x.id); if (challenge === 'rescue' && x.id !== 'JB') setChallenge(''); }} /><span style={{ display: 'flex', alignItems: 'center' }}><Dot id={x.id} />{x.name}</span></label></td>
                     <td><span>{ordinal(pos)}</span> <span className="faint">{note}</span></td><td>{x.captain}</td><td className="mut">{x.coach}</td>
                     <td><div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><div className="meter" style={{ flex: '1 1 auto' }}><i style={{ width: `${Math.round(20 + 80 * (strs[i] - mn) / (mx - mn || 1))}%` }} /></div><span className="num" style={{ width: 22, textAlign: 'right' }}>{Math.round(strs[i])}</span></div></td>
                   </tr>);
@@ -68,6 +72,10 @@ export default function NewGame() {
             <div className="field"><span className="lbl">Default match control</span>
               <div className="stack" style={{ gap: 8 }}>{MODES.map(([k, l, d]) => (
                 <label key={k} className="chk"><input type="radio" name="mode" checked={mode === k} onChange={() => setMode(k)} /><span><b style={{ fontWeight: 600 }}>{l}</b> <span className="faint t-small">{d}</span></span></label>))}</div></div>
+            <div className="field"><span className="lbl">Challenge</span>
+              <div className="stack" style={{ gap: 8 }}>{[['', 'None', 'A normal career.', ''], ...CHALLENGES.map((c) => [c.k, c.n, c.d, c.tag])].map(([k, l, d, tag]) => (
+                <label key={k || 'none'} className="chk"><input type="radio" name="challenge" checked={challenge === k} onChange={() => pickChallenge(k)} /><span><b style={{ fontWeight: 600 }}>{l}</b>{tag && <span className="faint t-small"> · {tag}</span>} <span className="faint t-small">{d}</span></span></label>))}</div>
+              {challenge === 'rescue' && team !== 'JB' && <p className="t-small crim">This challenge is with Janakpur Bolts.</p>}</div>
             <div className="panel stack" style={{ gap: 8 }}><p className="t-h3" style={{ display: 'flex', alignItems: 'center' }}><Dot id={team} />{t.name}</p>
               <p className="t-small mut">{t.city}, {t.province} Province. Captain {t.captain}, coach {t.coach}. Key players: {stars}. {tt.squad.length} players, {preview.osCount(team)} overseas signed so far: you need 6 to 8 before the first match.</p></div>
             <button type="button" className="btn btn-primary btn-lg" onClick={start}>Start Season 3</button>

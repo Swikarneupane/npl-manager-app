@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Staff room</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl" data-theme="{{theme}}" style="min-height: 1100px">
+  <header class="top">
+    <span class="brand">NPL Manager</span>
+    <span class="tm"><i class="dot t-ll"></i>Lumbini Lions</span>
+    <span class="kv"><span>Season</span><span>4 · 2027</span></span>
+    <span class="phase"><b>Pre-season</b></span>
+    <span class="spacer"></span>
+    <span class="kv"><span>Staff budget</span><span class="num">Rs 8 L left of 32 L</span></span>
+  </header>
+  <div class="shell">
+    <nav class="nav" aria-label="Main">
+      <a href="Home.dc.html">Home</a>
+      <a href="Squad.dc.html">Squad</a>
+      <span class="off" aria-disabled="true">Match <small>Pre-season</small></span>
+      <a href="Table.dc.html">Fixtures</a>
+      <a href="Table.dc.html">Table</a>
+      <span class="off" aria-disabled="true">Auction <small>Closed</small></span>
+      <hr>
+      <a href="History.dc.html">Stats</a>
+      <a href="History.dc.html">History</a>
+      <a href="Finance.dc.html" class="on">Club <small>Staff</small></a>
+      <a href="Settings.dc.html">Settings</a>
+    </nav>
+    <main class="main">
+      <div style="max-width: 1220px">
+        <div class="pagehead">
+          <div class="stack" style="gap: 4px">
+            <h1 class="t-h1">Staff room</h1>
+            <p class="mut">8 staff · 1 vacancy · all staff are generated characters</p>
+          </div>
+        </div>
+        <div class="split" style="gap: 40px; grid-template-columns: minmax(0,1.6fr) minmax(0,1fr)">
+          <section class="stack" style="gap: 30px">
+            <div class="tblwrap">
+              <table class="tbl">
+                <thead><tr><th>Role</th><th>Name</th><th class="c">Grade</th><th>Good at</th><th class="r">Wage</th><th>Contract</th><th>Thinks of you</th></tr></thead>
+                <tbody>
+                  <tr><td class="mut">Assistant manager</td><td class="name">Prakash Adhikari</td><td class="c">B</td><td class="t-small">Match reading, man-management</td><td class="r">Rs 5 L</td><td>2028</td><td class="blu t-small">Loyal</td></tr>
+                  <tr><td class="mut">Batting coach</td><td class="name">Suraj Maharjan</td><td class="c">A</td><td class="t-small">Against spin, young batters</td><td class="r">Rs 6 L</td><td>2027</td><td class="t-small">Respects you</td></tr>
+                  <tr><td class="mut">Bowling coach</td><td class="name">Dinesh Rana</td><td class="c">C</td><td class="t-small">Seam, workload</td><td class="r">Rs 3 L</td><td>2028</td><td class="t-small">Neutral</td></tr>
+                  <tr><td class="mut">Spin coach</td><td class="name">Hari Bhattarai</td><td class="c">B</td><td class="t-small">Leg-spin, variations</td><td class="r">Rs 3 L</td><td>2027</td><td class="t-small">Respects you</td></tr>
+                  <tr><td class="mut">Fielding coach</td><td class="name">Nirajan KC</td><td class="c">C</td><td class="t-small">Catching drills</td><td class="r">Rs 2 L</td><td>2027</td><td class="t-small">Neutral</td></tr>
+                  <tr><td class="mut">Analyst</td><td class="name">Ritu Shrestha</td><td class="c">A</td><td class="t-small">Matchups, opposition reports</td><td class="r">Rs 2 L</td><td>2029</td><td class="blu t-small">Loyal</td></tr>
+                  <tr><td class="mut">Physio</td><td class="name">Manoj Thapa</td><td class="c">B</td><td class="t-small">Injury prevention</td><td class="r">Rs 2 L</td><td>2028</td><td class="t-small">Respects you</td></tr>
+                  <tr><td class="mut">Head scout</td><td class="name">Ramesh Pun</td><td class="c">A</td><td class="t-small">Lumbini and Karnali provinces</td><td class="r">Rs 1 L</td><td>2028</td><td class="crim t-small">Unhappy · wants more trips</td></tr>
+                  <tr class="dim"><td class="mut">Mental-skills coach</td><td class="crim">Vacant</td><td></td><td class="t-small">Composure under pressure</td><td></td><td></td><td></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div>
+              <h2 class="t-h3" style="margin-bottom: 4px">Hire a mental-skills coach</h2>
+              <p class="mut t-small" style="margin-bottom: 10px">Raises composure in key moments and playoffs. Compare candidates and call one in for interview.</p>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px,100%),1fr)); gap: 12px">
+                <sc-for list="{{cands}}" as="c" hint-placeholder-count="3">
+                  <div class="panel stack" style="gap: 6px">
+                    <p style="font-weight: 600">{{c.name}} <span class="faint t-small">· grade {{c.grade}}</span></p>
+                    <p class="t-small mut">{{c.bio}}</p>
+                    <p class="t-small">Wage {{c.wage}} · {{c.fx}}</p>
+                    <button type="button" class="btn btn-sm {{c.btnCls}}" onClick="{{c.pick}}">{{c.btn}}</button>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </section>
+          <aside class="stack" style="gap: 22px">
+            <div>
+              <h2 class="sec">Staff advice · 3 new</h2>
+              <ul class="inbox">
+                <li class="unread"><span class="when">Batting</span><div><p class="ttl">Bibek Thapa Magar needs work on the short ball</p><p class="mut t-small">Out to bouncers 4 times. A two-week focus could add +3 against pace.</p><div class="acts"><button type="button" class="btn btn-sm">Set focus</button></div></div></li>
+                <li class="unread"><span class="when">Physio</span><div><p class="ttl">Trumpelmann should miss one warm-up game</p><p class="mut t-small">Injury risk high after the camp.</p></div></li>
+                <li><span class="when">Scout</span><div><p class="ttl">“Give me Gandaki this month. Nobody is watching it.”</p></div></li>
+              </ul>
+            </div>
+            <div class="panel stack" style="gap: 8px">
+              <h2 class="sec" style="margin: 0">What staff grade does</h2>
+              <p class="t-small">A-grade coaches develop players about twice as fast as C-grade in their specialty. Analysts sharpen matchup advice; physios cut injury risk.</p>
+              <p class="faint t-micro">Staff opinions change with results, budgets and whether you take their advice.</p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { invited:null }; }
+  renderVals() {
+    const C = [['Anjali Gautam','A','Sports psychologist, worked with the national under-19s','Rs 6 L','big lift in finals'],['Bikram Lama','B','Former first-class captain turned mental coach','Rs 4 L','good with young players'],['Sagar Paudel','C','New to cricket, background in athletics','Rs 2 L','cheap, slow to show results']];
+    const cands = C.map(c => { const on = this.state.invited === c[0]; return { name:c[0], grade:c[1], bio:c[2], wage:c[3], fx:c[4], btn: on ? 'Interview booked' : 'Call for interview', btnCls: on ? 'btn-blue' : '', pick: () => this.setState({ invited:c[0] }) }; });
+    return { theme: this.props.theme ?? 'dark', cands };
+  }
+}
+</script>
+</body>
+</html>

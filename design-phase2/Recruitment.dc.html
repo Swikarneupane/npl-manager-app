@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Recruitment meeting</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl" data-theme="{{theme}}" style="min-height: 1100px">
+  <header class="top">
+    <span class="brand">NPL Manager</span>
+    <span class="tm"><i class="dot t-ll"></i>Lumbini Lions</span>
+    <span class="kv"><span>Season</span><span>4 · 2027</span></span>
+    <span class="phase"><b>Off-season</b> · 9 days to the mega auction</span>
+    <span class="spacer"></span>
+    <span class="kv"><span>Domestic purse</span><span class="num">Rs 98 L</span></span>
+    <span class="kv"><span>Overseas purse</span><span class="num">Rs 60 L</span></span>
+  </header>
+  <div class="shell">
+    <nav class="nav" aria-label="Main">
+      <a href="Home.dc.html">Home</a>
+      <a href="Squad.dc.html">Squad</a>
+      <span class="off" aria-disabled="true">Match <small>Off-season</small></span>
+      <a href="Table.dc.html">Fixtures</a>
+      <a href="Table.dc.html">Table</a>
+      <a href="Recruitment.dc.html" class="on" aria-current="page">Auction <small>Planning</small></a>
+      <hr>
+      <a href="History.dc.html">Stats</a>
+      <a href="History.dc.html">History</a>
+      <a href="Finance.dc.html">Club</a>
+      <a href="Settings.dc.html">Settings</a>
+    </nav>
+    <main class="main">
+      <div style="max-width: 1220px">
+        <div class="pagehead">
+          <div class="stack" style="gap: 4px">
+            <h1 class="t-h1">Recruitment meeting</h1>
+            <p class="mut">With your head of recruitment, analyst and captain · Rohit Paudel and Lalit Rajbanshi retained</p>
+          </div>
+          <a href="Auction.dc.html" class="btn btn-primary btn-lg">Save plan · {{count}} on the shortlist</a>
+        </div>
+
+        <div class="split" style="gap: 40px; grid-template-columns: minmax(0,1.6fr) minmax(0,1fr)">
+          <section class="stack" style="gap: 28px">
+            <div>
+              <h2 class="t-h3" style="margin-bottom: 4px">What the squad needs</h2>
+              <p class="mut t-small" style="margin-bottom: 10px">Set a priority for each gap. High priorities get your scouts first and a bigger share of the purse.</p>
+              <div class="tblwrap">
+                <table class="tbl">
+                  <thead><tr><th>Gap</th><th>Why</th><th>Priority</th><th class="r">Budget</th></tr></thead>
+                  <tbody>
+                    <sc-for list="{{gaps}}" as="g" hint-placeholder-count="5">
+                      <tr>
+                        <td class="name">{{g.name}}</td>
+                        <td class="mut t-small" style="white-space: normal; max-width: 300px">{{g.why}}</td>
+                        <td><div class="seg" role="group" aria-label="Priority for {{g.name}}"><sc-for list="{{g.levels}}" as="l" hint-placeholder-count="3"><button type="button" class="{{l.cls}}" onClick="{{l.pick}}" style="min-height: 30px; padding: 0 9px; font-size: 12.5px">{{l.label}}</button></sc-for></div></td>
+                        <td class="r num">{{g.budget}}</td>
+                      </tr>
+                    </sc-for>
+                  </tbody>
+                </table>
+              </div>
+              <p class="faint t-small" style="margin-top: 8px">Budget splits the overseas purse (Rs 60 L) and the domestic purse (Rs 98 L) by priority. Total planned: <b style="color: var(--ink)">{{planned}}</b>.</p>
+            </div>
+
+            <div>
+              <h2 class="t-h3" style="margin-bottom: 8px">Targets by gap</h2>
+              <ul class="mlist">
+                <li><span class="grow"><b style="font-weight: 600">Aasif Sheikh</b> <span class="role">WK</span> <span class="faint t-small">ex-Lumbini · RTM eligible</span><br><span class="l2">Keeper · expected price Rs 20–30 L · scout confidence high</span></span><span class="gld t-small">First choice</span></li>
+                <li><span class="grow">Kiran Rokaya <span class="role">WK</span><br><span class="l2">Keeper · expected Rs 4–8 L · cheaper fallback</span></span><span class="faint t-small">Backup</span></li>
+                <li><span class="grow">Marco Venter <span class="role">AR</span> <span class="blu t-small">OS</span><br><span class="l2">Overseas seam all-rounder · expected Rs 10–16 L</span></span><span class="gld t-small">First choice</span></li>
+                <li><span class="grow">Sompal Kami <span class="role">BOWL</span><br><span class="l2">Death bowler · expected Rs 18–25 L · 2 rivals interested</span></span><span class="gld t-small">First choice</span></li>
+                <li><span class="grow">Anish Yadav <span class="role">BOWL</span><br><span class="l2">17, high potential · expected Rs 1–3 L · long-term</span></span><span class="faint t-small">Bargain</span></li>
+              </ul>
+            </div>
+          </section>
+
+          <aside class="stack" style="gap: 22px">
+            <div class="panel stack" style="gap: 10px">
+              <h2 class="sec" style="margin: 0">Around the table</h2>
+              <p class="pull" style="font-size: 15px; line-height: 23px">“Kami's price will go above 25. Decide now if he is worth it, or we lose the keeper too.”<cite>Head of recruitment (generated staff)</cite></p>
+              <p class="pull" style="font-size: 15px; line-height: 23px">“Last season we lost 4 games in the last two overs. A death bowler is the gap.”<cite>Analyst (generated staff)</cite></p>
+              <p class="t-small mut">Captain's wish: an experienced keeper he can trust with the gloves and the field.</p>
+            </div>
+            <div>
+              <h2 class="sec">Rivals' needs</h2>
+              <table class="tbl compact plain">
+                <tbody>
+                  <tr><td style="padding-left: 0"><i class="dot t-pa"></i>Pokhara</td><td class="mut t-small">Keeper, death bowler · big purse</td></tr>
+                  <tr><td style="padding-left: 0"><i class="dot t-sr"></i>Sudurpaschim</td><td class="mut t-small">Overseas all-rounder</td></tr>
+                  <tr><td style="padding-left: 0"><i class="dot t-jb"></i>Janakpur</td><td class="mut t-small">Almost everything · Rs 1.04 cr</td></tr>
+                </tbody>
+              </table>
+              <p class="faint t-micro" style="margin-top: 6px">Pokhara chasing the same keeper and death bowler will push both prices up.</p>
+            </div>
+            <div class="panel stack" style="gap: 8px">
+              <h2 class="sec" style="margin: 0">Scout before the auction</h2>
+              <p class="t-small">2 scouting trips left this window</p>
+              <div class="row" style="gap: 8px"><button type="button" class="btn btn-sm">Watch Venter's nets</button><button type="button" class="btn btn-sm">Second report on Yadav</button></div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { pr: { wk:'High', os:'High', death:'High', finisher:'Medium', young:'Low' } }; }
+  renderVals() {
+    const G = [['wk','Wicketkeeper','None in the squad after the release of Sheikh and Dickwella','dom'],['os','Overseas all-rounder','Need 6 overseas; only 0 signed','os'],['death','Death bowler','Economy 10.8 in overs 17–20 last season, worst in the league','dom'],['finisher','Finisher','Neesham is 37; no one else strikes above 150 at the death','os'],['young','Young Nepali talent','Board objective: two academy-age players','dom']];
+    const W = { High:3, Medium:2, Low:1 };
+    const pr = this.state.pr;
+    const sum = (pool) => G.filter(g => g[3] === pool).reduce((a, g) => a + W[pr[g[0]]], 0);
+    const purse = { dom:98, os:60 };
+    const gaps = G.map(g => { const share = Math.round(purse[g[3]] * W[pr[g[0]]] / Math.max(1, sum(g[3])));
+      return { name:g[1], why:g[2], budget:'Rs ' + share + ' L', levels: ['High','Medium','Low'].map(l => ({ label:l, cls: pr[g[0]] === l ? 'on' : '', pick: () => this.setState({ pr: Object.assign({}, pr, { [g[0]]: l }) }) })) }; });
+    const count = G.reduce((a, g) => a + W[pr[g[0]]] , 0);
+    return { theme: this.props.theme ?? 'light', gaps, planned: 'Rs 1.58 cr', count };
+  }
+}
+</script>
+</body>
+</html>

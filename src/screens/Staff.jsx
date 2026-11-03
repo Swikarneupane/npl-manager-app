@@ -1,91 +1,128 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import '../styles/office.css';
 import { useGame } from '../lib/store.jsx';
-import { Modal } from '../components/bits.jsx';
-import { Icon } from '../components/icons.jsx';
+import { Modal, PageHead } from '../components/bits.jsx';
+import MScreen, { useTab } from '../components/MScreen.jsx';
 import { fmtL } from '../game/engine.js';
-import { COUNTRY_NAMES } from '../game/data.js';
 import { STAFF_POSTS } from '../game/game.js';
+import { gradeOfL, candGrade, candBio, staffEffect, STAFF_DOES, opinionLabel, staffBudget, interview, interviewsLeft, POST_NP, adviceQuality } from '../game/office.js';
 import { autosave } from '../lib/save.js';
 import { useNarrow } from '../lib/util.js';
+import { T, tn } from '../lib/i18n.js';
 
-// What a level does, from the rules in game.js (develop, recordMatch, strengths, injuryLength).
-export function staffEffects(post, L) {
-  if (!L) return post === 'physio' ? ['Injuries last a match longer', 'No extra fitness recovery after matches'] : post === 'bat' ? ['No extra development for young batters'] : ['No extra development for young bowlers'];
-  const dev = Math.round(L / 2);
-  if (post === 'bat') return [`Batters under 26 develop faster (+${dev} a season)`, `Out-of-form batters recover form ${L * 10}% quicker`];
-  if (post === 'bowl') return [`Bowlers under 26 develop faster (+${dev} a season)`, `Out-of-form bowlers recover form ${L * 10}% quicker`, `Death-over bowling +${(0.4 * L).toFixed(1)}`];
-  return [`Injuries ${dev} match${dev > 1 ? 'es' : ''} shorter (at least 1)`, `+${L} fitness after every match`];
-}
-const shortFx = (post, L) => { const d = Math.round(L / 2); return post === 'physio' ? `Injuries ${d} shorter · +${L} fitness a match` : `+${d} a season for under-26s · form back ${L * 10}% quicker${post === 'bowl' ? ` · death +${(0.4 * L).toFixed(1)}` : ''}`; };
-const Dots = ({ L }) => <span className="lvl" role="img" aria-label={`Level ${L} of 5`}>{[1, 2, 3, 4, 5].map((k) => <i key={k} className={k <= L ? 'on' : ''} />)}</span>;
+// Kept for older screens that import it: the effect lines for a post at a level.
+export function staffEffects(post, L) { return [staffEffect(post, L)]; }
+const label = (k) => STAFF_POSTS.find((x) => x[0] === k)[1];
 const sur = (n) => n.split(' ').slice(-1)[0];
-// Best value: the highest level whose wage is within 5% of the club balance (else the cheapest).
-const bestIdx = (list, balance) => { let b = -1; list.forEach((c, i) => { if (c.wage <= balance * 0.05 && (b < 0 || c.level > list[b].level)) b = i; }); return b >= 0 ? b : list.reduce((m, c, i) => (c.wage < list[m].wage ? i : m), 0); };
 
-export default function Staff() {
-  const { G, update, toast } = useGame(); const narrow = useNarrow(); const t = G.teams[G.user]; const st = G.s.staff[G.user];
-  const open = G.staffWindow();
-  const vacant = STAFF_POSTS.map(([k]) => k).find((k) => !st[k]);
-  const [post, setPost] = useState(vacant || null); const [confirm, setConfirm] = useState(null);
-  const label = (k) => STAFF_POSTS.find((x) => x[0] === k)[1];
+function useStaff() {
+  const { G, update, toast } = useGame(); const st = G.s.staff[G.user]; const open = G.staffWindow();
+  const vacant = STAFF_POSTS.map(([k]) => k).filter((k) => !st[k]);
+  const [post, setPost] = useState(vacant[0] || null); const [confirm, setConfirm] = useState(null);
   const hire = (k, i) => {
     const c = G.staffCandidates(k)[i]; const fee = st[k] ? G.releaseCost(G.user, k) : 0;
     const go = () => update(() => { const e = G.hireStaff(k, i); if (e) toast(e); else { toast(`${c.name} hired as ${label(k).toLowerCase()}.`); autosave(G); setPost(STAFF_POSTS.map(([x]) => x).find((x) => !G.s.staff[G.user][x]) || null); } });
     if (fee) setConfirm({ title: `Replace ${st[k].name}?`, text: `Releasing him mid-contract costs half his remaining wage: ${fmtL(fee)}. ${c.name} then joins on ${fmtL(c.wage)} a season until ${G.year + 1}.`, ok: `Replace · ${fmtL(fee)} fee`, go }); else go();
   };
   const release = (k) => { const fee = G.releaseCost(G.user, k);
-    setConfirm({ title: `Release ${st[k].name}?`, text: `${fee ? `This costs half his remaining wage: ${fmtL(fee)}, paid now from the club balance.` : 'His contract is paid up, so there is no fee.'} The post stays vacant until you hire someone.`, ok: fee ? `Release · ${fmtL(fee)}` : 'Release',
+    setConfirm({ title: `Release ${st[k].name}?`, text: `${fee ? `This costs half his remaining wage: ${fmtL(fee)}, paid now from the club balance.` : 'His contract is paid up, so there is no fee.'} The other staff notice. The post stays vacant until you hire someone.`, ok: fee ? `Release · ${fmtL(fee)}` : 'Release',
       go: () => update(() => { G.releaseStaff(k); autosave(G); setPost(k); }) }); };
-  const cands = post ? G.staffCandidates(post) : []; const best = cands.length ? bestIdx(cands, t.balance) : -1;
-  const wages = G.staffWages(G.user);
-  const closed = !open && <p className="t-small mut panel" style={{ padding: '10px 14px' }}>Staff can be hired, replaced or released in the pre-season and off-season. The next window opens after the season.</p>;
-  const candList = post && (
-    <section className="stack" style={{ gap: 10 }}>
-      <div className="sechead"><h2 className="t-h2">{st[post] ? `Replace your ${label(post).toLowerCase()}` : narrow ? `Hire a ${label(post).toLowerCase()}` : `${label(post)} candidates`}</h2><span className="t-micro faint">{narrow ? `Club balance ${fmtL(t.balance)} · contracts run 2 seasons` : 'New candidates each off-season'}</span></div>
-      <ul className="cands">{cands.map((c, i) => (
-        <li key={c.name} className="panel">
-          <div className="sechead" style={{ margin: 0 }}><span><span className="t-small b6">{c.name}</span> <span className="t-micro faint">{COUNTRY_NAMES[c.nat] || c.nat}</span>{i === best && <span className="ptag b" style={{ marginLeft: 6 }}>Best value</span>}</span><span className="t-small"><b>{fmtL(c.wage)}</b><span className="faint t-micro"> / season</span></span></div>
-          <div className="row" style={{ gap: 10, alignItems: 'center' }}><Dots L={c.level} /><span className="t-micro mut">{shortFx(post, c.level)}</span></div>
-          <button type="button" className={`btn btn-sm${i === best ? ' btn-blue' : ''}`} disabled={!open || t.balance < c.wage} onClick={() => hire(post, i)}>{narrow ? `Hire ${sur(c.name)}` : 'Hire'}</button>
-        </li>))}{!cands.length && <li className="faint t-small">No candidates left this off-season.</li>}</ul>
-    </section>
-  );
+  const iv = (k, i) => update(() => { const e = interview(G, k, i); if (e) toast(e); else autosave(G); });
+  return { G, st, open, vacant, post, setPost, hire, release, iv, confirm, setConfirm };
+}
+
+function Candidates({ S, phone }) {
+  const { G, post, open, hire, iv, st } = S; if (!post) return null; const t = G.teams[G.user];
+  const cands = G.staffCandidates(post); const room = staffBudget(G) - G.staffWages(G.user) + (st[post] ? st[post].wage : 0);
   return (
-    <div className="staffpg">
-      <p className="t-small"><Link to="/club">Club</Link> <span className="faint">/ Backroom staff</span></p>
-      <div className="pagehead" style={{ marginTop: 6 }}>
-        <div className="stack" style={{ gap: 4 }}><h1 className="t-h1">{narrow ? 'Staff' : 'Backroom staff'}</h1><p className="mut t-small">You are the head coach. Three specialists work under you. Their wages come from the club balance, not the auction purse.</p></div>
-        <div className="panel" style={{ padding: '10px 16px' }}><p className="t-micro faint">Staff wages</p><p className="board-f ab-mid">{fmtL(wages)} <span className="t-small faint">a season</span></p></div>
+    <section>
+      <h2 className="t-h3" style={{ marginBottom: 4 }}>{st[post] ? `Replace your ${label(post).toLowerCase()}` : `Hire a ${label(post).toLowerCase()}`}</h2>
+      <p className="mut t-small" style={{ marginBottom: 10 }}>{STAFF_DOES[post]}. Compare candidates and call one in for interview: an interview shows his real grade. {interviewsLeft(G)} interview{interviewsLeft(G) === 1 ? '' : 's'} left this window.</p>
+      <div className={phone ? 'stack' : 'of-cands'} style={{ gap: 12 }}>
+        {cands.map((c, i) => (
+          <div key={c.name} className="panel stack" style={{ gap: 6 }}>
+            <p style={{ fontWeight: 600 }}>{c.name} <span className="faint t-small">· grade {candGrade(c)}</span></p>
+            <p className="t-small mut">{candBio(c)}{c.iv ? ` · good at ${c.spec.toLowerCase()}` : ''}</p>
+            <p className="t-small">Wage {fmtL(c.wage)} · {c.iv ? staffEffect(post, c.level) : 'effect shown after interview'}</p>
+            {c.wage > room && <p className="t-micro crim">Over the staff budget by {fmtL(c.wage - room)}</p>}
+            <div className="row" style={{ gap: 8 }}>
+              <button type="button" className={`btn btn-sm${c.iv ? ' btn-blue' : ''}`} disabled={!open || c.iv || interviewsLeft(G) <= 0} onClick={() => iv(post, i)}>{c.iv ? 'Interviewed' : 'Call for interview'}</button>
+              <button type="button" className="btn btn-sm" disabled={!open || t.balance < c.wage} onClick={() => hire(post, i)}>{phone ? `Hire ${sur(c.name)}` : 'Hire'}</button>
+            </div>
+          </div>))}
+        {!cands.length && <p className="faint t-small">No candidates left this window.</p>}
       </div>
+    </section>);
+}
+
+function Advice({ G }) {
+  const list = G.s.inbox.filter((n) => n.kind === 'staff').slice(0, 5); const fresh = list.filter((n) => !n.read).length;
+  return (
+    <div>
+      <h2 className="sec">{T(G, 'Staff advice', 'कर्मचारीको सल्लाह')}{fresh ? ` · ${fresh} new` : ''}</h2>
+      {list.length ? <ul className="mlist">{list.map((n) => (
+        <li key={n.id} style={{ alignItems: 'flex-start' }}><span className="grow"><span className="t-micro faint">{n.cat || 'Staff'}</span><br /><span className="t-small" style={{ fontWeight: 500 }}>{n.title || n.text}</span>{n.sum && <><br /><span className="l2">{n.sum}</span></>}
+          {n.choices && <><br /><span className={`t-micro ${n.done ? 'faint' : 'gld'}`}>{n.done ? `You chose: ${n.picked}` : 'Answer in the inbox'}</span></>}</span></li>))}</ul>
+        : <p className="faint t-small">Advice arrives in the inbox during the season. Better assistants and analysts give sharper advice.</p>}
+      <p className="faint t-micro" style={{ marginTop: 6 }}>Advice quality {Math.round(adviceQuality(G) * 100)}% · from your assistant manager and analyst.</p>
+    </div>);
+}
+
+function GradeNote({ G }) {
+  return (
+    <div className="panel stack" style={{ gap: 8 }}>
+      <h2 className="sec" style={{ margin: 0 }}>What staff grade does</h2>
+      <p className="t-small">Grades run from D to A. A-grade coaches develop players about twice as fast as C-grade in their speciality. Analysts sharpen matchup advice; physios cut injury time; the head scout narrows potential faster; the mental-skills coach adds composure.</p>
+      <p className="faint t-micro">Staff opinions change with results, budgets and whether you take their advice. Contracts run 2 seasons; releasing someone costs half the wage still owed. Every club has staff, so rivals get these effects too.</p>
+    </div>);
+}
+
+export default function Staff() {
+  const S = useStaff(); const { G, st, open, vacant, setPost, release, confirm, setConfirm } = S; const narrow = useNarrow();
+  const [tab, setTab] = useTab(['staff', 'hire', 'advice'], 'staff');
+  const wages = G.staffWages(G.user), budget = staffBudget(G); const left = Math.round((budget - wages) * 10) / 10;
+  const n = STAFF_POSTS.length - vacant.length;
+  const sub = `${n} staff · ${vacant.length ? `${vacant.length} vacanc${vacant.length > 1 ? 'ies' : 'y'}` : 'no vacancies'} · all staff are generated characters`;
+  const closed = !open && <p className="t-small mut panel" style={{ padding: '10px 14px', marginBottom: 16 }}>Staff can be hired, replaced or released in the pre-season and off-season. The next window opens after the season.</p>;
+  const modal = confirm && <Modal><h2 className="t-h2">{confirm.title}</h2><p className="mut" style={{ marginTop: 8 }}>{confirm.text}</p>
+    <div className="acts"><button type="button" className="btn btn-primary btn-lg" onClick={() => { confirm.go(); setConfirm(null); }}>{confirm.ok}</button><button type="button" className="btn btn-lg" onClick={() => setConfirm(null)}>Cancel</button></div></Modal>;
+  const budgetTxt = left >= 0 ? `${fmtL(left)} left of ${fmtL(budget)}` : `${fmtL(-left)} over ${fmtL(budget)}`;
+  if (narrow) return (
+    <MScreen top={{ title: tn(G, 'Staff'), sub: `${n} of 9`, right: <>Budget<br /><b className={left < 0 ? 'crim' : ''}>{budgetTxt.split(' of ')[0]}</b></> }} label="Staff" tab={tab} onTab={setTab}
+      tabs={[['staff', T(G, 'Staff', 'कर्मचारी'), vacant.length || null], ['hire', T(G, 'Hire', 'भर्ना')], ['advice', T(G, 'Advice', 'सल्लाह'), G.s.inbox.filter((x) => x.kind === 'staff' && !x.read).length || null]]}>
+      {closed && <div style={{ paddingTop: 12 }}>{closed}</div>}
+      {tab === 'staff' && <ul className="mlist">{STAFF_POSTS.map(([k, l]) => { const x = st[k]; const op = x ? opinionLabel(x) : null; return (
+        <li key={k} className={x ? '' : 'dim'}><span className="grow"><span className="t-micro faint">{T(G, l, POST_NP[k])}</span><br /><span className={`t-small${x ? '' : ' crim'}`} style={{ fontWeight: 500 }}>{x ? x.name : 'Vacant'}</span>
+          {x && <><br /><span className="l2">{x.spec} · {fmtL(x.wage)} · to {x.until} · <span className={op[1]}>{op[0]}</span></span></>}</span>
+          {x ? <span className="stack" style={{ alignItems: 'flex-end', gap: 4 }}><span className="of-grade">{gradeOfL(x.level)}</span>{open && <button type="button" className="linkbtn t-micro" onClick={() => release(k)}>Release</button>}</span>
+            : <button type="button" className="btn btn-sm" onClick={() => { setPost(k); setTab('hire'); }}>Hire</button>}</li>); })}</ul>}
+      {tab === 'hire' && <div style={{ paddingTop: 12 }} className="stack">
+        <select className="input" style={{ height: 44 }} value={S.post || ''} onChange={(e) => setPost(e.target.value)} aria-label="Post">{STAFF_POSTS.map(([k, l]) => <option key={k} value={k}>{l}{st[k] ? '' : ' · vacant'}</option>)}</select>
+        <Candidates S={S} phone /></div>}
+      {tab === 'advice' && <div style={{ paddingTop: 12 }} className="stack" ><Advice G={G} /><GradeNote G={G} /></div>}
+      {modal}
+    </MScreen>);
+  return (
+    <div style={{ maxWidth: 1220 }}>
+      <p className="t-small"><Link to="/club">{tn(G, 'Club')}</Link> <span className="faint">/ {T(G, 'Staff room', 'कर्मचारी कक्ष')}</span></p>
+      <PageHead title={T(G, 'Staff room', 'कर्मचारी कक्ष')} sub={sub}>
+        <div className="panel" style={{ padding: '10px 16px' }}><p className="t-micro faint">Staff budget</p><p className={`t-small b6 ${left < 0 ? 'crim' : ''}`}>{budgetTxt}</p></div>
+      </PageHead>
       {closed}
-      {narrow ? (
-        <ul className="panel staff-sm">{STAFF_POSTS.map(([k, l]) => { const x = st[k]; return (
-          <li key={k}><span><span className="t-micro faint">{l}</span><br /><span className={`t-small b6${x ? '' : ' crim'}`}>{x ? x.name : 'Vacant'}</span></span>
-            {x ? <span className="stack" style={{ alignItems: 'flex-end', gap: 2 }}><Dots L={x.level} /><span className="t-micro faint">{fmtL(x.wage)} / season · to {x.until}</span>
-              {open && <span className="row" style={{ gap: 6, alignItems: 'center' }}><button type="button" className="linkbtn t-micro" onClick={() => setPost(k)}>Replace</button><span className="faint t-micro" aria-hidden="true">·</span><button type="button" className="linkbtn t-micro" onClick={() => release(k)}>Release</button></span>}</span>
-              : <button type="button" className={`ptag c linkbtn`} onClick={() => setPost(k)}>{post === k ? 'Hire below' : 'Hire'}</button>}</li>); })}</ul>
-      ) : (
-        <div className="staff-posts">{STAFF_POSTS.map(([k, l]) => { const x = st[k]; return (
-          <section key={k} className={`panel stack${post === k ? ' sel' : ''}`} style={{ gap: 10 }}>
-            <div className="row" style={{ gap: 10, alignItems: 'center' }}><span className="staff-ic" aria-hidden="true"><Icon name={k === 'physio' ? 'club' : k === 'bat' ? 'squad' : 'match'} size={20} /></span><div><p className="sec" style={{ margin: 0 }}>{l}</p><p className={`t-h3${x ? '' : ' crim'}`}>{x ? x.name : 'Vacant'}</p></div></div>
-            {x ? <>
-              <div className="sechead" style={{ margin: 0, alignItems: 'center' }}><Dots L={x.level} /><span className="t-small"><b>{fmtL(x.wage)}</b> <span className="faint">a season</span></span></div>
-              <ul className="sfx">{staffEffects(k, x.level).map((e) => <li key={e} className="t-small"><span className="blu b6">+</span>{e}</li>)}</ul>
-              <p className="t-micro faint">{COUNTRY_NAMES[x.nat] || x.nat} · contract until the end of {x.until}</p>
-              <div className="row" style={{ gap: 8 }}><button type="button" className="btn btn-sm" disabled={!open} onClick={() => setPost(k)}>Replace</button><button type="button" className="btn btn-ghost btn-sm" disabled={!open} onClick={() => release(k)}>Release</button></div>
-            </> : <>
-              <p className="t-small mut">{k === 'physio' ? 'Without a physio, injuries last a match longer and players get no extra fitness back after matches.' : `Without a ${l.toLowerCase()}, young ${k === 'bat' ? 'batters' : 'bowlers'} develop at the normal rate.`}</p>
-              <button type="button" className="btn btn-primary btn-sm" disabled={!open} onClick={() => setPost(k)}>See {G.staffCandidates(k).length} candidates</button></>}
-          </section>); })}</div>
-      )}
-      <div className={narrow ? 'stack' : 'staff-low'} style={{ gap: 16, marginTop: 20 }}>
-        {candList}
-        <section className="panel stack" style={{ gap: 6 }}><p className="t-h3">How staff level works</p><p className="t-small mut">Levels run from 1 to 5. A higher level gives a bigger effect and costs more: Rs 3, 5, 8, 10 and 12 L a season. Contracts run 2 seasons. Staff can be hired or replaced in the pre-season and off-season. Releasing a coach mid-contract costs half the remaining wage.</p>
-          <p className="t-micro faint">Coaches add development to players under 26 each off-season, up to their potential. Every club has staff, so rivals get these effects too.</p></section>
+      <div className="split" style={{ gap: 40, gridTemplateColumns: 'minmax(0,1.6fr) minmax(0,1fr)' }}>
+        <section className="stack" style={{ gap: 30 }}>
+          <div className="tblwrap"><table className="tbl">
+            <thead><tr><th>Role</th><th>Name</th><th className="c">Grade</th><th>Good at</th><th className="r">Wage</th><th>Contract</th><th>Thinks of you</th></tr></thead>
+            <tbody>{STAFF_POSTS.map(([k, l]) => { const x = st[k]; if (!x) return (
+              <tr key={k} className="dim"><td className="mut">{l}</td><td className="crim">Vacant</td><td /><td className="t-small" style={{ whiteSpace: 'normal' }}>{STAFF_DOES[k].split(';')[0]}</td><td /><td /><td><button type="button" className="btn btn-sm" disabled={!open} onClick={() => setPost(k)}>Candidates</button></td></tr>);
+              const op = opinionLabel(x); return (
+              <tr key={k} className={S.post === k ? 'me' : ''}><td className="mut">{l}</td><td className="name">{x.name}{open && <><br /><button type="button" className="linkbtn t-micro" onClick={() => setPost(k)}>Replace</button> <span className="faint t-micro">·</span> <button type="button" className="linkbtn t-micro" onClick={() => release(k)}>Release</button></>}</td><td className="c"><b>{gradeOfL(x.level)}</b></td><td className="t-small" style={{ whiteSpace: 'normal' }}>{x.spec}</td><td className="r num">{fmtL(x.wage)}</td><td className="num">{x.until}</td><td className={`t-small ${op[1]}`} style={{ whiteSpace: 'normal' }}>{op[0]}</td></tr>); })}</tbody>
+          </table></div>
+          <Candidates S={S} />
+        </section>
+        <aside className="stack" style={{ gap: 22 }}><Advice G={G} /><GradeNote G={G} /></aside>
       </div>
-      {confirm && <Modal><h2 className="t-h2">{confirm.title}</h2><p className="mut" style={{ marginTop: 8 }}>{confirm.text}</p>
-        <div className="acts"><button type="button" className="btn btn-primary btn-lg" onClick={() => { confirm.go(); setConfirm(null); }}>{confirm.ok}</button><button type="button" className="btn btn-lg" onClick={() => setConfirm(null)}>Cancel</button></div></Modal>}
-    </div>
-  );
+      {modal}
+    </div>);
 }

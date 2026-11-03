@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../lib/store.jsx';
-import { Icon } from '../components/icons.jsx';
 import { FILTERS, NewsRow, ageOf, isPending, today } from '../components/news.jsx';
 import { tr } from '../lib/util.js';
 import { openDecisions, dueLabel } from '../components/DecisionSheet.jsx';
@@ -26,10 +25,10 @@ export default function News() {
   return (
     <div className="news">
       <div className="sechead" style={{ marginBottom: 12 }}>
-        <div className="row" style={{ gap: 4, alignItems: 'center' }}><button type="button" className="btn btn-ghost iconbtn" aria-label="Back to Home" onClick={() => nav('/')}><Icon name="back" size={20} /></button><h1 className="t-h2">{tr(G, 'News')}</h1></div>
+        <div className="row" style={{ gap: 4, alignItems: 'center' }}><button type="button" className="btn btn-ghost iconbtn" aria-label="Back to Home" onClick={() => nav('/')}>‹</button><h1 className="t-h2">{tr(G, 'News')}</h1></div>
         <button type="button" className="btn btn-ghost btn-sm" disabled={!unread} onClick={() => update(() => { s.inbox.forEach((n) => { if (!isPending(n)) n.read = true; }); })}>Mark all read</button>
       </div>
-      <label className="search"><Icon name="search" size={18} /><input type="search" className="input" placeholder="Search news, players, teams" aria-label="Search news" value={q} onChange={(e) => { setQ(e.target.value); setLimit(PAGE); }} /></label>
+      <label className="search"><input type="search" className="input" placeholder="Search news, players, teams" aria-label="Search news" value={q} onChange={(e) => { setQ(e.target.value); setLimit(PAGE); }} /></label>
       <div className="chips" role="group" aria-label="Filter news">{FILTERS.map(([k, l]) => <button key={k} type="button" className={`chip${flt === k ? ' on' : ''}`} aria-pressed={flt === k} onClick={() => { setFlt(k); setLimit(PAGE); }}>{l}</button>)}</div>
 
       {pending.length > 0 && <section className="nsec"><h2 className="sec">Needs you · {pending.length}</h2>

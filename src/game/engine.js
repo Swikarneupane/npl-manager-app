@@ -1,3 +1,5 @@
+import {dlsG,dlsRes,winProbability,projectedTotal,venuePar} from './winprob.js';
+import {czInit,batComp,fieldComp,falseShot,wideFactor,dropFactor,czBall,czOver} from './composure.js';
 // ===== Utilities =====
 const R=Math.random;
 const ri=(a,b)=>a+Math.floor(R()*(b-a+1));
@@ -8,6 +10,7 @@ const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[a
 const SPIN=['OB','LB','SLA','LWS'];
 const isSpin=t=>SPIN.includes(t);
 const isPace=t=>!!t&&!isSpin(t);
+const bowlGrp=t=>isPace(t)?'pace':t==='OB'?'OB':t==='SLA'?'SLA':isSpin(t)?'wrist':'pace';
 const TYPE_LABEL={RF:'Right-arm fast',RFM:'Right-arm fast-medium',RM:'Right-arm medium',LF:'Left-arm fast',LFM:'Left-arm fast-medium',LM:'Left-arm medium',OB:'Off-spin',LB:'Leg-spin',SLA:'Left-arm orthodox',LWS:'Left-arm wrist-spin','':'—'};
 const fmtL=v=>{v=Math.round(v*10)/10; return v>=100?('Rs '+(v/100).toFixed(2)+' cr'):('Rs '+v+' L');};
 function ovr(p){ if(p.role==='BAT') return p.bat; if(p.role==='BOWL') return p.bowl; if(p.role==='WK') return p.bat+2; return Math.round(Math.max(p.bat,p.bowl,(p.bat+p.bowl)/2+7)); }
@@ -99,9 +102,7 @@ function cm(lang,key,vars){
   let t=CM[L][key]; if(Array.isArray(t)) t=pick(t);
   return t.replace(/\{(\w+)\}/g,(_,k)=>vars&&vars[k]!=null?vars[k]:'');
 }
-// ===== DLS (simplified resource model) =====
-function dlsG(u,w){ const f=Math.pow(Math.max(0,1-w/10),0.9); return f*(1-Math.exp(-u/(70*f+5))); }
-function dlsRes(ballsLeft,wkts){ if(wkts>=10) return 0; return 100*dlsG(ballsLeft,wkts)/dlsG(120,0); }
+// DLS resources (dlsG, dlsRes) live in winprob.js, shared with the win-probability model.
 // ===== Match engine =====
 function phaseOf(ballIdx){ const o=Math.floor(ballIdx/6); return o<6?'pp':o>=15?'death':'mid'; }
 function autoAggr(inn,maxBalls){
@@ -133,6 +134,8 @@ function ballProbs(b,w,aggr,ctx){
   else if(f==='defend'){P.four*=0.84; P.six*=0.9; P.wkt*=0.9; P.one*=1.12; P.two*=1.1;}
   else if(f==='death'){P.six*=0.88; P.four*=0.92; P.one*=1.08; P.two*=1.12;}
   P.four*=ctx.pitch; P.six*=ctx.pitch; P.wkt/=Math.sqrt(ctx.pitch);
+  // composure: a rattled batter plays more false shots
+  if(ctx.comp!=null){ const k=falseShot(ctx.comp); P.wkt*=k; if(k>1) P.dot*=1+(k-1)/4; else if(ctx.comp>75) P.four*=1.05; }
   if(ctx.freeHit){P.wkt=0; P.six*=1.4;}
   const s=Object.values(P).reduce((x,y)=>x+y,0); for(const k in P)P[k]/=s;
   return P;
@@ -140,16 +143,17 @@ function ballProbs(b,w,aggr,ctx){
 function choose(P){ let r=R(),acc=0; for(const k in P){acc+=P[k]; if(r<acc) return k;} return 'dot'; }
 
 class Match{
-  static FIELDS=['home','away','opt','overs','maxBalls','night','pitch','dew','lang','log','result','inns','weather','lineups','toss','bowlRev','catches','hattricks'];
+  static FIELDS=['home','away','opt','overs','maxBalls','night','pitch','dew','lang','log','result','inns','weather','lineups','toss','bowlRev','catches','hattricks','cz','edge','km','dug'];
   constructor(G,home,away,opt){
     this.G=G; this.home=home; this.away=away; this.opt=opt||{};
     this.overs=opt.overs||20; this.maxBalls=this.overs*6;
     this.night = opt.night!=null? opt.night : R()<0.5;
-    this.pitch = rf(0.9,1.1); this.dew = opt.dew!=null ? !!opt.dew : (this.night && R()<0.6);
+    this.pitch = opt.pitch!=null ? opt.pitch : rf(0.9,1.1); this.dew = opt.dew!=null ? !!opt.dew : (this.night && R()<0.6);
     this.lang=opt.lang||'en'; this.log=[]; this.result=null; this.inns=[];
     this.weather=null;
     const rainRoll=R();
-    if(!opt.noRain){ if(rainRoll<0.02) this.weather={type:'pre',overs:ri(8,17)}; else if(rainRoll<0.055) this.weather={type:'mid'}; }
+    const rainP=opt.rain!=null?opt.rain:0.055;
+    if(!opt.noRain){ if(rainRoll<rainP*0.36) this.weather={type:'pre',overs:ri(8,17)}; else if(rainRoll<rainP) this.weather={type:'mid'}; }
     if(this.weather&&this.weather.type==='pre'){this.overs=this.weather.overs; this.maxBalls=this.overs*6;}
     this.lineups={}; this.lineups[home]=G.lineup(home); this.lineups[away]=G.lineup(away);
     this.night=!!this.night;
@@ -200,7 +204,8 @@ class Match{
     return best;
   }
   // ---- ball settings, shared by ball() and the read-outs ----
-  aggrFor(inn){ return (inn.bat===this.G.user && inn.aggr!=='auto')? +inn.aggr : autoAggr(inn,this.maxBalls); }
+  // t.aggrBias: a manager's batting style (an AI manager who likes to attack bats a little harder)
+  aggrFor(inn){ if(inn.bat===this.G.user && inn.aggr!=='auto') return +inn.aggr; const t=this.G.teams&&this.G.teams[inn.bat]; return clamp(autoAggr(inn,this.maxBalls)+((t&&t.aggrBias)||0),-1,2); }
   fieldFor(inn,ph){ return (inn.bowl===this.G.user && inn.field!=='auto')? inn.field : (ph==='death'?'death': (inn.target && (inn.target-inn.runs)/(Math.max(1,this.maxBalls-inn.balls)/6)>10)?'defend':'balanced'); }
   strengths(inn,bat,bowl,ph){
     let b=bat.bat+bat.form*1.2-(100-bat.fit)*0.08+(isSpin(bowl.type)?bat.vsSpin:-bat.vsSpin)*0.5;
@@ -212,14 +217,22 @@ class Match{
     if(bat.bat<30) b-=8;
     // difficulty: AI sides play a little above or below their ratings against you
     const adj=this.G.diff?this.G.diff().rate:0; if(adj&&this.G.user){ if(inn.bat!==this.G.user) b+=adj; if(inn.bowl!==this.G.user) w+=adj; }
-    return {b,w};
+    // matchups ticked in the build-up: a small edge for the user's side (opt.mu, from matchday.js)
+    let mu=-1; const M=this.opt&&this.opt.mu; const u=this.G.user;
+    if(M&&u) M.forEach((e,k)=>{
+      if(e.t==='bat'&&inn.bat===u&&bat.id===e.bat&&bowl.id===e.bowl){ b+=e.v; mu=k; }
+      else if(e.t==='bowl'&&inn.bowl===u&&bat.id===e.bat&&bowlGrp(bowl.type)===e.grp){ w+=e.v; mu=k; }
+      else if(e.t==='phase'&&inn.bat===u&&ph===e.ph){ b+=e.v; mu=k; }
+      else if(e.t==='see'&&inn.bat===u&&bowl.id===e.bowl){ w-=e.v; mu=k; }
+    });
+    return {b,w,mu};
   }
   // Outcome probabilities of the next ball for the current striker, without bowling it.
   // o.aggr / o.field / o.bowler override what the innings would use. Uses no randomness.
   preview(inn,o={}){
     const bat=this.P(inn.striker), bowl=this.P(o.bowler||inn.cur); if(!bat||!bowl||!inn.bs[inn.striker]) return null;
     const ph=phaseOf(inn.balls); const {b,w}=this.strengths(inn,bat,bowl,ph);
-    return ballProbs(b,w,o.aggr!=null?o.aggr:this.aggrFor(inn),{phase:ph,set:inn.bs[inn.striker].b,field:o.field||this.fieldFor(inn,ph),pitch:this.pitch,freeHit:inn.freeHit});
+    return ballProbs(b,w,o.aggr!=null?o.aggr:this.aggrFor(inn),{phase:ph,set:inn.bs[inn.striker].b,field:o.field||this.fieldFor(inn,ph),pitch:this.pitch,freeHit:inn.freeHit,comp:o.comp!=null?o.comp:batComp(this,inn,inn.striker)});
   }
   // ---- save / resume ----
   serialize(){ const o={}; for(const k of Match.FIELDS) if(this[k]!==undefined) o[k]=this[k]; return JSON.parse(JSON.stringify(o)); }
@@ -240,14 +253,14 @@ class Match{
     }
     const batFirst=this.toss.dec==='bat'?this.toss.win:(this.toss.win===h?a:h);
     const bat2 = batFirst===h?a:h;
-    if(!this.inns.length){ this.inns.push(this.newInnings(batFirst,bat2,null)); this.say(`${T[batFirst].name} innings`,'head'); }
+    if(!this.inns.length){ this.inns.push(this.newInnings(batFirst,bat2,null)); this.say(`${T[batFirst].name} innings`,'head'); this.walkOut(this.inns[0]); }
     const i1=this.inns[0];
     await this.playInnings(i1);
     if(this.inns.length<2){
       const target=i1.runs+1;
       this.inns.push(this.newInnings(bat2,batFirst,target));
       if(this.weather&&this.weather.type==='mid') this.weather.at=ri(30,this.maxBalls-6);
-      this.say(`${T[bat2].name} need ${target} to win from ${this.overs} overs.`,'head');
+      this.say(`${T[bat2].name} need ${target} to win from ${this.overs} overs.`,'head'); this.walkOut(this.inns[1]);
     }
     await this.playInnings(this.inns[1]);
     this.result=null;
@@ -269,7 +282,7 @@ class Match{
         { const b=inn.bw[bid]; (b.ph||(b.ph={pp:0,mid:0,death:0}))[phaseOf(inn.balls)]++; }
         if(this.hooks.beforeOver) await this.hooks.beforeOver(inn,this);
       }
-      await this.ball(inn);
+      { const r0=inn.runs,w0=inn.wkts,ph=phaseOf(inn.balls); await this.ball(inn); const X=(inn.ph||(inn.ph={}))[ph]||(inn.ph[ph]={r:0,w:0}); X.r+=inn.runs-r0; X.w+=inn.wkts-w0; }
       await this.endOverIfNeeded(inn);
     }
   }
@@ -280,6 +293,7 @@ class Match{
     inn.lastOverEnd=inn.balls;
     // runs and overs per phase, for the scout report's weakest phase
     { const px=inn.phx||(inn.phx={pp:[0,0],mid:[0,0],death:[0,0]}); const ph0=phaseOf(inn.balls-1); px[ph0][0]+=inn.overRuns||0; px[ph0][1]++; }
+    czOver(this,inn);
     const s=inn.bw[inn.cur]; const fig=`${Math.floor(s.balls/6)}-${s.r}-${s.w}`;
     const bats=[inn.striker,inn.non].filter(id=>inn.bs[id]&&!inn.bs[id].out).map(id=>`${this.P(id).name.split(' ').slice(-1)[0]} ${inn.bs[id].r} (${inn.bs[id].b})`);
     const need=isSecond?`Need ${inn.target-inn.runs} from ${this.maxBalls-inn.balls}`:`Run rate ${(inn.runs/(inn.balls/6)).toFixed(2)}`;
@@ -294,15 +308,16 @@ class Match{
     const ph=phaseOf(inn.balls);
     // extras
     const acc=bowl.bowl;
-    const wideP=0.045-acc*0.00028, nbP=0.008-acc*0.00004;
+    const cf=fieldComp(this,inn.bowl); const wideP=(0.045-acc*0.00028)*wideFactor(cf), nbP=0.008-acc*0.00004;
     const ex=R();
     const user=this.G.user;
     const aggr=this.aggrFor(inn), field=this.fieldFor(inn,ph);
     const vars={bat:bat.name,bowler:bowl.name};
-    if(ex<wideP){ inn.runs++; inn.extras++; bw.r++; bw.wd++; inn.overRuns++; inn.partnership++; this.say(this.tr('wide',vars),'extra',{ball:true,o:this.ballLbl(inn,false),ev:'wd'}); inn.overSeq.push('wd'); if(this.hooks.afterBall) await this.hooks.afterBall(inn,this,{ev:'wd'}); return; }
+    if(ex<wideP){ inn.runs++; inn.extras++; bw.r++; bw.wd++; inn.overRuns++; inn.partnership++; this.say(this.tr('wide',vars),'extra',{ball:true,o:this.ballLbl(inn,false),ev:'wd'}); inn.overSeq.push('wd'); this.compose(inn,'wd'); if(this.hooks.afterBall) await this.hooks.afterBall(inn,this,{ev:'wd'}); return; }
     let noBall=false; if(ex<wideP+nbP){ noBall=true; }
-    const {b,w}=this.strengths(inn,bat,bowl,ph);
-    const P=ballProbs(b,w,aggr,{phase:ph,set:bs.b,field,pitch:this.pitch,freeHit:inn.freeHit});
+    const {b,w,mu}=this.strengths(inn,bat,bowl,ph);
+    if(mu>=0){ const e=this.opt.mu[mu]; if(!e.on){ e.on=1; this.say(`Plan: ${e.title}. The matchup edge is on.`,'comp plan'); } }
+    const P=ballProbs(b,w,aggr,{phase:ph,set:bs.b,field,pitch:this.pitch,freeHit:inn.freeHit,comp:batComp(this,inn,inn.striker)});
     let out=choose(P);
     const wasFree=inn.freeHit; inn.freeHit=false;
     if(noBall){ inn.runs++; inn.extras++; bw.r++; bw.nb++; inn.overRuns++; this.say(this.tr('nb',vars),'extra',{ball:true,o:this.ballLbl(inn,false),ev:'nb'}); inn.overSeq.push('nb'); inn.freeHit=true; if(out==='wkt') out='dot'; }
@@ -313,9 +328,9 @@ class Match{
       // catches can be dropped
       const how=this.wicketType(bowl);
       const fielder=this.fielderFor(inn,how);
-      if(how==='caught' && R()<0.07*(100-this.P(fielder).field)/40){
+      if(how==='caught' && R()<0.07*(100-this.P(fielder).field)/40*dropFactor(cf)){
         this.say(this.tr('drop',{...vars,fielder:this.P(fielder).name}),'drop',{ball:true,o:this.ballLbl(inn)});
-        out='dot'; ev='drop';
+        out='dot'; ev='drop'; this.compose(inn,'drop'); this.muBall(bat,bowl,0,false);
       } else {
         // DRS for lbw / caught behind
         let finalOut=true;
@@ -334,7 +349,7 @@ class Match{
           }
         }
         if(finalOut){
-          ev='wkt'; this.dismiss(inn,inn.striker,how,fielder,vars);
+          ev='wkt'; this.muBall(bat,bowl,0,true); this.compose(inn,'wkt'); this.dismiss(inn,inn.striker,how,fielder,vars);
           if(this.hooks.afterBall) await this.hooks.afterBall(inn,this,{ev:'wkt',how});
           return;
         } else { out='dot'; ev='dot'; }
@@ -350,7 +365,7 @@ class Match{
         else rev= hint==='plumb'? R()<0.7: R()<0.08;
         if(rev){
           this.say(this.tr('review',{side:T[bt].name})+` (LBW appeal against ${bat.name})`,'drs');
-          if(wasOut){ this.say(this.tr('overturned',{txt:'Hitting the stumps. OUT!'}),'drs'); this.dismiss(inn,inn.striker,'lbw',null,vars); if(this.hooks.afterBall) await this.hooks.afterBall(inn,this,{ev:'wkt',how:'lbw'}); return; }
+          if(wasOut){ this.say(this.tr('overturned',{txt:'Hitting the stumps. OUT!'}),'drs'); this.muBall(bat,bowl,0,true); this.compose(inn,'wkt'); this.dismiss(inn,inn.striker,'lbw',null,vars); if(this.hooks.afterBall) await this.hooks.afterBall(inn,this,{ev:'wkt',how:'lbw'}); return; }
           rv2[inn.bat]--; this.say(this.tr('upheld',{side:T[bt].name}),'drs');
         }
       }
@@ -368,6 +383,7 @@ class Match{
     }
     inn.runs+=runs; bs.r+=runs; bw.r+=runs; inn.overRuns+=runs; inn.partnership+=runs;
     if(runs===0 && !noBall) bw.dots++;
+    if(!noBall) this.muBall(bat,bowl,runs,false);
     if(runs===4){bs.f++; inn.fours++;} if(runs===6){bs.s++; inn.sixes++;}
     const key = out==='drop'?null: ({dot:'dot',one:'one',two:'two',three:'three',four:'four',six:'six'})[out]||'dot';
     if(ev!=='drop'){
@@ -379,12 +395,21 @@ class Match{
     const prev=bs.r-runs;
     if(prev<50&&bs.r>=50&&bs.r<100) this.say(this.tr('milestone50',{bat:bat.name,r:bs.r,b:bs.b}),'mile');
     if(prev<100&&bs.r>=100) this.say(this.tr('milestone100',{bat:bat.name,r:bs.r,b:bs.b}),'mile');
+    if(ev!=='drop') this.compose(inn,noBall?'nb':runs===0?'dot':String(runs),{bat:bat.id});
     if(runs%2===1) [inn.striker,inn.non]=[inn.non,inn.striker];
     // injuries
     if(R()<0.0009){ const p=this.P(inn.cur); if(bw.balls%6!==0){ bw.injured=true; p.inj=this.G.injuryLength?this.G.injuryLength(inn.bowl,ri(1,3)):ri(1,3); this.say(`${p.name} pulls up holding his hamstring and leaves the field. He cannot bowl again today.`,'info inj'); inn.injSwap=true; } }
     if(this.hooks.afterBall) await this.hooks.afterBall(inn,this,{ev:String(runs)});
     if(inn.injSwap && inn.balls%6!==0){ inn.injSwap=false; const nb=this.aiBowler(inn,6-inn.balls%6); inn.cur=nb; if(!inn.bw[nb]) inn.bw[nb]={balls:0,r:0,w:0,dots:0,wd:0,nb:0}; this.say(`${this.P(nb).name} will finish the over.`,'info'); }
   }
+  // body language from the team talk (opt.body), once per player: openers and the fielding side at
+  // the start of an innings, later batters when they walk out
+  body(ids){ const B=this.opt&&this.opt.body; if(!B) return; const cz=czInit(this); for(const id of ids){ if(id&&B[id]&&!cz.said['body'+id]){ cz.said['body'+id]=1; this.say(B[id],'comp body',{who:id}); } } }
+  walkOut(inn){ const u=this.G.user; if(inn.bat===u) this.body([inn.striker,inn.non]); else if(inn.bowl===u) this.body(this.lineups[u].xi.filter(id=>!(this.inns[0]&&this.inns[0]!==inn&&this.inns[0].bs[id]&&(this.inns[0].bs[id].batted||this.inns[0].bs[id].in)))); }
+  // composure after a ball, with a commentary line when someone crosses a threshold
+  compose(inn,ev,info){ for(const l of czBall(this,inn,ev,info)) this.say(l.t,'comp',{who:l.who,v:l.v}); }
+  // matchups: batter hand and player pair against this bowler, for the real league only
+  muBall(bat,bowl,runs,out){ if(this.G.recMu) this.G.recMu(bat,bowl,runs,out); }
   ovStr(inn){ return Math.floor(inn.balls/6)+'.'+(inn.balls%6); }
   ballLbl(inn,legal){ const b=inn.balls; if(legal===false) return Math.floor(b/6)+'.'+(b%6+1); return b>0&&b%6===0? (b/6-1)+'.6' : Math.floor(b/6)+'.'+(b%6); }
   wicketType(b){ const r=R(); if(isSpin(b.type)) return r<.18?'bowled':r<.36?'lbw':r<.44?'stumped':r<.52?'behind':'caught'; return r<.22?'bowled':r<.36?'lbw':r<.46?'behind':'caught'; }
@@ -412,7 +437,7 @@ class Match{
       const remaining=inn.order.filter(id=>!inn.bs[id].out && !inn.bs[id].in && !inn.bs[id].batted);
       nxt = (this.hooks.pickNext && inn.bat===this.G.user)? this.hooks.pickNext(inn,this,remaining): null;
       if(!nxt||!remaining.includes(nxt)) nxt=remaining[0];
-      if(nxt){ inn.bs[nxt].in=true; inn.bs[nxt].batted=true; this.say(this.tr('newbat',{bat:this.P(nxt).name}),'info');
+      if(nxt){ inn.bs[nxt].in=true; inn.bs[nxt].batted=true; this.say(this.tr('newbat',{bat:this.P(nxt).name}),'info'); this.body([nxt]);
         if(victim===inn.striker) inn.striker=nxt; else inn.non=nxt; }
     }
   }
@@ -472,11 +497,14 @@ class Match{
     }
     return best;
   }
-  winProb(){ // for team batting in current innings perspective -> returns prob that team batting second wins
-    const i=this.inns[this.inns.length-1]; if(!i) return 0.5;
-    if(!i.target){ const proj=i.runs+ (dlsRes(this.maxBalls-i.balls,i.wkts)/100)*165; return {bat:i.bat,proj:Math.round(proj)}; }
-    const need=i.target-i.runs; const exp=(dlsRes(this.maxBalls-i.balls,i.wkts)/100)*165*1.02;
-    const p=1/(1+Math.exp(-(exp-need)/14)); return {bat:i.bat,p:need<=0?1:(i.wkts>=10||i.balls>=this.maxBalls)?0:p};
-  }
+  // Win probability for the side batting now, from score, wickets, balls left, target and venue
+  // par, with a small edge for the stronger XI that fades as the match goes on.
+  // o overrides the state: {runs, wkts, balls} relative changes, for key-moment previews.
+  winState(i,o){ o=o||{}; const par=venuePar(this.G.s,this.G.year);
+    if(this.edge==null){ const G=this.G; let e=0; if(G.teamStrength&&G.winChance&&this.lineups[this.home]){ try{ const a=G.teamStrength(this.lineups[this.home].xi,this.lineups[this.home].order), b=G.teamStrength(this.lineups[this.away].xi,this.lineups[this.away].order); const pw=G.winChance(a,b); e=Math.log(pw/(1-pw)); }catch(err){ e=0; } } this.edge=Math.round(e*1000)/1000; }
+    const e=i.bat===this.home?this.edge:-this.edge;
+    return {runs:i.runs+(o.runs||0),wkts:Math.min(10,i.wkts+(o.wkts||0)),balls:Math.min(this.maxBalls,i.balls+(o.balls||0)),maxBalls:this.maxBalls,target:i.target,par,edge:e*0.6}; }
+  winProb(o){ const i=this.inns[this.inns.length-1]; if(!i) return {bat:this.home,p:0.5,proj:venuePar(this.G.s,this.G.year)};
+    const st=this.winState(i,o); return {bat:i.bat,p:winProbability(st),proj:i.target?null:projectedTotal(st),par:st.par}; }
 }
 export {R,ri,rf,pick,clamp,shuffle,isSpin,isPace,TYPE_LABEL,fmtL,ovr,calcValue,mkPlayer,Match,dlsRes,cm,setPID,getPID,ballProbs,autoAggr,phaseOf};

@@ -13,7 +13,7 @@ export default function Signings() {
   const os = G.osCount(G.user); const fa = G.osFreeAgents().slice(0, 40); const open = G.s.phase === 'preseason';
   const canStart = os >= 6 || !fa.some((p) => p.value <= t.osPurse);
   const mine = t.squad.map((id) => G.P(id)).filter((p) => p.nat !== 'NEP');
-  const dom = Object.values(G.players).filter((p) => !p.team && !p.retired && p.nat === 'NEP').sort((a, b) => ovr(b) - ovr(a)).slice(0, 15);
+  const dom = Object.values(G.players).filter((p) => !p.team && !p.retired && !p.academy && p.nat === 'NEP').sort((a, b) => ovr(b) - ovr(a)).slice(0, 15);
   const offer = (p) => {
     const amt = ui.offers[p.id] ?? p.value;
     if (!G.canAdd(G.user, p)) return toast('No room: squads hold at most 22 players and 8 overseas.');

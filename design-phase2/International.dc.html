@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — International centre</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl" data-theme="{{theme}}" style="min-height: 1300px">
+  <header class="top">
+    <span class="brand">NPL Manager</span>
+    <span class="tm"><i class="dot t-ll"></i>Lumbini Lions</span>
+    <span class="kv"><span>Season</span><span>3 → 4</span></span>
+    <span class="phase"><b>Off-season</b> · January 2027</span>
+    <span class="spacer"></span>
+    <span class="kv"><span>Your players with Nepal</span><span class="num">3</span></span>
+  </header>
+  <div class="shell">
+    <nav class="nav" aria-label="Main">
+      <a href="Home.dc.html">Home</a>
+      <a href="Squad.dc.html">Squad</a>
+      <span class="off" aria-disabled="true">Match <small>Off-season</small></span>
+      <a href="Table.dc.html">Fixtures</a>
+      <a href="Table.dc.html">Table</a>
+      <a href="Retention.dc.html">Auction</a>
+      <hr>
+      <a href="World.dc.html">World <small>Leagues</small></a>
+      <a href="International.dc.html" class="on" aria-current="page">Nepal <small>Internationals</small></a>
+      <a href="History.dc.html">History</a>
+      <a href="Finance.dc.html">Club</a>
+      <a href="Settings.dc.html">Settings</a>
+    </nav>
+    <main class="main">
+      <div style="max-width: 1220px">
+        <section class="board" style="padding: 22px 26px" aria-label="Nepal">
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px">
+            <div class="stack" style="gap: 6px">
+              <span class="blbl" style="display: flex; align-items: center; gap: 8px"><span style="display: inline-block; width: 10px; height: 12px; background: var(--crimson-solid); clip-path: polygon(0 0, 100% 45%, 35% 45%, 100% 100%, 0 100%)" aria-hidden="true"></span>Nepal · men's team</span>
+              <span class="bf" style="font-size: 44px; line-height: 1">Road to the 2027 World Cup</span>
+              <span class="blbl" style="font-size: 14px">Next: ODI World Cup Qualifier · February–March 2027 · table and rankings are in-game</span>
+            </div>
+            <div class="cells" style="gap: 10px 28px">
+              <div class="cell"><span class="blbl">League 2</span><span class="bf mid">4th</span></div>
+              <div class="cell"><span class="blbl">ODI ranking</span><span class="bf mid">15</span></div>
+              <div class="cell"><span class="blbl">T20I ranking</span><span class="bf mid">16</span></div>
+            </div>
+          </div>
+        </section>
+
+        <div class="tabs" role="tablist" aria-label="International sections" style="margin-top: 18px; background: transparent">
+          <sc-for list="{{tabs}}" as="t" hint-placeholder-count="3">
+            <button type="button" role="tab" class="{{t.cls}}" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="flex: 0 0 auto">{{t.label}}</button>
+          </sc-for>
+        </div>
+
+        <!-- NEPAL -->
+        <sc-if value="{{isNepal}}" hint-placeholder-val="{{ true }}">
+          <div class="split" style="margin-top: 24px; gap: 40px; grid-template-columns: minmax(0,1.5fr) minmax(0,1fr)">
+            <section class="stack" style="gap: 28px">
+              <div>
+                <h2 class="t-h3" style="margin-bottom: 4px">The 50-over pathway</h2>
+                <p class="mut t-small" style="margin-bottom: 12px">Three tiers feed the World Cup. Nepal's in-game finish puts them straight into the Qualifier.</p>
+                <ol style="list-style: none; margin: 0; padding: 0" class="stack">
+                  <li style="display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--rule)"><span class="gld" style="font-weight: 600">ODI World Cup 2027</span><span class="t-small">South Africa, Zimbabwe and Namibia · October–November 2027</span></li>
+                  <li style="display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--rule); background: var(--blue-soft)"><span style="font-weight: 600; padding-left: 8px">World Cup Qualifier</span><span class="t-small"><b>Nepal are here next.</b> League 2's top four go straight in · Feb–Mar 2027</span></li>
+                  <li style="display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--rule)"><span style="font-weight: 600">Qualifier Play-off</span><span class="t-small mut">League 2's bottom four and the Challenge League's top four · losers can drop a tier</span></li>
+                  <li style="display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--rule)"><span style="font-weight: 600">CWC League 2</span><span class="t-small mut">8 teams, 144 ODIs in tri-series, 2023–27</span></li>
+                  <li style="display: grid; grid-template-columns: 150px minmax(0,1fr); gap: 16px; padding: 12px 0"><span style="font-weight: 600">Challenge League</span><span class="t-small mut">The third tier of 50-over cricket</span></li>
+                </ol>
+              </div>
+              <div>
+                <div style="display: flex; justify-content: space-between; align-items: baseline"><h2 class="t-h3">CWC League 2 · final table</h2><span class="faint t-small">in-game</span></div>
+                <table class="tbl compact plain" style="margin-top: 6px">
+                  <thead><tr><th style="padding-left: 0">#</th><th>Team</th><th class="r">P</th><th class="r">W</th><th class="r">L</th><th class="r">NR</th><th class="r">Pts</th><th></th></tr></thead>
+                  <tbody>
+                    <tr><td style="padding-left: 0">1</td><td>Scotland</td><td class="r">36</td><td class="r">25</td><td class="r">10</td><td class="r">1</td><td class="r" style="font-weight: 600">51</td><td class="blu t-small">Qualifier</td></tr>
+                    <tr><td style="padding-left: 0">2</td><td>USA</td><td class="r">36</td><td class="r">22</td><td class="r">13</td><td class="r">1</td><td class="r" style="font-weight: 600">45</td><td class="blu t-small">Qualifier</td></tr>
+                    <tr><td style="padding-left: 0">3</td><td>Netherlands</td><td class="r">36</td><td class="r">21</td><td class="r">15</td><td class="r">0</td><td class="r" style="font-weight: 600">42</td><td class="blu t-small">Qualifier</td></tr>
+                    <tr class="me cut"><td style="padding-left: 0">4</td><td style="font-weight: 600">Nepal</td><td class="r">36</td><td class="r">19</td><td class="r">17</td><td class="r">0</td><td class="r" style="font-weight: 600">38</td><td class="blu t-small">Qualifier</td></tr>
+                    <tr><td style="padding-left: 0">5</td><td>Oman</td><td class="r">36</td><td class="r">18</td><td class="r">17</td><td class="r">1</td><td class="r" style="font-weight: 600">37</td><td class="faint t-small">Play-off</td></tr>
+                    <tr><td style="padding-left: 0">6</td><td>Namibia</td><td class="r">36</td><td class="r">16</td><td class="r">19</td><td class="r">1</td><td class="r" style="font-weight: 600">33</td><td class="faint t-small">Play-off</td></tr>
+                    <tr><td style="padding-left: 0">7</td><td>UAE</td><td class="r">36</td><td class="r">13</td><td class="r">23</td><td class="r">0</td><td class="r" style="font-weight: 600">26</td><td class="faint t-small">Play-off</td></tr>
+                    <tr><td style="padding-left: 0">8</td><td>Canada</td><td class="r">36</td><td class="r">8</td><td class="r">28</td><td class="r">0</td><td class="r" style="font-weight: 600">16</td><td class="faint t-small">Play-off</td></tr>
+                  </tbody>
+                </table>
+                <p class="faint t-micro" style="margin-top: 6px">Real results up to October 2026 seed the save; the rest is simulated. Nepal held 4th by one point on the last day.</p>
+              </div>
+            </section>
+            <aside class="stack" style="gap: 22px">
+              <div>
+                <h2 class="sec">Your players in the Nepal squad</h2>
+                <ul class="mlist">
+                  <li><span class="grow"><b style="font-weight: 600">Rohit Paudel</b> (c)<br><span class="l2">League 2: 1,040 runs · in-game</span></span><span class="blu t-small">Called up</span></li>
+                  <li><span class="grow"><b style="font-weight: 600">Lalit Rajbanshi</b><br><span class="l2">League 2: 58 wickets · in-game</span></span><span class="blu t-small">Called up</span></li>
+                  <li><span class="grow"><b style="font-weight: 600">Gulshan Jha</b><br><span class="l2">Breakthrough after the NPL final</span></span><span class="gld t-small">First call-up</span></li>
+                </ul>
+                <p class="faint t-micro" style="margin-top: 6px">International form feeds back into their NPL ratings and morale.</p>
+              </div>
+              <div class="panel stack" style="gap: 8px">
+                <h2 class="sec" style="margin: 0">Clash with your calendar</h2>
+                <p class="t-small">The Qualifier overlaps your pre-season camp by 9 days. Paudel, Rajbanshi and Jha will miss it.</p>
+                <div class="row" style="gap: 8px"><button type="button" class="btn btn-sm">Move the camp</button><button type="button" class="btn btn-sm">Train without them</button></div>
+              </div>
+              <div>
+                <h2 class="sec">Nepal's recent record</h2>
+                <ul class="mlist">
+                  <li style="padding: 8px 0"><span class="grow t-small">T20 World Cup 2026 · India and Sri Lanka</span><span class="t-small mut">Group stage · beat Scotland</span></li>
+                  <li style="padding: 8px 0"><span class="grow t-small">T20 World Cup 2024 · USA and West Indies</span><span class="t-small mut">Group stage</span></li>
+                  <li style="padding: 8px 0"><span class="grow t-small">CWC League 2 · 2023–27</span><span class="t-small mut">4th · in-game</span></li>
+                </ul>
+              </div>
+            </aside>
+          </div>
+        </sc-if>
+
+        <!-- COMPETITIONS -->
+        <sc-if value="{{isComp}}" hint-placeholder-val="{{ false }}">
+          <div class="tblwrap" style="margin-top: 24px">
+            <table class="tbl">
+              <thead><tr><th>Competition</th><th>When</th><th>Where</th><th>Nepal</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td class="name">T20 World Cup 2026</td><td>Feb–Mar 2026</td><td>India, Sri Lanka</td><td>Group stage, 1 win</td><td class="faint">Played</td></tr>
+                <tr class="me"><td class="name">CWC League 2</td><td>2023–27</td><td>Tri-series</td><td>4th</td><td class="blu">Finished · in-game</td></tr>
+                <tr class="me"><td class="name">ODI World Cup Qualifier</td><td>Feb–Mar 2027</td><td>To be confirmed</td><td>Qualified</td><td class="crim">Next</td></tr>
+                <tr><td class="name">ODI World Cup 2027</td><td>Oct–Nov 2027</td><td>South Africa, Zimbabwe, Namibia</td><td>Needs a top finish at the Qualifier</td><td class="faint">Later</td></tr>
+                <tr><td class="name">T20 World Cup 2028</td><td>2028</td><td>Australia, New Zealand</td><td>Route to be confirmed</td><td class="faint">Later</td></tr>
+                <tr class="dim"><td class="name">World Test Championship</td><td>2027–29</td><td>Full members only</td><td>Not eligible</td><td>Long-term goal</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="faint t-small" style="margin-top: 8px">Qualification rules and hosts follow the ICC's announced pathway; anything after October 2026 is simulated in the save.</p>
+        </sc-if>
+
+        <!-- SERIES -->
+        <sc-if value="{{isSeries}}" hint-placeholder-val="{{ false }}">
+          <p class="faint t-small" style="margin-top: 20px">Around the world this month · in-game</p>
+          <ul class="inbox">
+            <li><span class="when">Live</span><div><p class="ttl">Australia v India · 5 Tests · India lead 2–1</p><p class="mut t-small">World Test Championship points at stake. Fourth Test starts Friday.</p></div></li>
+            <li><span class="when">Live</span><div><p class="ttl">South Africa v England · 3 ODIs · 1–1</p><p class="mut t-small">World Cup host warming up.</p></div></li>
+            <li><span class="when">Next week</span><div><p class="ttl">Nepal v Oman · 3 T20Is in Kirtipur</p><p class="mut t-small">Warm-up for the Qualifier. Your three players are in the squad.</p></div></li>
+            <li><span class="when">Done</span><div><p class="ttl">Netherlands v Scotland · 2 ODIs · shared 1–1</p></div></li>
+          </ul>
+        </sc-if>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { tab:'Nepal' }; }
+  renderVals() {
+    const t = this.state.tab;
+    const tabs = ['Nepal','Competitions','Series around the world'].map(x => ({ label:x, sel: t === x, cls: t === x ? 'on' : '', pick: () => this.setState({ tab:x }) }));
+    return { theme: this.props.theme ?? 'dark', tabs, isNepal: t === 'Nepal', isComp: t === 'Competitions', isSeries: t === 'Series around the world' };
+  }
+}
+</script>
+</body>
+</html>

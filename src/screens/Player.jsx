@@ -10,6 +10,67 @@ import { appearances } from '../lib/form.js';
 import { coachLine } from './Squad.jsx';
 import { gradeLabel, selectorView } from './Nepal.jsx';
 import { INTL_ASOF } from '../game/intl-data.js';
+import { useState } from 'react';
+import { autosave } from '../lib/save.js';
+import { T } from '../lib/i18n.js';
+import { traitRows, traitChips, relationships, timeline, mentorOptions, projection, TALK, talk, lastTen } from '../game/living.js';
+import '../styles/living.css';
+
+// Form: the last 10 innings, oldest to newest, gold for 50+.
+function FormTen({ G, p }) {
+  const L = lastTen(G, p, appearances); if (!L.length) return <p className="t-small faint">No innings yet.</p>;
+  const bars = [...Array(Math.max(0, 10 - L.length)).fill(null), ...L]; const max = Math.max(55, ...L.map((e) => e.r));
+  const outs = L.filter((e) => e.out).length; const runs = L.reduce((a, e) => a + e.r, 0);
+  return (<>
+    <div className="sechead" style={{ alignItems: 'baseline' }}><h2 className="t-h3">{T(G, 'Form · last 10 innings', 'फर्म · पछिल्ला १० इनिङ्स')}</h2><span className="mut t-small">avg {outs ? (runs / outs).toFixed(1) : '–'} · {runs} runs</span></div>
+    <div className="lv-bars" role="img" aria-label={`Runs in the last ${L.length} innings: ${L.map((e) => e.r).join(', ')}`}>
+      {bars.map((e, i) => { if (!e) return <span key={i} className="lv-bar e"><i style={{ height: '2px' }} /></span>; const cls = `lv-bar${e.r >= 50 ? ' g' : ''}`; const inner = <><span className={`t-micro ${e.r >= 50 ? 'gld' : 'faint'}`}>{e.r}{e.out ? '' : '*'}</span><i style={{ height: `${Math.max(2, (e.r / max) * 100)}%` }} /></>;
+        return e.link ? <Link key={i} to={e.link} className={cls} aria-label={`Match ${e.n}: ${e.r}`}>{inner}</Link> : <span key={i} className={cls}>{inner}</span>; })}
+    </div>
+    <p className="faint t-micro" style={{ marginTop: 6 }}>Oldest to newest. Gold = 50+. * not out.</p>
+  </>);
+}
+function Personality({ G, p }) {
+  const rows = traitRows(G, p); const rel = relationships(G, p);
+  return (
+    <div className="cols" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px,100%),1fr))', gap: 28, display: 'grid' }}>
+      <div><h2 className="sec">{T(G, 'Personality', 'स्वभाव')}</h2>
+        <table className="tbl plain compact"><tbody>{rows.map((r) => <tr key={r.k}><td style={{ paddingLeft: 0 }} className="mut">{r.label}</td><td className={r.known ? (r.gold ? 'gld' : r.crim ? 'crim' : '') : 'faint'}>{r.known ? r.text : 'Not known yet'}</td></tr>)}</tbody></table>
+        <p className="faint t-micro" style={{ marginTop: 6 }}>Revealed by scouting and time at your club{p.team === G.user ? ` (${p.seen || 0} matches)` : ''}.{p.real !== false ? ' Ratings from the game, not real assessments.' : ' A generated player.'}</p></div>
+      <div><h2 className="sec">{T(G, 'Relationships', 'सम्बन्ध')}</h2>
+        {rel.length ? <ul className="mlist">{rel.map((r, i) => <li key={i} style={{ padding: '8px 0' }}><span className="grow t-small">{r.pid ? <Link to={`/player/${r.pid}`}>{r.who}</Link> : r.who}</span><span className={`t-small ${r.c || ''}`}>{r.t}</span></li>)}</ul> : <p className="t-small faint">Not at a club.</p>}</div>
+    </div>
+  );
+}
+function Timeline({ G, p }) {
+  const ev = timeline(G, p); if (!ev.length) return null;
+  return (<div><h2 className="sec">{T(G, 'Career', 'करियर')}</h2>
+    <ol className="feed lv-tl">{ev.map((e, i) => <li key={i} className={`ev ${e.mile ? 'ev-mile mile' : 'ev-dot'}`}><span className="ov">{e.y}</span><span className="tx">{e.mile && <span className="tag">{e.mile}</span>}{e.story ? <Link to={`/story/${e.story}`}>{e.t}</Link> : e.t}</span></li>)}</ol></div>);
+}
+function DevPlan({ G, p, update, coach }) {
+  const opts = mentorOptions(G, p); const pr = projection(G, p);
+  return (
+    <section className="panel stack" style={{ gap: 10 }}>
+      <h2 className="t-h3">{T(G, 'Development plan', 'विकास योजना')}</h2>
+      <div className="field"><span className="lbl">Focus</span><div className="chips" role="radiogroup" aria-label="Training focus" style={{ margin: 0 }}>{FOCUS.map((f) => <button key={f} type="button" role="radio" aria-checked={(p.focus || 'Balanced') === f} className={`chip${(p.focus || 'Balanced') === f ? ' on' : ''}`} onClick={() => update(() => { p.focus = f; autosave(G); })}>{f}</button>)}</div></div>
+      <div className="field"><label htmlFor="mentor">Mentor</label><select id="mentor" className="input lv-sel" value={p.mentor || ''} onChange={(e) => update(() => { p.mentor = e.target.value || null; autosave(G); })}><option value="">None</option>{opts.map((q) => <option key={q.id} value={q.id}>{q.name} ({q.age})</option>)}</select>
+        {!opts.length && <p className="t-micro faint">No senior teammate in his discipline is better than him.</p>}</div>
+      <p className="t-small">Projection: <b className="num">{pr.from} → {pr.to}</b> by next season with this plan.</p>
+      <p className="t-micro faint">{coach}{p.age >= 26 ? ' He is 26 or older, so the coach helps his form, not his development.' : ''}{p.mentor && p.age <= 25 ? ' A mentor adds about a point a season.' : ''}</p>
+    </section>
+  );
+}
+function Talk({ G, p, update }) {
+  const [said, setSaid] = useState(null);
+  return (
+    <section className="panel stack" style={{ gap: 10 }}>
+      <h2 className="t-h3">{T(G, 'Talk to him', 'कुरा गर्नुहोस्')}</h2>
+      <div className="stack" style={{ gap: 8 }}>{TALK.map(([k, l]) => <button key={k} type="button" className={`choice${said && said.k === k ? ' on' : ''}`} style={{ padding: '10px 12px' }} onClick={() => update(() => { const r = talk(G, p, k); setSaid({ k, ...r }); autosave(G); })}><span style={{ fontWeight: 600, fontSize: 14 }}>{l}</span></button>)}</div>
+      {said && <p className={`t-small ev-new${p.real === false ? ' lv-reply' : ''}`}>{said.reply}{said.d != null ? <span className="faint"> Happiness {said.d >= 0 ? '+' : '−'}{Math.abs(said.d)}.</span> : null}</p>}
+      <p className="t-micro faint">{p.real === false ? 'Once between matches. Logged in your decisions.' : 'Real players: cricket talk only. Once between matches.'}</p>
+    </section>
+  );
+}
 
 const ROLE = { BAT: 'batter', BOWL: 'bowler', AR: 'all-rounder', WK: 'wicketkeeper' };
 const FOCUS = ['Balanced', 'Batting', 'Bowling', 'Fitness'];
@@ -77,6 +138,7 @@ export default function Player() {
   const order = mine ? t.squad.slice().sort((a, b) => ovr(G.P(b)) - ovr(G.P(a))) : null; const idx = order ? order.indexOf(p.id) : -1;
   const go = (d) => { const next = G.P(order[(idx + d + order.length) % order.length]); nav(`/player/${next.id}${tab === 'npl' || (tab === 'nepal' && next.nat === 'NEP') ? `?tab=${tab}` : ''}`, { replace: true }); };
   const avg = s && s.inn - s.no > 0 ? (s.r / (s.inn - s.no)).toFixed(1) : '–'; const sr = s && s.b ? (100 * s.r / s.b).toFixed(1) : '–';
+  const chips = traitChips(G, p);
   const coach = mine && p.age < 26 ? (() => { const st = G.s.staff[G.user]; const bat = p.role !== 'BOWL'; const x = bat ? st.bat : st.bowl; return x ? `With your level ${x.level} ${bat ? 'batting' : 'bowling'} coach: about +${Math.round(x.level / 2)} ${bat ? 'batting' : 'bowling'} by next season on top of normal growth.` : null; })() : null;
   return (
     <div className="playerpg stack" style={{ gap: 16 }}>
@@ -86,8 +148,9 @@ export default function Player() {
       </div>
       <section className="board pboard">
         {tags.length > 0 && <div className="row" style={{ gap: 6 }}>{tags.map((x) => <span key={x} className="btag">{x}</span>)}</div>}
+        {chips.length > 0 && <div className="lv-chips" style={{ marginTop: 6 }}>{chips.map((x) => <span key={x.t} className={`lv-chip ${x.c || ''}`}>{x.t}</span>)}</div>}
         <h1 className="bf pb-name">{p.name}</h1>
-        <p className="blbl">{p.team ? tname(G, p.team) : p.retired ? 'Retired' : 'Free agent'} · {COUNTRY_NAMES[p.nat] || p.nat} · {p.age} · {ROLE[p.role]} · {p.hand === 'L' ? 'left' : 'right'}-hand bat{p.type ? `, ${(TYPE_LABEL[p.type] || p.type).toLowerCase()}` : ''}{p.prov ? ` · ${p.prov} Province` : ''}</p>
+        <p className="blbl">{p.team ? tname(G, p.team) : p.retired ? 'Retired' : 'Free agent'} · {COUNTRY_NAMES[p.nat] || p.nat} · {p.age} · {ROLE[p.role]} · {p.hand === 'L' ? 'left' : 'right'}-hand bat{p.type ? `, ${(TYPE_LABEL[p.type] || p.type).toLowerCase()}` : ''}{p.prov ? ` · ${p.prov} Province` : ''}{p.real === false ? ' · generated player' : ''}</p>
         <div className="pb-cells"><div><p className="blbl">Overall</p><p className="bf pb-v">{o}</p></div><div><p className="blbl">Potential</p><p className="bf pb-v">{potRange(p)}</p></div><div><p className="blbl">Form</p><p className="bf pb-v">{formDisp(p)}</p></div><div className="wide"><p className="blbl">Fitness</p><p className="bf pb-v">{Math.round(p.fit)}%</p></div><div className="wide"><p className="blbl">Morale</p><p className="bf pb-v">{Math.round(p.morale)}</p></div></div>
       </section>
       <div className="tabs" role="tablist" aria-label="Player" style={{ gridTemplateColumns: `repeat(${nep ? 3 : 2},minmax(0,1fr))`, margin: 0, maxWidth: nep ? 480 : 360 }}>
@@ -96,22 +159,25 @@ export default function Player() {
       {tab === 'nepal' ? <NepalTab G={G} p={p} /> : tab === 'overview' ? (
         <div className="pgrid">
           <div className="stack" style={{ gap: 16, minWidth: 0 }}>
-            <section><div className="sechead"><h2 className="t-h3">Last 5 {p.role === 'BOWL' ? 'matches' : 'innings'}</h2><span className="t-micro faint">{p.role === 'BOWL' ? 'wickets' : 'runs'}</span></div><LastFive G={G} p={p} /></section>
+            {p.role !== 'BOWL' && <section><FormTen G={G} p={p} /></section>}
+            {p.role !== 'BAT' && p.role !== 'WK' && <section><div className="sechead"><h2 className="t-h3">Last 5 {p.role === 'BOWL' ? 'matches' : 'spells'}</h2><span className="t-micro faint">wickets</span></div><LastFive G={G} p={p} /></section>}
             <section><h2 className="t-h3" style={{ marginBottom: 6 }}>{s ? (sy === G.year ? 'This season' : `Season ${seasonNo(sy)}`) : 'This season'}</h2>
               <div className="tiles">{[['Runs', s ? s.r : 0], ['Average', s ? avg : '–'], ['Strike rate', s ? sr : '–'], ['Wickets', s ? s.w : 0]].map(([k, v]) => <div key={k} className="panel tile4"><p className="t-micro faint">{k}</p><p className="board-f">{v}</p></div>)}</div></section>
             <section className="panel stack" style={{ gap: 6 }}><h2 className="t-h3">Attributes</h2>
               <ul className="attrs">{attr.map(([k, v]) => <li key={k}><span className="t-small">{k}</span><Meter pct={v} blue /><span className="t-small b6 num">{v || '–'}</span></li>)}</ul>
               <p className="t-micro faint">Potential {potRange(p)}{p.scouted ? ' · scouted' : ''}. Ratings are out of 100.</p></section>
+            <Personality G={G} p={p} />
+            <Timeline G={G} p={p} />
           </div>
           <div className="stack" style={{ gap: 16, minWidth: 0 }}>
-            {mine && <section className="panel stack" style={{ gap: 8 }}><h2 className="t-h3">Training focus</h2>
-              <div className="chips" role="radiogroup" aria-label="Training focus" style={{ margin: 0 }}>{FOCUS.map((f) => <button key={f} type="button" role="radio" aria-checked={p.focus === f} className={`chip${p.focus === f ? ' on' : ''}`} onClick={() => update(() => { p.focus = f; })}>{f}</button>)}</div>
-              <p className="t-micro faint">{coach || coachLine(G, p)}{p.age >= 26 ? ' He is 26 or older, so the coach helps his form, not his development.' : ''}</p></section>}
+            {mine && <DevPlan G={G} p={p} update={update} coach={coach || coachLine(G, p)} />}
+            {mine && <Talk key={p.id} G={G} p={p} update={update} />}
             <section className="panel pcontract">
               <div><p className="t-micro faint">Salary</p><p className="t-small">{p.team ? `${fmtL(p.salary)} / season` : '—'}</p></div>
               <div><p className="t-micro faint">Contract</p><p className="t-small">{p.team ? `Until the ${G.s.settings.nextMega} mega auction` : '—'}</p></div>
               <div><p className="t-micro faint">Market value</p><p className="t-small">{fmtL(p.value)}</p></div>
               <div><p className="t-micro faint">Retirement</p><p className="t-small">{retire}</p></div>
+              {mine && <div><Link to={`/contract/${p.id}`} className="t-small">{T(G, 'Contract talks', 'अनुबन्ध वार्ता')}</Link></div>}
             </section>
             <div className="row" style={{ gap: 8 }}>
               {mine && !isCap && <button className="btn" onClick={() => update(() => { t.captainId = p.id; toast(`${p.name} is your new captain.`); })}>Make captain</button>}

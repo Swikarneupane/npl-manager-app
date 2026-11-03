@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Live match, mobile</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl m-root" data-theme="{{theme}}" style="position: relative">
+  <section class="board" style="border-radius: 0; border-width: 0 0 1px; padding: 12px 16px 12px; flex: none" aria-label="Scoreboard">
+    <div style="display: flex; justify-content: space-between; align-items: center">
+      <span class="blbl" style="display: flex; align-items: center"><i class="dot t-ll"></i>Lumbini v Biratnagar · chasing 173</span>
+      <span class="blbl">Match 17</span>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 4px">
+      <div style="display: flex; align-items: baseline; gap: 8px">
+        <span class="bf" style="font-size: 48px; line-height: .95">128/4</span>
+        <span class="bf" style="font-size: 18px; color: var(--board-ink-2)">15.2 ov</span>
+      </div>
+      <div class="stack" style="text-align: right"><span class="blbl">Need</span><span class="bf" style="font-size: 22px; line-height: 1.1">45 off 28</span></div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; margin-top: 8px">
+      <div class="stack"><span class="blbl">Run rate</span><span class="bf" style="font-size: 18px">8.35</span></div>
+      <div class="stack"><span class="blbl">Required</span><span class="bf" style="font-size: 18px">9.64</span></div>
+      <div class="stack"><span class="blbl">Partnership</span><span class="bf" style="font-size: 18px">34 (22)</span></div>
+    </div>
+    <div style="display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 8px; align-items: center; margin-top: 8px">
+      <span class="bf" style="font-size: 14px">46%</span>
+      <div class="wp" role="img" aria-label="Win probability: Lumbini 46 percent, Biratnagar 54 percent"><i style="width: 46%; background: var(--t-ll)"></i><i style="width: 54%; background: var(--t-bk)"></i></div>
+      <span class="bf" style="font-size: 14px; color: var(--board-ink-2)">54%</span>
+    </div>
+  </section>
+
+  <div class="tabs" role="tablist" aria-label="Match sections">
+    <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4">
+      <button type="button" role="tab" class="{{t.cls}}" aria-selected="{{t.sel}}" onClick="{{t.pick}}">{{t.label}}<sc-if value="{{t.hasBadge}}" hint-placeholder-val="{{ false }}"><span class="badge q">{{t.badge}}</span></sc-if></button>
+    </sc-for>
+  </div>
+
+  <div class="m-scroll">
+    <sc-if value="{{isLive}}" hint-placeholder-val="{{ true }}">
+      <ul class="mlist">
+        <li><span class="grow"><b style="font-weight: 600">Rohit Paudel*</b> <span class="faint t-small">4s 6 · 6s 2</span></span><span class="board-f" style="font-size: 20px; font-weight: 600">61 <span class="faint" style="font-weight: 500">(41)</span></span></li>
+        <li><span class="grow">Jimmy Neesham <span class="faint t-small">6s 2</span></span><span class="board-f" style="font-size: 20px; font-weight: 600">18 <span class="faint" style="font-weight: 500">(11)</span></span></li>
+        <li><span class="grow">Sandeep Lamichhane <span class="faint t-small">bowling</span></span><span class="board-f" style="font-size: 20px; font-weight: 600">3.2–0–25–2</span></li>
+      </ul>
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--rule)">
+        <span class="t-small mut">This over</span>
+        <div class="balls" style="gap: 5px">
+          <span class="ball" style="width: 30px; height: 30px">1</span><span class="ball b4" style="width: 30px; height: 30px">4</span><span class="ball next" style="width: 30px; height: 30px"></span><span class="ball next" style="width: 30px; height: 30px"></span><span class="ball next" style="width: 30px; height: 30px"></span><span class="ball next" style="width: 30px; height: 30px"></span>
+        </div>
+      </div>
+      <ol class="feed" aria-live="polite">
+        <li class="ev ev-four ev-new" style="grid-template-columns: 38px minmax(0,1fr); gap: 4px 10px"><span class="ov">15.2</span><span class="tx"><span class="tag">4</span>Lamichhane to Paudel, <b>four</b>. Lofted over extra cover.</span></li>
+        <li class="ev" style="grid-template-columns: 38px minmax(0,1fr); gap: 4px 10px"><span class="ov">15.1</span><span class="tx"><span class="tag faint">1</span>Lamichhane to Neesham, 1 run. Googly, to long-on.</span></li>
+        <li class="ev-over"><b>Over 15</b><span>11 runs</span><span>Need 50 from 30</span></li>
+        <li class="ev ev-six" style="grid-template-columns: 38px minmax(0,1fr); gap: 4px 10px"><span class="ov">14.6</span><span class="tx"><span class="tag">6</span>Raza to Neesham, <b>six</b>. Slog-swept into the stand.</span></li>
+      </ol>
+      <button type="button" class="btn btn-ghost" style="width: 100%; margin-top: 6px; color: var(--blue)" onClick="{{toFeed}}">All commentary</button>
+    </sc-if>
+
+    <sc-if value="{{isFeed}}" hint-placeholder-val="{{ false }}">
+      <ol class="feed">
+        <li class="ev ev-four" style="grid-template-columns: 38px minmax(0,1fr); gap: 4px 10px"><span class="ov">15.2</span><span class="tx"><span class="tag">4</span>Lamichhane to Paudel, <b>four</b>. Down the track and lofted over extra cover, one bounce into the rope.</span></li>
+        <li class="ev" style="grid-template-columns: 38px minmax(0,1fr); gap: 4px 10px"><span class="ov">15.1</span><span class="tx"><span class="tag faint">1</span>Lamichhane to Neesham, 1 run. Googly, worked to long-on.</span></li>
+        <li class="ev-over"><b>End of over 15</b><span>11 runs</span><span>123/4</span><span>Need 50 from 30</span></li>
+        <li class="ev ev-six" style="grid-template-columns: 38px minmax(0,1fr); gap: 4px 10px"><span class="ov">14.6</span><span class="tx"><span class="tag">6</span>Raza to Neesham, <b>six</b>. Slog-swept flat into the stand at deep midwicket.</span></li>
+        <li class="ev ev-crowd" style="grid-template-columns: 38px minmax(0,1fr); gap: 4px 10px"><span class="ov"></span><span class="tx">“Lumbini! Lumbini!” rolls round Kirtipur.</span></li>
+        <li class="ev" style="grid-template-columns: 38px minmax(0,1fr); gap: 4px 10px"><span class="ov">14.5</span><span class="tx"><span class="tag faint">1</span>Raza to Paudel, 1 run.</span></li>
+        <li class="ev ev-mile" style="grid-template-columns: 38px minmax(0,1fr); gap: 4px 10px"><span class="ov">14.4</span><span class="tx"><span class="tag">50</span><b>Fifty for Rohit Paudel</b>, 37 balls.</span></li>
+        <li class="ev ev-dot" style="grid-template-columns: 38px minmax(0,1fr); gap: 4px 10px"><span class="ov">14.3</span><span class="tx"><span class="tag">·</span>Raza to Paudel, no run.</span></li>
+        <li class="ev ev-drs" style="grid-template-columns: 38px minmax(0,1fr); gap: 4px 10px"><span class="ov">13.5</span><span class="tx"><span class="tag">DRS</span>Biratnagar review LBW on Neesham. Umpire's call, <b>not out</b>.</span></li>
+        <li class="ev-rain">Light drizzle. DLS par 116 at 13 overs, Lumbini 2 ahead.</li>
+        <li class="ev ev-wkt" style="grid-template-columns: 38px minmax(0,1fr); gap: 4px 10px"><span class="ov">11.4</span><span class="tx"><span class="tag">W</span>Shakib to Dickwella, <b>out</b>. c Warner, 9 (8).</span></li>
+      </ol>
+    </sc-if>
+
+    <sc-if value="{{isCard}}" hint-placeholder-val="{{ false }}">
+      <div class="seg" role="group" aria-label="Innings" style="margin: 12px 0 6px; display: grid; grid-template-columns: 1fr 1fr"><button type="button" class="on">Lumbini 128/4</button><button type="button">Biratnagar 172/6</button></div>
+      <table class="tbl compact plain">
+        <thead><tr><th style="padding-left: 0">Batter</th><th class="r">R</th><th class="r">B</th><th class="r">SR</th></tr></thead>
+        <tbody>
+          <tr><td style="padding-left: 0; font-weight: 500">Rohit Paudel* <span class="faint t-micro">not out</span></td><td class="r" style="font-weight: 600">61</td><td class="r">41</td><td class="r faint">148.8</td></tr>
+          <tr><td style="padding-left: 0">Aasif Sheikh <span class="faint t-micro">b Lamichhane</span></td><td class="r" style="font-weight: 600">14</td><td class="r">10</td><td class="r faint">140.0</td></tr>
+          <tr><td style="padding-left: 0">Charith Asalanka <span class="faint t-micro">c Warner b Raza</span></td><td class="r" style="font-weight: 600">22</td><td class="r">16</td><td class="r faint">137.5</td></tr>
+          <tr><td style="padding-left: 0">Bibek Thapa Magar <span class="faint t-micro">lbw b Lamichhane</span></td><td class="r" style="font-weight: 600">4</td><td class="r">6</td><td class="r faint">66.7</td></tr>
+          <tr><td style="padding-left: 0">Niroshan Dickwella <span class="faint t-micro">c Warner b Shakib</span></td><td class="r" style="font-weight: 600">9</td><td class="r">8</td><td class="r faint">112.5</td></tr>
+          <tr><td style="padding-left: 0; font-weight: 500">Jimmy Neesham <span class="faint t-micro">not out</span></td><td class="r" style="font-weight: 600">18</td><td class="r">11</td><td class="r faint">163.6</td></tr>
+          <tr><td style="padding-left: 0" class="faint">Extras</td><td class="r">0</td><td></td><td></td></tr>
+        </tbody>
+      </table>
+      <p class="t-small mut" style="margin-top: 10px"><span class="faint">FoW</span> 1-21, 2-58, 3-71, 4-94</p>
+      <a href="Scorecard.dc.html" class="t-small" style="display: inline-block; margin-top: 8px">Full scorecard with bowling</a>
+    </sc-if>
+
+    <sc-if value="{{isTac}}" hint-placeholder-val="{{ false }}">
+      <div class="stack" style="gap: 18px; padding-top: 14px">
+        <div class="field">
+          <span class="lbl" id="agg">Batting aggression</span>
+          <div class="seg" role="group" aria-labelledby="agg" style="display: grid; grid-template-columns: repeat(5, minmax(0,1fr))">
+            <sc-for list="{{aggr}}" as="o" hint-placeholder-count="5"><button type="button" class="{{o.cls}}" onClick="{{o.pick}}" style="padding: 0 2px; min-height: 40px; font-size: 13px">{{o.label}}</button></sc-for>
+          </div>
+          <p class="faint t-small">{{aggrNote}}</p>
+        </div>
+        <div class="field">
+          <label for="nb">Next batter in</label>
+          <select id="nb" class="input" style="width: 100%; height: 44px"><option>Gulshan Jha · AR · 64</option><option>Lalit Rajbanshi · BOWL</option><option>Suman Tamang · BOWL</option></select>
+        </div>
+        <div class="field">
+          <span class="lbl">Field setting</span>
+          <p class="faint t-small">Used while Lumbini bowl. Set in the first innings: Death from over 17.</p>
+        </div>
+        <hr class="hr" style="margin: 0">
+        <div class="field">
+          <span class="lbl" id="cm">Pause the game</span>
+          <div class="seg" role="group" aria-labelledby="cm" style="display: grid; grid-template-columns: repeat(4, minmax(0,1fr))">
+            <sc-for list="{{modes}}" as="o" hint-placeholder-count="4"><button type="button" class="{{o.cls}}" onClick="{{o.pick}}" style="padding: 0 2px; min-height: 40px; font-size: 12.5px">{{o.label}}</button></sc-for>
+          </div>
+        </div>
+        <div class="field">
+          <span class="lbl" id="sp">Playback speed</span>
+          <div class="seg" role="group" aria-labelledby="sp" style="display: grid; grid-template-columns: repeat(4, minmax(0,1fr))">
+            <sc-for list="{{speeds}}" as="o" hint-placeholder-count="4"><button type="button" class="{{o.cls}}" onClick="{{o.pick}}" style="min-height: 40px">{{o.label}}</button></sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+
+  <div class="m-actions">
+    <button type="button" class="btn btn-primary" style="flex: 1 1 auto">Next ball</button>
+    <button type="button" class="btn">End of over</button>
+    <button type="button" class="btn" onClick="{{toTac}}" aria-label="Aggression: {{aggrShort}}">{{aggrShort}}</button>
+  </div>
+
+  <nav class="bnav" aria-label="Main">
+    <a href="MHome.dc.html">Home</a>
+    <a href="MSquad.dc.html">Squad</a>
+    <a href="MMatch.dc.html" class="on" aria-current="page"><span class="live"></span>Match</a>
+    <a href="MLeague.dc.html">League</a>
+    <a href="Settings.dc.html">More</a>
+  </nav>
+
+  <sc-if value="{{drs}}" hint-placeholder-val="{{ false }}">
+    <div class="scrim" style="align-items: flex-end; padding: 0">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="drs-m" style="width: 100%; border-radius: 14px 14px 0 0; border-width: 1px 0 0; padding: 20px 16px 24px">
+        <p class="faint t-small">15.3 · Lamichhane to Neesham</p>
+        <p id="drs-m" class="t-h2" style="margin-top: 4px">Umpire says <span class="crim">OUT</span>, LBW</p>
+        <p class="mut t-small" style="margin-top: 6px">1 review left · Neesham: “looked high.”</p>
+        <div class="acts"><button type="button" class="btn btn-primary btn-lg" onClick="{{closeDrs}}">Review</button><button type="button" class="btn btn-lg" onClick="{{closeDrs}}">Walk off</button></div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["dark","light"],"default":"dark"},"tab":{"editor":"enum","options":["Live","Commentary","Card","Tactics"],"default":"Live"},"showDrs":{"editor":"boolean","default":false},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { tab:null, aggr:'Attack', mode:'Key', speed:'1×', closed:false }; }
+  renderVals() {
+    const s = this.state;
+    const tab = s.tab ?? this.props.tab ?? 'Live';
+    const go = (t) => () => this.setState({ tab: t });
+    const tabs = ['Live','Commentary','Card','Tactics'].map(t => ({ label:t, sel: tab === t, cls: tab === t ? 'on' : '', hasBadge: t === 'Tactics', badge: s.aggr, pick: go(t) }));
+    const seg = (arr, key) => arr.map(l => ({ label:l, cls: s[key] === l ? 'on' : '', pick: () => this.setState({ [key]: l }) }));
+    const notes = { Defend:'Protect wickets, about 6 an over.', Normal:'Rotate strike, punish bad balls.', Attack:'Look for boundaries. Needed: 9.64 an over.', 'All-out':'Swing at everything. High wicket risk.', Auto:'Matched to the required rate.' };
+    return { theme: this.props.theme ?? 'dark', tabs,
+      isLive: tab === 'Live', isFeed: tab === 'Commentary', isCard: tab === 'Card', isTac: tab === 'Tactics',
+      toFeed: go('Commentary'), toTac: go('Tactics'),
+      aggr: seg(['Defend','Normal','Attack','All-out','Auto'], 'aggr'), aggrNote: notes[s.aggr], aggrShort: s.aggr,
+      modes: seg(['Ball','Over','Key','Sim'], 'mode'), speeds: seg(['0.5×','1×','2×','4×'], 'speed'),
+      drs: (this.props.showDrs ?? false) && !s.closed, closeDrs: () => this.setState({ closed: true }) };
+  }
+}
+</script>
+</body>
+</html>

@@ -2,12 +2,12 @@ import { Link } from 'react-router-dom';
 import { nn } from '../lib/util.js';
 
 // Shared by the Home news portal and the News page.
-export const KINDS = { match: 'Result', injury: 'Injury · Physio', board: 'Board', league: 'League', event: 'Decision', signing: 'Signing', intl: 'International' };
+export const KINDS = { match: 'Result', injury: 'Injury · Physio', board: 'Board', league: 'League', event: 'Decision', signing: 'Signing', intl: 'International', scout: 'Scouting', staff: 'Staff', story: 'Story', world: 'World cricket', press: 'Press', sponsor: 'Sponsors and fans', training: 'Training' };
 const OLD_SIGNING = /^(Overseas signings|TRADE:)/;
 export const kindOf = (n) => (n.kind === 'league' && OLD_SIGNING.test(n.text) ? 'signing' : n.kind);
 export const isPending = (n) => !!(n.choices && !n.done);
 // Your club: everything the game only writes about the user's team, plus flagged items (trades).
-export const isClub = (n) => !!n.club || ['match', 'injury', 'board', 'event'].includes(n.kind);
+export const isClub = (n) => !!n.club || ['match', 'injury', 'board', 'event', 'scout', 'staff', 'story', 'press', 'sponsor', 'training'].includes(n.kind);
 // Unread items plus decisions still waiting, for the More badge and the News tile.
 export const unreadCount = (G) => G.s.inbox.filter((n) => !n.read || isPending(n)).length;
 
@@ -39,7 +39,7 @@ function title(G, n) {
 }
 
 // One row: unread dot, kind, title, and a muted second line.
-export function NewsRow({ G, n, sub, to = n.fix ? `/scorecard/${n.fix}` : null, children }) {
+export function NewsRow({ G, n, sub, to = n.to || (n.fix ? `/scorecard/${n.fix}` : null), children }) {
   const body = (
     <>
       <span className={`nrow-dot${n.read ? '' : ' on'}`} aria-hidden="true" />

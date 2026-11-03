@@ -1,0 +1,64 @@
+/* ===== Big occasions: playoff week, final week, trophy ceremony, season review ===== */
+.occ-bracket{display:grid;grid-template-columns:minmax(0,1fr) 40px minmax(0,1fr) 40px minmax(0,1fr);align-items:center}
+.occ-bracket .bk-l{height:60%;border:1px solid var(--rule-strong);border-left:0;border-radius:0 8px 8px 0;margin-right:8px}
+.occ-bracket .bk-h{height:2px;background:var(--rule-strong);margin:0 8px}
+.occ-fx p{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.occ-fx p > span{display:flex;align-items:center;min-width:0}
+.occ-fx .win{font-weight:600}
+.occ-fx.next{border-color:var(--ink-3)}
+@media (max-width:980px){.occ-bracket{grid-template-columns:minmax(0,1fr);gap:12px}.occ-bracket .bk-l,.occ-bracket .bk-h{display:none}}
+.occ-choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(200px,100%),1fr));gap:8px;margin-top:8px}
+.occ-choices .choice{padding:10px 12px}
+.occ-choices .choice .l{font-weight:600;font-size:14px}
+.occ-task{display:block!important}
+.occ-task .hd{display:flex;align-items:flex-start;gap:12px}
+.occ-task .day{width:60px;flex:none;font-size:16px}
+.occ-replay{max-height:420px;overflow-y:auto}
+.occ-hero .bf.title{font-size:54px;line-height:1;display:flex;flex-wrap:wrap;align-items:center;gap:4px 18px}
+.occ-hero .bf.title .v{color:var(--board-ink-2);font-size:32px}
+@media (max-width:760px){.occ-hero .bf.title{font-size:30px}.occ-hero .bf.title .v{font-size:20px}}
+.occ-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(160px,100%),1fr));gap:12px}
+.occ-tiles .bf{font-size:30px;font-weight:600;line-height:1.1}
+@media (max-width:760px){.occ-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.occ-tiles .bf{font-size:22px}}
+.occ-review-h1{margin:0;font-size:40px;line-height:46px;font-weight:600;letter-spacing:-.02em}
+@media (max-width:760px){.occ-review-h1{font-size:26px;line-height:32px}}
+
+/* trophy ceremony: full screen on the scoreboard */
+.occ-full{position:fixed;inset:0;z-index:60;background:var(--board-bg);color:var(--board-ink);display:flex;flex-direction:column;overflow:hidden}
+.occ-full header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 28px;padding-top:max(16px,env(safe-area-inset-top,0px));border-bottom:1px solid var(--board-rule);flex:none}
+.occ-full .dim{color:var(--board-ink-2)}
+.occ-full .gold{color:var(--gold)}
+.occ-full main{flex:1 1 auto;display:flex;align-items:center;justify-content:center;padding:40px 24px;overflow-y:auto;min-height:0}
+.occ-full .inner{width:min(880px,100%);text-align:center}
+.occ-full footer{flex:none;display:flex;justify-content:center;gap:10px;padding:0 24px 36px;padding-bottom:max(24px,env(safe-area-inset-bottom,0px));flex-wrap:wrap}
+.occ-full .btn-gold{background:var(--gold);border-color:var(--gold);color:#1A1406;min-width:220px}
+.occ-full .btn-board{background:transparent;color:var(--board-ink);border-color:var(--board-rule)}
+.occ-full .btn-ghost{color:var(--board-ink-2)}
+.occ-full .choice{background:transparent;color:var(--board-ink);border-color:var(--board-rule)}
+.occ-full .choice.on{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.occ-full .choice .why{color:var(--board-ink-2);font-size:13.5px}
+.occ-full .choice .fx{color:var(--gold);font-size:12.5px}
+.occ-awards{list-style:none;margin:18px 0 0;padding:0;text-align:left}
+.occ-awards li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;padding:16px 0;border-bottom:1px solid var(--board-rule)}
+.occ-awards li:last-child{border-bottom:0}
+.occ-awards .nm{font-size:22px;font-weight:600}
+.occ-awards .v{font-size:28px}
+.occ-champ{font-size:120px;line-height:.9;font-weight:700;color:var(--gold);letter-spacing:.01em}
+.occ-champ-ne{font-family:var(--f-board-ne,var(--f-board));font-stretch:75%;font-size:44px;line-height:1.2;font-weight:600}
+.occ-rule{width:120px;height:1px;background:var(--gold)}
+.occ-ball{font-size:30px;line-height:40px;font-weight:500;text-wrap:balance}
+@media (max-width:760px){
+  .occ-full header{padding:12px 16px}
+  .occ-full main{padding:24px 20px;align-items:flex-start}
+  .occ-full .inner{margin:auto 0}
+  .occ-full footer{padding:12px 16px 20px}
+  .occ-full footer .btn{flex:1 1 0;min-width:0}
+  .occ-champ{font-size:76px}.occ-champ-ne{font-size:34px}.occ-rule{width:80px}
+  .occ-ball{font-size:23px;line-height:31px}
+  .occ-awards .nm{font-size:18px}.occ-awards .v{font-size:22px}
+}
+.occ-pundits{width:100%;table-layout:fixed}.occ-pundits td{white-space:normal;vertical-align:top}.occ-pundits td:nth-child(1){width:32%}.occ-pundits td:nth-child(2){width:28%}
+/* the scoreboard is dark in both themes, so gold on it uses the dark theme's gold (light gold on navy) */
+.occ-full,.occ-hero{--gold:#EAC173}
+.occ-full .btn-gold:disabled{opacity:.5}
+a.btn-primary,a.btn-primary:visited,a.btn-primary:hover{color:#fff;text-decoration:none}

@@ -18,7 +18,9 @@
     "android:sync": "vite build && cap sync android",
     "android:apk": "vite build && cap sync android && cd android && ./gradlew assembleDebug",
     "test:resume": "node scripts/test-resume.js",
-    "test:flow": "node scripts/test-season-flow.js"
+    "test:flow": "node scripts/test-season-flow.js",
+    "test:unit": "node scripts/unit/run.mjs",
+    "test": "node scripts/unit/run.mjs && node scripts/test-season-flow.js && node scripts/test-resume.js"
   },
   "devDependencies": {
     "@capacitor/android": "8.5.0",

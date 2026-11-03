@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>NPL Manager — Rankings and WTC</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="./npl.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anek+Devanagari:wdth,wght@75..100,400..700&amp;family=Anek+Latin:wdth,wght@75..100,400..700&amp;family=IBM+Plex+Sans+Devanagari:wght@400;500;600&amp;family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&amp;display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div class="npl" data-theme="{{theme}}" style="min-height: 1300px">
+  <header class="top">
+    <span class="brand">NPL Manager</span>
+    <span class="tm"><i class="dot t-ll"></i>Lumbini Lions</span>
+    <span class="kv"><span>Season</span><span>5 · 2028</span></span>
+    <span class="phase"><b>Off-season</b></span>
+    <span class="spacer"></span>
+    <span class="kv"><span>Ratings</span><span>in-game, updated after every international</span></span>
+  </header>
+  <div class="shell">
+    <nav class="nav" aria-label="Main">
+      <a href="Home.dc.html">Home</a>
+      <a href="Squad.dc.html">Squad</a>
+      <span class="off" aria-disabled="true">Match <small>Off-season</small></span>
+      <a href="Table.dc.html">Fixtures</a>
+      <a href="Table.dc.html">Table</a>
+      <a href="Retention.dc.html">Auction</a>
+      <hr>
+      <a href="World.dc.html">World <small>Leagues</small></a>
+      <a href="Rankings.dc.html" class="on" aria-current="page">Nepal <small>Rankings</small></a>
+      <a href="History.dc.html">History</a>
+      <a href="Finance.dc.html">Club</a>
+      <a href="Settings.dc.html">Settings</a>
+    </nav>
+    <main class="main">
+      <div style="max-width: 1220px">
+        <div class="pagehead">
+          <div class="stack" style="gap: 4px">
+            <h1 class="t-h1">Rankings</h1>
+            <p class="mut">The game's own ratings, not the ICC's. Real players and teams, simulated results from October 2026 on.</p>
+          </div>
+          <div class="seg" role="group" aria-label="Format"><sc-for list="{{formats}}" as="f" hint-placeholder-count="2"><button type="button" class="{{f.cls}}" onClick="{{f.pick}}">{{f.label}}</button></sc-for></div>
+        </div>
+
+        <div class="tabs" role="tablist" aria-label="Ranking" style="background: transparent">
+          <sc-for list="{{tabs}}" as="t" hint-placeholder-count="4"><button type="button" role="tab" class="{{t.cls}}" aria-selected="{{t.sel}}" onClick="{{t.pick}}" style="flex: 0 0 auto">{{t.label}}</button></sc-for>
+        </div>
+
+        <div class="split" style="margin-top: 22px; gap: 40px; grid-template-columns: minmax(0,1.4fr) minmax(0,1fr)">
+          <section>
+            <div class="tblwrap">
+              <table class="tbl">
+                <thead><tr><th class="r" style="width: 50px">#</th><th>{{colName}}</th><th>{{colSub}}</th><th class="r">Rating</th><th class="r">Move</th></tr></thead>
+                <tbody>
+                  <sc-for list="{{rows}}" as="r" hint-placeholder-count="12">
+                    <tr class="{{r.cls}}"><td class="r">{{r.n}}</td><td class="name">{{r.name}}</td><td class="mut">{{r.sub}}</td><td class="r">{{r.rt}}</td><td class="r {{r.mvCls}}">{{r.mv}}</td></tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </div>
+            <p class="faint t-small" style="margin-top: 8px">Nepal and Nepali players are highlighted. Lumbini players carry a dot.</p>
+          </section>
+
+          <aside class="stack" style="gap: 24px">
+            <div class="panel stack" style="gap: 8px">
+              <h2 class="sec" style="margin: 0">Nepal at a glance</h2>
+              <table class="tbl plain compact">
+                <tbody>
+                  <tr><td style="padding-left: 0" class="mut">T20I team</td><td class="r">16th <span class="up t-small">▲ 2</span></td></tr>
+                  <tr><td style="padding-left: 0" class="mut">ODI team</td><td class="r">15th <span class="up t-small">▲ 1</span></td></tr>
+                  <tr><td style="padding-left: 0" class="mut">Best batter</td><td class="r">Kushal Bhurtel · 18th T20I</td></tr>
+                  <tr><td style="padding-left: 0" class="mut">Best bowler</td><td class="r">Sandeep Lamichhane · 9th T20I</td></tr>
+                  <tr><td style="padding-left: 0" class="mut">Best all-rounder</td><td class="r">Dipendra Singh Airee · 6th T20I</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: baseline"><h2 class="sec">World Test Championship 2027–29</h2><span class="faint t-micro">in-game</span></div>
+              <table class="tbl compact plain">
+                <thead><tr><th style="padding-left: 0">#</th><th>Team</th><th class="r">Played</th><th class="r">PCT</th></tr></thead>
+                <tbody>
+                  <tr><td style="padding-left: 0">1</td><td>India</td><td class="r">8</td><td class="r">66.7</td></tr>
+                  <tr class="cut"><td style="padding-left: 0">2</td><td>Australia</td><td class="r">9</td><td class="r">61.1</td></tr>
+                  <tr><td style="padding-left: 0">3</td><td>South Africa</td><td class="r">6</td><td class="r">58.3</td></tr>
+                  <tr><td style="padding-left: 0">4</td><td>England</td><td class="r">10</td><td class="r">50.0</td></tr>
+                  <tr><td style="padding-left: 0">5</td><td>New Zealand</td><td class="r">6</td><td class="r">44.4</td></tr>
+                  <tr><td style="padding-left: 0">6</td><td>Sri Lanka</td><td class="r">4</td><td class="r">41.7</td></tr>
+                  <tr><td style="padding-left: 0">7</td><td>Pakistan</td><td class="r">6</td><td class="r">33.3</td></tr>
+                  <tr><td style="padding-left: 0">8</td><td>West Indies</td><td class="r">6</td><td class="r">22.2</td></tr>
+                  <tr><td style="padding-left: 0">9</td><td>Bangladesh</td><td class="r">4</td><td class="r">16.7</td></tr>
+                </tbody>
+              </table>
+              <p class="faint t-micro" style="margin-top: 6px">Top two meet in the final. Nepal play no Tests; Test status is a long-term storyline in the game.</p>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1300}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { tab:'Teams', fmt:'T20I' }; }
+  renderVals() {
+    const s = this.state;
+    const D = {
+      'Teams|T20I': [['India','','268','–'],['Australia','','262','–'],['England','','256','▲ 1'],['New Zealand','','251','▼ 1'],['South Africa','','249','–'],['West Indies','','244','–'],['Pakistan','','240','▲ 1'],['Sri Lanka','','236','▼ 1'],['Afghanistan','','231','–'],['Bangladesh','','223','–'],['…','','',''],['Nepal','16th','186','▲ 2','nep']],
+      'Teams|ODI': [['India','','121','–'],['Australia','','117','–'],['South Africa','','112','▲ 1'],['New Zealand','','110','▼ 1'],['Pakistan','','106','–'],['England','','104','–'],['Sri Lanka','','98','–'],['Afghanistan','','95','–'],['Bangladesh','','88','–'],['West Indies','','80','–'],['…','','',''],['Nepal','15th','44','▲ 1','nep']],
+      'Batters|T20I': [['Travis Head','Australia','861','–'],['Suryakumar Yadav','India','838','▲ 1'],['Phil Salt','England','830','▼ 1'],['Babar Azam','Pakistan','802','–'],['Pathum Nissanka','Sri Lanka','790','▲ 2'],['…','','',''],['Kushal Bhurtel','Nepal · 18th','684','▲ 6','nep'],['Rohit Paudel','Nepal · 24th · Lumbini','651','▲ 3','ll'],['Dipendra Singh Airee','Nepal · 31st','622','▼ 2','nep']],
+      'Batters|ODI': [['Shubman Gill','India','812','–'],['Babar Azam','Pakistan','788','–'],['Travis Head','Australia','770','▲ 1'],['…','','',''],['Rohit Paudel','Nepal · 27th · Lumbini','598','▲ 9','ll'],['Kushal Bhurtel','Nepal · 41st','541','▲ 4','nep']],
+      'Bowlers|T20I': [['Rashid Khan','Afghanistan','742','–'],['Adil Rashid','England','720','–'],['Wanindu Hasaranga','Sri Lanka','711','▲ 1'],['Jasprit Bumrah','India','706','▼ 1'],['Adam Zampa','Australia','698','–'],['…','','',''],['Sandeep Lamichhane','Nepal · 9th','671','▲ 3','nep'],['Lalit Rajbanshi','Nepal · 37th · Lumbini','560','▲ 11','ll']],
+      'Bowlers|ODI': [['Kuldeep Yadav','India','701','–'],['Rashid Khan','Afghanistan','688','–'],['…','','',''],['Sandeep Lamichhane','Nepal · 14th','640','▲ 2','nep'],['Lalit Rajbanshi','Nepal · 29th · Lumbini','584','▲ 6','ll']],
+      'All-rounders|T20I': [['Hardik Pandya','India','268','–'],['Sikandar Raza','Zimbabwe','254','–'],['Mohammad Nabi','Afghanistan','236','–'],['…','','',''],['Dipendra Singh Airee','Nepal · 6th','221','▲ 2','nep'],['Gulshan Jha','Nepal · 44th · Lumbini','132','new','ll']],
+      'All-rounders|ODI': [['Mohammad Nabi','Afghanistan','294','–'],['Sikandar Raza','Zimbabwe','280','–'],['…','','',''],['Dipendra Singh Airee','Nepal · 11th','212','▲ 1','nep']]
+    };
+    const key = s.tab + '|' + s.fmt;
+    let n = 0;
+    const rows = D[key].map((r, i) => { if (r[0] !== '…') n = r[1].match(/(\d+)(st|nd|rd|th)/) ? Number(r[1].match(/(\d+)/)[0]) : (i + 1);
+      return { n: r[0] === '…' ? '' : n, name: (r[4] === 'll' ? '● ' : '') + r[0], sub: r[1].replace(/ · \d+(st|nd|rd|th)/, '').replace(/^\d+(st|nd|rd|th)$/, ''), rt:r[2], mv:r[3],
+        mvCls: r[3].startsWith('▲') ? 'up' : (r[3].startsWith('▼') ? 'down' : 'faint'), cls: r[4] ? 'me' : (r[0] === '…' ? 'dim' : '') }; });
+    const tabs = ['Teams','Batters','Bowlers','All-rounders'].map(t => ({ label:t, sel: s.tab === t, cls: s.tab === t ? 'on' : '', pick: () => this.setState({ tab:t }) }));
+    const formats = ['T20I','ODI'].map(f => ({ label:f, cls: s.fmt === f ? 'on' : '', pick: () => this.setState({ fmt:f }) }));
+    return { theme: this.props.theme ?? 'light', tabs, formats, rows, colName: s.tab === 'Teams' ? 'Team' : 'Player', colSub: s.tab === 'Teams' ? '' : 'Team' };
+  }
+}
+</script>
+</body>
+</html>

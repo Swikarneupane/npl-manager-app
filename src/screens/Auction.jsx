@@ -4,7 +4,9 @@ import { useGame } from '../lib/store.jsx';
 import { Dot, Meter, Modal, Role } from '../components/bits.jsx';
 import { ovr, fmtL, TYPE_LABEL } from '../game/engine.js';
 import { COUNTRY_NAMES } from '../game/data.js';
-import { NEEDS, needRoles, DOM_CAP, OS_CAP } from '../game/game.js';
+import { NEEDS, needRoles, DOM_CAP, OS_CAP, MIN_OS, MAX_SQUAD, MIN_SQUAD, MAX_OS, MIN_BASE } from '../game/game.js';
+import MScreen, { useTab } from '../components/MScreen.jsx';
+import { tn } from '../lib/i18n.js';
 import { AuctionRoom } from '../lib/auction.js';
 import { potRange, tname, tshort, useNarrow } from '../lib/util.js';
 import { autosave } from '../lib/save.js';
@@ -14,6 +16,43 @@ const PRI_TAG = { A: 'c', B: 'g', C: '' };
 const ROLE_NAME = { AR: 'All-rounder', WK: 'Wicketkeeper', BAT: 'Batter', BOWL: 'Bowler' };
 const L = (x) => `Rs ${fmtL(x).replace(/^Rs /, '')}`;
 const range = ([a, b]) => `Rs ${a}–${b} L`;
+
+
+// ===== needs, your max and what's coming =====
+// Squad against 18-22, Nepali with room left, overseas against the minimum 6, and the most you can
+// bid on this lot (G.lotMax: the purse minus a base-price reserve for every slot still required).
+export function needsInfo(G, p) {
+  const t = G.teams[G.user]; const os = G.osCount(G.user); const nep = t.squad.length - os; const req = G.requiredSlots(G.user);
+  return { squad: t.squad.length, nep, nepRoom: Math.max(0, Math.min(MAX_SQUAD - t.squad.length, 14 - nep)), os, osNeed: req.os, osRoom: Math.max(0, MAX_OS - os), req, max: p ? G.lotMax(G.user, p) : null };
+}
+// Tags on an upcoming lot: the need he fills, your RTM on an ex-player, your shortlist max.
+export function lotTags(G, p, needs) {
+  const A = G.s.auction; const t = G.teams[G.user]; const e = G.slEntry(p.id); const out = [];
+  // a saved recruitment plan drives the tags: the first gap (not Low priority) this player fits
+  const plan = G.s.office && G.s.office.plan; const gaps = plan && plan.saved && plan.y === G.year && plan.gaps ? plan.gaps.filter((g) => g.pr !== 'Low' || g.young) : null;
+  const fit = (g) => (g.pool === 'os') === (p.nat !== 'NEP') && (!g.need || needRoles(p).includes(g.need)) && (!g.bat || p.bat >= g.bat) && (!g.bowl || p.bowl >= g.bowl) && (!g.young || (p.age <= 21 && p.pot >= 70));
+  const gap = gaps && gaps.find(fit);
+  const role = !gaps && (needs || G.userNeeds()).find((n) => n.left > 0 && needRoles(p).includes(n.k));
+  if (gap) out.push([`Fits your ${gap.name.toLowerCase()} gap${gap.pr === 'High' ? ' · high' : ''}`, 'blu']);
+  else if (gaps) { /* the plan decides what fits */ }
+  else if (role && role.k === 'wk') out.push(['Fills your WK need', 'blu']);
+  else if (p.nat !== 'NEP' && G.requiredSlots(G.user).os > 0) out.push(['Fills an overseas need', 'blu']);
+  else if (role) out.push([`Fills your ${role.short.toLowerCase()} need`, 'blu']);
+  const gold = [];
+  if (A && A.kind === 'mega' && p.prevTeam === G.user && t.rtm > 0) gold.push('Ex-player · your RTM');
+  if (e && e.max) gold.push(`your max ${L(e.max)}`);
+  if (gold.length) out.push([gold.join(' · ').replace(/^your/, 'Your'), 'gld']);
+  return out;
+}
+const startIdx = (A) => A.i + (A.cur && !A.cur.done ? 1 : 0);
+// The next lots, and how far away your next shortlisted lot is.
+export function upcoming(G, n = 6) {
+  const A = G.s.auction; const st = startIdx(A); const lots = A.lots.slice(st, st + n).map((l, k) => ({ ...l, no: st + k + 1, p: G.P(l.pid) }));
+  const k = A.lots.slice(st).findIndex((l) => G.slEntry(l.pid)); const star = k >= 0 ? { no: st + k + 1, away: k + 1, p: G.P(A.lots[st + k].pid) } : null;
+  return { lots, star };
+}
+// Set names numbered in the order they come up: "Set 4 · Overseas set 2".
+function setNo(A, set) { const names = []; for (const l of A.lots) if (!names.includes(l.set)) names.push(l.set); return names.indexOf(set) + 1; }
 
 // ===== shared pieces =====
 function Stepper({ step }) {
@@ -248,8 +287,9 @@ function BidControls({ room, bar }) {
   if (c.done) return <div className="acts-row"><button type="button" className="btn btn-blue btn-lg" onClick={() => room.next()}>{room.A.lots[room.A.i] ? 'Next lot' : 'Go to the accelerated round'}</button></div>;
   const p = G.P(c.pid); const e = G.slEntry(p.id); const auto = !!(e && e.max); const nb = G.nextBidAmount(); const jb = G.jumpBidAmount();
   const setAuto = (on) => update(() => { if (on) G.setShortlist(p.id, { max: e && e.max ? e.max : Math.max(nb, G.likelyPrice(p)[1]) }); else if (e) e.max = 0; });
+  const max = G.lotMax(G.user, p); const over = nb > max;
   const btns = (
-    <div className="bidbtns"><button type="button" className="btn btn-primary b6" disabled={!room.canUserBid()} onClick={() => { const x = room.bid(); if (x) toast(x); }}>Bid {L(nb)}</button>
+    <div className="bidbtns"><button type="button" className="btn btn-primary b6" disabled={!room.canUserBid()} onClick={() => { const x = room.bid(); if (x) toast(x); }}>{c.leader === G.user ? 'You lead' : over ? 'Over your limit' : `Bid ${L(nb)}`} <span className="sub">· your max {L(max)}</span></button>
       <button type="button" className="btn" disabled={!room.canJump()} onClick={() => { const x = room.jumpBid(); if (x) toast(x); }}>{bar ? `To ${fmtL(jb).replace(/^Rs /, '')}` : `Jump to ${fmtL(jb).replace(/^Rs /, '')}`}</button>
       <button type="button" className="btn" disabled={c.userPassed} onClick={() => room.pass()}>{c.userPassed ? 'Passed' : 'Pass'}</button></div>
   );
@@ -261,6 +301,40 @@ function BidControls({ room, bar }) {
     </div>
   );
   return bar ? <>{autoRow}{btns}</> : <section className="panel stack" style={{ gap: 12 }}>{btns}{autoRow}</section>;
+}
+
+
+function NeedsPanel({ room }) {
+  const { G } = useGame(); const c = room.A.cur; const p = c ? G.P(c.pid) : null; const n = needsInfo(G, p); const needs = G.userNeeds();
+  const t = G.teams[G.user]; const wk = needs.find((x) => x.k === 'wk');
+  const nextWk = wk && wk.left > 0 ? room.A.lots.slice(startIdx(room.A)).findIndex((l) => G.P(l.pid).role === 'WK') : -1;
+  const per = (purse, k) => (k > 0 ? `≈ ${L(Math.floor((purse / k) * 2) / 2)}` : '—');
+  const domLeft = Math.max(n.req.nep, 0) || Math.max(0, MIN_SQUAD - n.squad - n.osNeed);
+  return (
+    <section className="panel stack" style={{ gap: 10, minWidth: 0 }} aria-label="Your needs"><h2 className="sec" style={{ margin: 0 }}>Your needs</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 8 }}>
+        <div className="stack"><span className="faint t-micro">Squad</span><span className="board-f" style={{ fontSize: 22, fontWeight: 600 }}>{n.squad} <span className="faint" style={{ fontSize: 15 }}>/ 18–22</span></span></div>
+        <div className="stack"><span className="faint t-micro">Nepali</span><span className="board-f" style={{ fontSize: 22, fontWeight: 600 }}>{n.nep} <span className="faint" style={{ fontSize: 15 }}>+{n.nepRoom} max</span></span></div>
+        <div className="stack"><span className="faint t-micro">Overseas</span><span className={`board-f${n.osNeed ? ' crim' : ''}`} style={{ fontSize: 22, fontWeight: 600 }}>{n.os} <span style={{ fontSize: 15 }} className={n.osNeed ? '' : 'faint'}>{n.osNeed ? `need ${n.osNeed}` : `/ ${MIN_OS}–${MAX_OS}`}</span></span></div>
+      </div>
+      <table className="tbl plain compact"><tbody>
+        {wk && wk.have === 0 && <tr><td style={{ paddingLeft: 0 }} className="crim wrapcell">No wicketkeeper yet</td><td className="r faint t-small wrapcell">{nextWk >= 0 ? `keepers from lot ${startIdx(room.A) + nextWk + 1}` : 'none left in the pool'}</td></tr>}
+        {p && <tr><td style={{ paddingLeft: 0 }} className="mut wrapcell">Your max on this lot</td><td className="r b6">{L(n.max)}</td></tr>}
+        <tr><td style={{ paddingLeft: 0 }} className="mut wrapcell">Per slot left</td><td className="r t-small wrapcell">OS {per(t.osPurse, n.osNeed || Math.max(0, MIN_OS - n.os))} · Nepali {per(t.purse, domLeft)}</td></tr>
+      </tbody></table>
+      <p className="faint t-micro">Max keeps {L(MIN_BASE.OS)} back for each other overseas player you must still sign, and {L(MIN_BASE.NEP)} for each Nepali.</p>
+    </section>
+  );
+}
+function UpNextList({ room }) {
+  const { G } = useGame(); const { lots } = upcoming(G, 6); const needs = G.userNeeds(); if (!lots.length) return null;
+  const sets = [...new Set(lots.map((l) => l.set))];
+  return (
+    <section aria-label="Up next"><div className="sechead"><h2 className="sec" style={{ margin: 0 }}>Up next</h2><span className="faint t-micro">{sets.map((x) => `Set ${setNo(room.A, x)}`).join(', then ')}</span></div>
+      <table className="tbl plain compact"><tbody>{lots.map((l) => { const e = G.slEntry(l.pid); const tag = lotTags(G, l.p, needs)[0]; return (
+        <tr key={l.pid}><td className={e ? 'gld' : 'faint'} style={{ paddingLeft: 0 }}>{e ? '★ ' : ''}{l.no}</td><td className="wrapcell" style={{ fontWeight: e ? 500 : 400 }}>{l.p.name} <span className="role">{l.p.role}</span> <span className="faint t-micro">{l.p.nat} · {ovr(l.p)}</span></td><td className="r num">{L(G.basePrice(l.p))}</td><td className={`t-micro ${e ? 'gld' : tag ? tag[1] : 'faint'}`}>{e ? 'shortlist' : tag ? tag[0].replace(/^Fills (your |an )?/, '').replace(' need', ' need') : ''}</td></tr>); })}</tbody></table>
+    </section>
+  );
 }
 
 function History({ room }) {
@@ -286,7 +360,7 @@ function UpNext({ room }) {
 
 function Accelerated({ room }) {
   const { G, update, toast, ui } = useGame(); const nav = useNavigate();
-  const pool = Object.values(G.players).filter((p) => !p.team && !p.retired).sort((x, y) => ovr(y) - ovr(x)).slice(0, 40);
+  const pool = Object.values(G.players).filter((p) => !p.team && !p.retired && !p.academy).sort((x, y) => ovr(y) - ovr(x)).slice(0, 40);
   const n = G.slotsNeeded(G.user); const t = G.teams[G.user];
   // Pre-season fairness: AI teams sign overseas free agents only when the user starts the season.
   const finish = () => { update(() => { G.finishAuction(); G.s.phase = 'preseason'; G.setObjectives(); autosave(G); ui.auc = null; }); nav('/signings'); };
@@ -300,6 +374,175 @@ function Accelerated({ room }) {
         <tbody>{pool.map((p) => <tr key={p.id}><td className="name"><Link to={`/player/${p.id}`} style={{ color: 'var(--ink)', textDecoration: 'none' }}>{p.name}</Link></td><td>{p.nat}</td><td className="r">{p.age}</td><td><Role r={p.role} /></td><td className="r">{ovr(p)}</td><td className="r">{fmtL(p.nat === 'NEP' ? G.basePrice(p) : p.value)}</td>
           <td className="r"><button className="btn btn-sm" onClick={() => update(() => { const e = G.signFA(p.id, G.user); if (e) toast(e); else { room.A.sold.push({ pid: p.id, team: G.user, price: p.salary, set: 'Accelerated' }); toast(`${p.name} signed at ${fmtL(p.salary)}.`); } })}>Sign</button></td></tr>)}</tbody></table></div>
     </section>
+  );
+}
+
+// ===== Phone: lot board, needs strip, up-next line, then Lot · Up next · My squad · Rivals · Sold =====
+function MLotBoard({ room }) {
+  const { G } = useGame(); const c = room.A.cur; if (!c) return null; const p = G.P(c.pid); const lead = c.leader;
+  const status = c.done ? (lead ? 'Sold to' : 'Unsold') : room.count === 1 ? 'Going once…' : room.count >= 2 ? 'Going twice…' : lead ? 'Leading' : 'Awaiting opening bid';
+  const skill = p.role === 'BOWL' ? `bowl ${p.bowl}` : p.role === 'AR' ? `bat ${p.bat} · bowl ${p.bowl}` : `bat ${p.bat}`;
+  return (
+    <section className="board" style={{ borderRadius: 0, borderWidth: '0 0 1px', padding: '10px 16px 12px', flex: 'none' }} aria-label="Current lot">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}><span className="bf" style={{ fontSize: 24, lineHeight: 1.1 }}>{p.name}</span><span className="blbl">Base {L(c.base)}</span></div>
+      <span className="blbl">{p.nat === 'NEP' ? 'Nepali' : 'Overseas'} {p.role} · {p.nat} · {p.age} · {skill}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 6 }}>
+        <span className="bf" style={{ fontSize: 48, lineHeight: 0.95 }}><span key={c.hist.length} className={room.tickCls}>{L(c.bid == null ? c.base : c.bid)}</span></span>
+        <div className="stack" style={{ textAlign: 'right', gap: 2 }}><span className="blbl" aria-live="polite">{status}</span><span className="bf" style={{ fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>{lead ? <><Dot id={lead} />{lead === G.user ? 'You' : tshort(G, lead)}</> : '—'}</span></div>
+      </div>
+    </section>
+  );
+}
+function MNeedsStrip({ room, onClick }) {
+  const { G } = useGame(); const c = room.A.cur; const p = c && !c.done ? G.P(c.pid) : null; const n = needsInfo(G, p);
+  return (
+    <button type="button" className="mstrip grid4" onClick={onClick} aria-label="My squad needs">
+      <span className="stack"><span className="faint t-micro">Squad</span><span className="big">{n.squad} <small className="faint">/ 18–22</small></span></span>
+      <span className="stack"><span className="faint t-micro">Nepali</span><span className="big">{n.nep} <small className="faint">+{n.nepRoom} max</small></span></span>
+      <span className="stack"><span className="faint t-micro">Overseas</span><span className={`big${n.osNeed ? ' crim' : ''}`}>{n.os} <small className={n.osNeed ? '' : 'faint'}>{n.osNeed ? `need ${n.osNeed}` : 'ok'}</small></span></span>
+      <span className="stack" style={{ textAlign: 'right' }}><span className="faint t-micro">Your max here</span><span className="big">{p ? L(n.max) : '—'}</span></span>
+    </button>
+  );
+}
+function MUpNextLine({ onClick }) {
+  const { G } = useGame(); const { lots, star } = upcoming(G, 2);
+  if (!lots.length) return null;
+  return (
+    <button type="button" className="mstrip line" onClick={onClick}>
+      <span className="faint t-small" style={{ flex: 'none' }}>Up next</span>
+      <span className="t-small" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: '1 1 auto' }}>{lots.map((l) => `${l.no} ${l.p.name}`).join(' · ')}{star && star.away > 2 && <> · <span className="gld">★ {star.no} {star.p.name} in {star.away} lots</span></>}</span>
+      <span className="faint" aria-hidden="true">›</span>
+    </button>
+  );
+}
+function MLot({ room }) {
+  const { G } = useGame(); const A = room.A; const c = A.cur; if (!c) return null; const p = G.P(c.pid);
+  const tags = lotTags(G, p); const pt = p.prevTeam && A.kind === 'mega' && G.teams[p.prevTeam] && G.teams[p.prevTeam].rtm > 0 && p.prevTeam !== G.user ? p.prevTeam : null;
+  const lp = G.likelyPrice(p); const e = G.slEntry(p.id);
+  return (
+    <>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 12 }}>
+        {tags.map(([t, cls]) => <span key={t} className="phase" style={{ fontSize: 12, ...(cls === 'blu' ? { borderColor: 'var(--blue)', color: 'var(--blue)' } : cls === 'gld' ? { borderColor: 'var(--gold)', color: 'var(--gold)' } : {}) }}>{t}</span>)}
+        {pt && <span className="phase" style={{ fontSize: 12 }}>{tshort(G, pt)} hold RTM</span>}
+        <span className="phase" style={{ fontSize: 12 }}>Fair value {range(lp)}</span>
+        {p.age >= 36 && <span className="phase" style={{ fontSize: 12 }}>Age {p.age} · 1–2 seasons left</span>}
+        {p.age <= 21 && p.pot >= 75 && <span className="phase" style={{ fontSize: 12 }}>Potential {potRange(p)}</span>}
+      </div>
+      <p className="mhead">Bid history</p>
+      <ul className="mlist">{c.hist.slice().reverse().slice(0, 6).map((h, i) => <li key={c.hist.length - i} className={i === 0 ? 'ev-new' : ''} style={{ minHeight: 36, padding: '7px 0' }}><span className="grow"><Dot id={h[0]} />{h[0] === G.user ? `${tname(G, h[0])} (you)` : tname(G, h[0])}{h[2] ? ' · RTM' : ''}</span><span className="num">{L(h[1])}</span></li>)}
+        <li className="dim" style={{ minHeight: 36, padding: '7px 0' }}><span className="grow">Opened at base</span><span className="num">{L(c.base)}</span></li></ul>
+      {!c.done && <AutoBid p={p} e={e} />}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 14 }}>
+        <button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => room.skip()}>Skip lot</button>
+        <button type="button" className="btn btn-ghost" style={{ minHeight: 44 }} onClick={() => room.simRest()}>Sim rest</button>
+        <button type="button" className="btn btn-ghost" style={{ minHeight: 44, gridColumn: '1/-1' }} disabled={!upcoming(G).star} onClick={() => room.jump()}>Jump to my next shortlisted lot{upcoming(G).star ? ` · lot ${upcoming(G).star.no}` : ''}</button>
+      </div>
+    </>
+  );
+}
+function AutoBid({ p, e }) {
+  const { G, update } = useGame(); const auto = !!(e && e.max);
+  return (
+    <div className="row autobid" style={{ gap: 10, alignItems: 'center', marginTop: 10 }}>
+      <label className="row chk" style={{ gap: 8 }}><input type="checkbox" checked={auto} onChange={(ev) => update(() => { if (ev.target.checked) G.setShortlist(p.id, { max: Math.min(G.lotMax(G.user, p), Math.max(G.nextBidAmount(), G.likelyPrice(p)[1])) }); else if (e) e.max = 0; })} aria-label="Auto-bid" /><span className="t-small">Auto-bid up to</span></label>
+      <input className="input maxin" type="number" min="0" step="0.5" value={e && e.max ? e.max : ''} placeholder="Max" aria-label="Auto-bid limit" onChange={(ev) => update(() => { G.setShortlist(p.id, { max: +ev.target.value || 0 }); })} />
+    </div>
+  );
+}
+function MUpNext() {
+  const { G, update } = useGame(); const A = G.s.auction; const [flt, setFlt] = useState('all'); const needs = G.userNeeds();
+  const st = startIdx(A); const rest = A.lots.slice(st).map((l, k) => ({ ...l, no: st + k + 1, p: G.P(l.pid) }));
+  const fits = (l) => lotTags(G, l.p, needs).some(([, c]) => c === 'blu');
+  const curSet = rest.length ? rest[0].set : null; const nextSet = rest.find((l) => l.set !== curSet); const nextName = nextSet ? nextSet.set : null;
+  const keep = (l) => (flt === 'sl' ? !!G.slEntry(l.pid) : flt === 'fit' ? fits(l) : l.set === curSet || l.set === nextName || !!G.slEntry(l.pid));
+  const groups = [];
+  for (const l of rest) { if (!keep(l)) continue; const g = flt !== 'all' || l.set === curSet || l.set === nextName ? l.set : 'later'; let G2 = groups.find((x) => x.k === g); if (!G2) groups.push(G2 = { k: g, lots: [] }); G2.lots.push(l); }
+  const title = (g) => { if (g.k === 'later') return 'Later · shortlisted'; const all = rest.filter((l) => l.set === g.k); return `Set ${setNo(A, g.k)} · ${g.k} · ${all.length > 1 ? `lots ${all[0].no}–${all[all.length - 1].no}` : `lot ${all[0].no}`}`; };
+  return (
+    <>
+      <div className="seg" role="group" aria-label="Filter lots" style={{ margin: '12px 0 2px', display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))' }}>{[['all', 'All'], ['sl', 'Shortlist'], ['fit', 'Fits needs']].map(([k, l]) => <button key={k} type="button" className={flt === k ? 'on' : ''} onClick={() => setFlt(k)}>{l}</button>)}</div>
+      {groups.map((g) => (
+        <div key={g.k}><p className="mhead">{title(g)}</p>
+          <ul className="mlist">{g.lots.slice(0, 40).map((l) => { const on = !!G.slEntry(l.pid); const tags = lotTags(G, l.p, needs); return (
+            <li key={l.pid} style={{ padding: '8px 0' }}>
+              <span className="board-f faint" style={{ width: 26, textAlign: 'right', fontSize: 16, flex: 'none' }}>{l.no}</span>
+              <span className="grow"><span style={{ fontWeight: 500 }}>{l.p.name}</span> <span className="role">{l.p.role}</span><br /><span className="l2">{l.p.nat} · {l.p.age} · rating {ovr(l.p)} · base {L(G.basePrice(l.p))}</span>
+                {tags.map(([t, cls]) => <span key={t}><br /><span className={`t-micro ${cls}`}>{t}</span></span>)}</span>
+              <button type="button" className="btn btn-ghost" style={{ minHeight: 44, width: 44, padding: 0, fontSize: 20, color: on ? 'var(--gold)' : 'var(--ink-3)' }} onClick={() => update(() => { G.toggleShortlist(l.pid); })} aria-label={`${on ? 'Remove' : 'Shortlist'} ${l.p.name}`} aria-pressed={on}>{on ? '★' : '☆'}</button>
+            </li>); })}</ul></div>))}
+      {!groups.length && <p className="faint t-small" style={{ padding: '20px 0' }}>Nothing here yet. Tap ☆ on a lot to shortlist it.</p>}
+    </>
+  );
+}
+function MMySquad() {
+  const { G } = useGame(); const t = G.teams[G.user]; const A = G.s.auction; const n = needsInfo(G, null); const needs = G.userNeeds();
+  const st = startIdx(A); const sq = t.squad.map((id) => G.P(id)); const roles = ['BAT', 'BOWL', 'AR', 'WK'].map((r) => `${r} ${sq.filter((p) => p.role === r).length}`).join(' · ');
+  const sale = (p) => A.sold.find((x) => x.pid === p.id); const fromLot = (role) => { const k = A.lots.slice(st).findIndex((l) => G.P(l.pid).role === role); return k >= 0 ? `next keepers from lot ${st + k + 1}` : 'none left in the pool'; };
+  const wk = needs.find((x) => x.k === 'wk'); const domSlots = Math.max(0, MIN_SQUAD - n.squad - n.osNeed); const osOther = Math.max(0, n.osNeed - 1);
+  return (
+    <>
+      <p className="mhead">Still to fill</p>
+      <ul className="mlist">
+        <li><span className="grow">Overseas<br /><span className="l2">{n.os} of a minimum {MIN_OS} · room for {n.osRoom}</span></span>{n.osNeed ? <span className="crim t-small b6">Need {n.osNeed}</span> : <span className="faint t-small">OK</span>}</li>
+        {needs.filter((x) => x.left > 0).map((x) => <li key={x.k}><span className="grow">{x.label.replace(/s$/, '')}<br /><span className="l2">{x.have ? `${x.have} in the squad` : 'None in the squad'}{x.k === 'wk' ? ` · ${fromLot('WK')}` : ''}</span></span><span className={`t-small b6${x.k === 'wk' && wk.have === 0 ? ' crim' : ''}`}>Need {x.left}</span></li>)}
+        <li><span className="grow">Squad size<br /><span className="l2">{n.squad} of a minimum {MIN_SQUAD} · maximum {MAX_SQUAD}</span></span><span className="t-small b6">{n.squad >= MIN_SQUAD ? 'OK' : `${MIN_SQUAD - n.squad}–${MAX_SQUAD - n.squad} more`}</span></li>
+        <li><span className="grow">Nepali<br /><span className="l2">{n.nep} signed · room for {n.nepRoom} more</span></span><span className="faint t-small">{n.req.nep ? `Need ${n.req.nep}` : 'OK'}</span></li>
+      </ul>
+      <p className="mhead">Money per slot</p>
+      <ul className="mlist">
+        <li><span className="grow">Overseas purse {L(t.osPurse)}<br /><span className="l2">{osOther ? `${L(osOther * MIN_BASE.OS)} kept back for the ${osOther} other overseas you must still sign` : 'No overseas slots still required'}</span></span><span className="t-small">{n.osNeed ? `≈ ${L(Math.floor((t.osPurse / n.osNeed) * 2) / 2)} each` : '—'}</span></li>
+        <li><span className="grow">Domestic purse {L(t.purse)}<br /><span className="l2">For {domSlots ? `${domSlots} to ${n.nepRoom}` : `up to ${n.nepRoom}`} more Nepali players</span></span><span className="t-small">{domSlots ? `≈ ${L(Math.floor((t.purse / domSlots) * 2) / 2)} each` : '—'}</span></li>
+      </ul>
+      <p className="mhead">Signed · {sq.length}</p>
+      <ul className="mlist">{sq.map((p) => { const x = sale(p); return <li key={p.id} style={{ padding: '8px 0' }}><span className="grow">{p.name} <span className="role">{p.role}</span>{p.nat !== 'NEP' && <span className="blu t-micro"> OS</span>}</span><span className={x ? 't-small' : 'faint t-small'}>{x ? L(x.price) : `Retained · ${L(p.salary)}`}</span></li>; })}</ul>
+      <p className="faint t-small" style={{ marginTop: 8 }}>By role: {roles}</p>
+      {A.kind === 'mega' && <p className="t-small" style={{ marginTop: 6 }}>RTM cards left: <b>{t.rtm || 0}</b></p>}
+    </>
+  );
+}
+function MRivals({ room }) {
+  const { G } = useGame(); const c = room.A.cur; const p = c ? G.P(c.pid) : null; const os = !p || p.nat !== 'NEP';
+  const teams = Object.values(G.teams).slice().sort((a, b) => (p ? G.lotMax(b.id, p) - G.lotMax(a.id, p) : 0));
+  return (
+    <>
+      <p className="faint t-small" style={{ marginTop: 12 }}>Who can still afford this lot. Amounts in Rs.</p>
+      <table className="tbl compact plain" style={{ marginTop: 4 }}><thead><tr><th style={{ paddingLeft: 0 }}>Team</th><th className="r">{os ? 'OS purse' : 'Purse'}</th><th className="r">{os ? 'OS open' : 'Open'}</th><th className="r">Max here</th></tr></thead>
+        <tbody>{teams.map((t) => { const bidding = room.rivalStatus(t.id).k === 'bid' && t.id !== G.user; const osN = G.osCount(t.id); const nep = t.squad.length - osN;
+          return <tr key={t.id} className={t.id === G.user ? 'me' : ''}><td style={{ paddingLeft: 0 }}><Dot id={t.id} />{tshort(G, t.id)}{t.id === G.user ? ' (you)' : ''}{bidding && <span className="crim t-micro"> bidding</span>}</td><td className="r">{fmtL(os ? t.osPurse : t.purse).replace(/^Rs /, '')}</td><td className="r">{os ? Math.max(0, MAX_OS - osN) : Math.max(0, Math.min(MAX_SQUAD - t.squad.length, 14 - nep))}</td><td className="r">{p ? fmtL(G.lotMax(t.id, p)).replace(/^Rs /, '') : '—'}</td></tr>; })}</tbody></table>
+      <p className="mhead">{os ? 'Domestic purses' : 'Overseas purses'}</p>
+      <p className="t-small mut">{Object.values(G.teams).slice().sort((a, b) => (os ? b.purse - a.purse : b.osPurse - a.osPurse)).map((t) => `${tshort(G, t.id)} ${fmtL(os ? t.purse : t.osPurse).replace(/^Rs /, '')}`).join(' · ')}</p>
+    </>
+  );
+}
+function MSold() {
+  const { G } = useGame(); const A = G.s.auction; const log = A.log || [];
+  return <ul className="mlist">{log.map((x, i) => { const p = G.P(x.pid); return <li key={`${x.pid}${i}`} className={i === 0 ? 'ev-new' : ''}><span className="grow"><span style={{ fontWeight: 500 }}>{p.name}</span><br /><span className="l2"><span className={x.team ? 'blu' : 'faint'}>{x.team ? 'Sold' : 'Unsold'}</span> {x.team ? `→ ${tshort(G, x.team)}${x.team === G.user ? ' (you)' : ''}` : `base ${L(G.basePrice(p))}`}</span></span><span className="num mut">{x.team ? L(x.price) : '—'}</span></li>; })}
+    {!log.length && <li className="faint t-small">No lots sold yet.</li>}</ul>;
+}
+function MBidBar({ room }) {
+  const { G, toast } = useGame(); const A = room.A; const c = A.cur; if (!c) return null;
+  if (c.done) { const nx = A.lots[A.i]; return <button type="button" className="btn btn-blue" style={{ flex: '1 1 auto' }} onClick={() => room.next()}>{nx ? `Next lot · ${A.i + 1} ${G.P(nx.pid).name}` : 'Go to the accelerated round'}</button>; }
+  const p = G.P(c.pid); const nb = G.nextBidAmount(); const max = G.lotMax(G.user, p); const lead = c.leader === G.user; const over = nb > max;
+  return (
+    <>
+      <button type="button" className="btn btn-primary" style={{ flex: '1 1 auto', fontSize: 15 }} disabled={c.userPassed || lead || !room.canUserBid()} onClick={() => { const x = room.bid(); if (x) toast(x); }}>
+        <span>{lead ? 'You lead' : over ? 'Over your limit' : `Bid ${L(nb)}`}</span><span className="sub">{over ? `Your max is ${L(max)}` : `Max ${L(max)}${max - nb >= 0 ? ` · ${L(Math.round((max - nb) * 10) / 10)} to spare` : ''}`}</span></button>
+      <button type="button" className="btn" style={{ flex: '0 0 96px' }} disabled={c.userPassed} onClick={() => room.pass()}>{c.userPassed ? 'Passed' : 'Pass'}</button>
+    </>
+  );
+}
+function AuctionMobile({ room, ended, rtm }) {
+  const { G } = useGame(); const A = room.A; const [tab, setTab] = useTab(['lot', 'next', 'squad', 'rivals', 'sold'], 'lot');
+  const lotN = Math.min(A.lots.length, A.i + (A.cur && !A.cur.done ? 1 : 0));
+  const top = { title: <>{A.kind === 'mega' ? 'Mega' : 'Mini'} auction</>, sub: ended ? 'Main auction done' : `Lot ${lotN} / ${A.lots.length}` };
+  if (ended) return <MScreen top={top}><Stepper step={3} /><Accelerated room={room} />{rtm}</MScreen>;
+  return (
+    <MScreen top={top} pinRaw={<><MLotBoard room={room} /><MNeedsStrip room={room} onClick={() => setTab('squad')} /><MUpNextLine onClick={() => setTab('next')} /></>}
+      label="Auction sections" tab={tab} onTab={setTab} tabs={[['lot', tn(G, 'Lot')], ['next', tn(G, 'Up next')], ['squad', tn(G, 'My squad')], ['rivals', tn(G, 'Rivals')], ['sold', tn(G, 'Sold')]]}
+      actions={<MBidBar room={room} />}>
+      {tab === 'lot' && <MLot room={room} />}{tab === 'next' && <MUpNext />}{tab === 'squad' && <MMySquad />}{tab === 'rivals' && <MRivals room={room} />}{tab === 'sold' && <MSold />}
+      {rtm}
+    </MScreen>
   );
 }
 
@@ -320,30 +563,9 @@ export default function Auction() {
     <p className="mut" style={{ marginTop: 8 }}>He played for you last season. Use one of your {G.teams[G.user].rtm} RTM card{G.teams[G.user].rtm > 1 ? 's' : ''} to match the price and keep him?</p>
     <div className="acts"><button className="btn btn-primary btn-lg" onClick={() => room.answerRTM(true)}>Use RTM · {fmtL(room.rtmAsk.price)}</button><button className="btn btn-lg" onClick={() => room.answerRTM(false)}>Let him go</button></div></Modal>;
   const t = G.teams[G.user];
-  const sims = !ended && <div className="row" style={{ gap: 8 }}><button type="button" className="btn" onClick={() => room.skip()}>Skip this lot</button><button type="button" className="btn" disabled={!G.s.shortlist.length} onClick={() => room.jump()}>Sim to my next target</button><button type="button" className="btn btn-ghost" title="Your team bids automatically to fill squad needs" onClick={() => room.simRest()}>Sim rest of auction</button></div>;
+  const sims = !ended && <div className="row" style={{ gap: 8 }}><button type="button" className="btn" onClick={() => room.skip()}>Skip this lot</button><button type="button" className="btn" disabled={!upcoming(G).star} onClick={() => room.jump()}>Jump to my next shortlisted lot{upcoming(G).star ? <span className="sub faint"> · Lot {upcoming(G).star.no}</span> : null}</button><button type="button" className="btn btn-ghost" title="Your team bids automatically to fill squad needs" onClick={() => room.simRest()}>Sim rest of auction</button></div>;
 
-  if (narrow) {
-    const tabs = [['floor', 'Floor'], ['pool', `Pool · ${G.s.shortlist.length}★`], ['squad', 'My squad'], ['rivals', 'Rivals']];
-    const rivalChips = Object.values(G.teams).filter((x) => x.id !== G.user).map((x) => ({ x, s: room.rivalStatus(x.id) })).sort((p, r) => (r.s.k === 'bid') - (p.s.k === 'bid') || (r.s.s === 'Watching') - (p.s.s === 'Watching')).slice(0, 3);
-    return (
-      <div className="auction">
-        <div className="sechead" style={{ alignItems: 'flex-start' }}><div><h1 className="t-h3">{title}</h1><p className="t-micro faint">{sub}</p></div><div style={{ textAlign: 'right' }}><p className="t-micro faint">Your purses</p><p className="t-small">{fmtL(t.purse).replace(/^Rs /, '')} · <span className="blu">{fmtL(t.osPurse).replace(/^Rs /, '')} OS</span></p></div></div>
-        <Meter pct={(done / a.lots.length) * 100} blue />
-        <div className="tabs" role="tablist" aria-label="Auction sections" style={{ marginTop: 10 }}>{tabs.map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => setQ(k === 'floor' ? {} : { tab: k }, { replace: true })}>{l}</button>)}</div>
-        {ended ? <><Stepper step={3} /><Accelerated room={room} /></> : <>
-          {tab === 'floor' && <div className="stack" style={{ gap: 12 }}><HowItWorks /><Board room={room} compact /><Fits room={room} compact />
-            <section className="panel stack" style={{ gap: 6, padding: '12px 14px' }}><div className="sechead" style={{ margin: 0 }}><p className="sec" style={{ margin: 0 }}>Rivals still bidding</p><button type="button" className="linkbtn t-micro" onClick={() => setQ({ tab: 'rivals' }, { replace: true })}>All rivals</button></div>
-              <div className="row" style={{ gap: 6 }}>{rivalChips.map(({ x, s }) => <span key={x.id} className={`ptag ${s.k === 'bid' ? 'c' : ''}`}><Dot id={x.id} />{tshort(G, x.id)} · {s.k === 'bid' ? `${fmtL(G.P(a.cur.pid).nat === 'NEP' ? x.purse : x.osPurse).replace(/^Rs /, '')} left` : s.s.toLowerCase()}</span>)}</div></section>
-            <UpNext room={room} /></div>}
-          {tab === 'pool' && <Shortlist room={room} inRoom />}
-          {tab === 'squad' && <MySquad room={room} />}
-          {tab === 'rivals' && <Rivals room={room} list />}
-          {tab !== 'pool' && <div className="bidbar"><BidControls room={room} bar />{a.cur && !a.cur.done && <div className="row" style={{ gap: 4 }}><button type="button" className="btn btn-ghost btn-sm" onClick={() => room.skip()}>Skip lot</button><button type="button" className="btn btn-ghost btn-sm" disabled={!G.s.shortlist.length} onClick={() => room.jump()}>Sim to next target</button><button type="button" className="btn btn-ghost btn-sm" onClick={() => room.simRest()}>Sim rest</button></div>}</div>}
-        </>}
-        {rtm}
-      </div>
-    );
-  }
+  if (narrow) return <AuctionMobile room={room} ended={ended} rtm={rtm} />;
   if (view === 'shortlist') return <div className="auction"><Stepper step={2} /><Shortlist room={room} inRoom /></div>;
   return (
     <div className="auction">
@@ -354,7 +576,7 @@ export default function Auction() {
         <div className="aroom">
           <Pool room={room} />
           <section className="stack" style={{ gap: 14, minWidth: 0 }}><Board room={room} /><BidControls room={room} /><div className="two-col"><Fits room={room} /><History room={room} /></div></section>
-          <MySquad room={room} />
+          <div className="stack" style={{ gap: 20, minWidth: 0 }}><NeedsPanel room={room} /><UpNextList room={room} /><MySquad room={room} /></div>
         </div>
         <section style={{ marginTop: 18 }} aria-label="Rival bidders"><div className="sechead"><h2 className="t-h3">Rivals on this lot</h2><span className="t-micro faint">Purse left for this lot · squad size</span></div><Rivals room={room} /></section>
         <div style={{ marginTop: 14 }}>{sims}</div>
