@@ -9,3 +9,12 @@ export const DEPTH_GROUPS = [
 // Matchday screens count as "Match" in the bottom bar; table screens as "League".
 export const MATCH_ROUTES = ['/match', '/prematch', '/press', '/roundup', '/final', '/trophy'];
 export const LEAGUE_ROUTES = ['/season', '/scorecard', '/playoffs', '/league', '/stats'];
+// Screens that are a bottom-bar destination on the phone (no back button there).
+// Auction, retention and off-season take Match's place in the off-season phases only.
+export const ROOTS = ['/', '/squad', '/match', '/season'];
+const OFF_ROOTS = ['/auction', '/retention', '/offseason'];
+// Where Back goes when there is no history to go back to (a restored session, a shared link).
+const PARENTS = [['/contract/list', '/club'], ['/player', '/squad'], ['/scorecard', '/season?tab=fixtures'], ['/contract/', '/contract/list'], ['/story/', '/stories'], ['/squad/overseas', '/squad'],
+  ['/prematch', '/'], ['/press', '/'], ['/roundup', '/'], ['/final', '/'], ['/trophy', '/'], ['/review', '/'], ['/playoffs', '/season'], ['/signings', '/'], ['/worldcup', '/international'], ['/rankings', '/international']];
+export const parentOf = (path) => { const x = PARENTS.find(([p]) => path.startsWith(p)); return x ? x[1] : '/'; };
+export const isRoot = (path, phase) => ROOTS.includes(path) || (['offseason', 'retention', 'auction'].includes(phase) && OFF_ROOTS.includes(path));

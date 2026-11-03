@@ -25,7 +25,7 @@ export default function News() {
   return (
     <div className="news">
       <div className="sechead" style={{ marginBottom: 12 }}>
-        <div className="row" style={{ gap: 4, alignItems: 'center' }}><button type="button" className="btn btn-ghost iconbtn" aria-label="Back to Home" onClick={() => nav('/')}>‹</button><h1 className="t-h2">{tr(G, 'News')}</h1></div>
+        <div className="row" style={{ gap: 4, alignItems: 'center' }}><button type="button" className="btn btn-ghost iconbtn wide" aria-label="Back to Home" onClick={() => nav('/')}>‹</button><h1 className="t-h2">{tr(G, 'News')}</h1></div>
         <button type="button" className="btn btn-ghost btn-sm" disabled={!unread} onClick={() => update(() => { s.inbox.forEach((n) => { if (!isPending(n)) n.read = true; }); })}>Mark all read</button>
       </div>
       <label className="search"><input type="search" className="input" placeholder="Search news, players, teams" aria-label="Search news" value={q} onChange={(e) => { setQ(e.target.value); setLimit(PAGE); }} /></label>

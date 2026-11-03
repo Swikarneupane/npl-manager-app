@@ -22,8 +22,8 @@ With full control a season takes four to six hours. Settings → Pace of the sea
 
 Ready-made installers are built with Electron:
 
-- **AppImage (any distro):** run `chmod +x NPL-Manager-1.0.0-x86_64.AppImage`, then double-click it or run `./NPL-Manager-1.0.0-x86_64.AppImage`.
-- **Debian/Ubuntu/Mint/Pop!_OS:** run `sudo apt install ./NPL-Manager-1.0.0-amd64.deb`, then open "NPL Manager" from the app menu (Games). To uninstall, run `sudo apt remove npl-manager`.
+- **AppImage (any distro):** run `chmod +x NPL-Manager-2.0.0-x86_64.AppImage`, then double-click it or run `./NPL-Manager-2.0.0-x86_64.AppImage`.
+- **Debian/Ubuntu/Mint/Pop!_OS:** run `sudo apt install ./NPL-Manager-2.0.0-amd64.deb`, then open "NPL Manager" from the app menu (Games). To uninstall, run `sudo apt remove npl-manager`.
 
 Your career is saved to `~/.config/NPL Manager/save.json`. The previous save is kept as `save.backup.json` in the same folder.
 

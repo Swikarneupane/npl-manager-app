@@ -37,36 +37,22 @@ html,body{margin:0;background:#0A0F16}
 .npl .seeall{display:inline-flex;align-items:center;gap:2px;font-weight:500;text-decoration:none;min-height:32px}
 .linkbtn{font:inherit;background:none;border:0;padding:0;min-height:32px;color:var(--blue);cursor:pointer;font-weight:500}
 .tbl td.wrapcell{white-space:normal}
-.phase-sm{display:none}
-.tabbar{display:none}
 @media (min-width:761px){ .npl .narrow{display:none} }
 @media (max-width:760px){
   .npl{--tabh:60px}
   .npl .wide,.top .brand{display:none}
-  .phase-sm{display:inline}
   .npl .top{justify-content:space-between;flex-wrap:nowrap;gap:12px}
   .npl .top .tm{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .npl .top .spacer{display:none}
-  .phase-sm{text-align:right;min-width:0}
   .npl .nav{display:none}
   .npl .main{padding-bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px) + 24px)}
-  .tabbar{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--rule);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))}
 }
-.npl .tabbar a,.tabbar button{font:inherit;font-size:11px;line-height:14px;font-weight:500;color:var(--ink-3);text-decoration:none;background:none;border:0;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:48px;border-radius:10px;position:relative;min-width:0}
-.npl .tabbar a.on,.tabbar button.on{color:var(--crimson)}
-.tabbar a:focus-visible,.tabbar button:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
-.tdot{position:absolute;top:5px;right:calc(50% - 17px);width:12px;height:12px;border-radius:50%;background:var(--crimson-solid);border:2px solid var(--surface)}
 
 /* More sheet (phone) */
 .sheet-scrim{position:fixed;left:0;right:0;top:0;bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px));background:var(--scrim);z-index:18}
 .sheet{position:fixed;left:0;right:0;bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px));z-index:19;background:var(--bg);border-radius:18px 18px 0 0;padding:10px 16px 18px;max-height:calc(100vh - var(--tabh) - 40px);overflow-y:auto}
 .sheet-grip{width:40px;height:4px;border-radius:2px;background:var(--rule-strong);margin:0 auto 12px}
 .sheet-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.sheet-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.npl .tile{display:flex;flex-direction:column;gap:6px;padding:14px 12px;border-radius:12px;border:1px solid var(--rule);background:var(--surface);color:var(--ink);text-decoration:none;min-height:96px;min-width:0}
-.tile.off{opacity:.55}
-.tile-l{font-weight:600}
-.tile:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 
 /* Season */
 .season{max-width:920px}
@@ -423,24 +409,17 @@ i.pp{background:var(--blue-solid)} i.mid{background:var(--gold)} i.death{backgro
 }
 
 /* ===== round 2 · phase 6: staff ===== */
-.staffpg{max-width:1100px}
 .lvl{display:inline-flex;gap:3px}
 .lvl i{display:block;width:14px;height:6px;border-radius:2px;background:var(--rule)}
 .lvl i.on{background:var(--blue-solid)}
-.staff-posts{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;align-items:start}
 .staff-posts .panel{padding:16px}
 .staff-posts .panel.sel{border-color:var(--blue)}
-.staff-ic{width:36px;height:36px;border-radius:10px;background:var(--blue-soft);color:var(--blue);display:inline-flex;align-items:center;justify-content:center;flex:none}
 .sfx{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
 .sfx li{display:flex;gap:8px}
-.staff-low{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:20px;align-items:start}
 @media (max-width:900px){ .staff-low{grid-template-columns:minmax(0,1fr)} }
 .cands{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .cands li{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:12px}
 .cands li .btn{align-self:flex-start}
-.staff-sm{list-style:none;margin:0;padding:4px 14px}
-.staff-sm li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--rule)}
-.staff-sm li:last-child{border-bottom:0}
 .npl .staff-link{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:20px;padding:14px 16px;color:var(--ink);text-decoration:none}
 .staff-link:hover{border-color:var(--blue)}
 
@@ -570,3 +549,7 @@ i.pp{background:var(--blue-solid)} i.mid{background:var(--gold)} i.death{backgro
 .dchoice-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
 .dchoice-row .btn{min-height:44px;white-space:normal;line-height:1.2}
 .btn.over{background:var(--sunk);color:var(--ink-3);border-color:var(--rule)}
+/* back: phone header button and desktop detail-page link */
+.m-top .m-back{flex:none;font:inherit;font-size:24px;line-height:1;min-width:36px;min-height:36px;margin:-6px 0 -6px -10px;border:0;background:transparent;color:var(--ink-2);cursor:pointer;border-radius:8px}
+.m-top .m-back:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+.desk-back{display:inline-block;margin-bottom:10px}

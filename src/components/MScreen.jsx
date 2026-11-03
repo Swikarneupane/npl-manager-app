@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { isRoot, parentOf } from '../lib/nav.js';
 import { useGame } from '../lib/store.jsx';
 import { fmtL } from '../game/engine.js';
 import { Dot } from './bits.jsx';
@@ -8,11 +9,19 @@ const PHASES = { preseason: 'Pre-season', league: 'League', playoffs: 'Playoffs'
 
 // The phone header strip. With no props it shows the team, the phase and both purses; a screen
 // can replace the left, middle or right part (MSquad shows "Squad · 17 players").
+// Back: the previous screen in this session, or the screen's parent when there is none.
+export function useBack() {
+  const loc = useLocation(); const nav = useNavigate();
+  const inApp = typeof window !== 'undefined' && window.history.state && window.history.state.idx > 0;
+  return () => (inApp ? nav(-1) : nav(parentOf(loc.pathname), { replace: true }));
+}
 export function MTop({ title, sub, right, dflt }) {
   const { G } = useGame(); const t = G.teams[G.user]; const ph = G.s.phase;
+  const loc = useLocation(); const back = useBack(); const showBack = !isRoot(loc.pathname, ph);
   const played = ph === 'league' ? G.s.fixtures.filter((f) => f.stage === 'L' && f.res).length : null;
   return (
     <header className={`m-top${dflt ? ' dflt' : ''}`}>
+      {showBack && <button type="button" className="m-back" onClick={back} aria-label="Back">‹</button>}
       <span className="team">{title || <><Dot id={G.user} />{t.name}</>}</span>
       {sub !== undefined ? <span className="faint t-small">{sub}</span> : <span className="phase" style={{ fontSize: 12, padding: '2px 8px' }}><b>{PHASES[ph] || ph}</b>{played != null ? ` · ${played}/28` : ''}</span>}
       <span className="purse">{right || <>Dom <b>{fmtL(t.purse)}</b><br />OS <b>{fmtL(t.osPurse)}</b></>}</span>

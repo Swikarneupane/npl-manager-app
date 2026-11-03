@@ -1,7 +1,6 @@
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useGame } from '../lib/store.jsx';
 import { Dot, Meter } from '../components/bits.jsx';
-import { Icon } from '../components/icons.jsx';
 import { ovr, fmtL, clamp, TYPE_LABEL } from '../game/engine.js';
 import { careerOf } from '../game/game.js';
 import { COUNTRY_NAMES } from '../game/data.js';
@@ -13,6 +12,7 @@ import { INTL_ASOF } from '../game/intl-data.js';
 import { useState } from 'react';
 import { autosave } from '../lib/save.js';
 import { T } from '../lib/i18n.js';
+import { gradeOfL } from '../game/office.js';
 import { traitRows, traitChips, relationships, timeline, mentorOptions, projection, TALK, talk, lastTen } from '../game/living.js';
 import '../styles/living.css';
 
@@ -98,7 +98,7 @@ function NepalTab({ G, p }) {
   return (
     <div className="stack" style={{ gap: 16 }}>
       <section className="panel stack" style={{ gap: 12 }}>
-        <div className="row" style={{ gap: 8, alignItems: 'center' }}><span className="staff-ic" aria-hidden="true"><Icon name="nepal" size={20} /></span><h2 className="t-h3">International career</h2></div>
+        <div className="row" style={{ gap: 8, alignItems: 'center' }}><h2 className="t-h3">International career</h2></div>
         <div className="two"><div><p className="t-micro faint">T20Is</p>{cap('t20i')}<p className="t-micro faint">at game start{g.t20i ? ' · + in your game' : ''}</p></div><div><p className="t-micro faint">ODIs</p>{cap('odi')}<p className="t-micro faint">at game start{g.odi ? ' · + in your game' : ''}</p></div></div>
         <div className="pcontract">
           <div><p className="t-micro faint">Debut</p><p className="t-small">{debut}</p></div>
@@ -139,11 +139,11 @@ export default function Player() {
   const go = (d) => { const next = G.P(order[(idx + d + order.length) % order.length]); nav(`/player/${next.id}${tab === 'npl' || (tab === 'nepal' && next.nat === 'NEP') ? `?tab=${tab}` : ''}`, { replace: true }); };
   const avg = s && s.inn - s.no > 0 ? (s.r / (s.inn - s.no)).toFixed(1) : '–'; const sr = s && s.b ? (100 * s.r / s.b).toFixed(1) : '–';
   const chips = traitChips(G, p);
-  const coach = mine && p.age < 26 ? (() => { const st = G.s.staff[G.user]; const bat = p.role !== 'BOWL'; const x = bat ? st.bat : st.bowl; return x ? `With your level ${x.level} ${bat ? 'batting' : 'bowling'} coach: about +${Math.round(x.level / 2)} ${bat ? 'batting' : 'bowling'} by next season on top of normal growth.` : null; })() : null;
+  const coach = mine && p.age < 26 ? (() => { const st = G.s.staff[G.user]; const bat = p.role !== 'BOWL'; const x = bat ? st.bat : st.bowl; return x ? `With your grade ${gradeOfL(x.level)} ${bat ? 'batting' : 'bowling'} coach: about +${Math.round(x.level / 2)} ${bat ? 'batting' : 'bowling'} by next season on top of normal growth.` : null; })() : null;
   return (
     <div className="playerpg stack" style={{ gap: 16 }}>
       <div className="sechead" style={{ alignItems: 'center' }}>
-        <Link to={mine ? '/squad' : '/stats'} className="t-small row" style={{ gap: 4, alignItems: 'center' }}><Icon name="back" size={18} />{mine ? 'Squad' : 'Back'}</Link>
+        <Link to={mine ? '/squad' : '/stats'} className="t-small row wide" style={{ gap: 4, alignItems: 'center' }}>‹ {mine ? 'Squad' : 'Back'}</Link>
         {order && <span className="row" style={{ gap: 4, alignItems: 'center' }}><button type="button" className="btn btn-ghost btn-sm" aria-label="Previous player" onClick={() => go(-1)}>‹</button><span className="t-small faint">{idx + 1} of {order.length}</span><button type="button" className="btn btn-ghost btn-sm" aria-label="Next player" onClick={() => go(1)}>›</button></span>}
       </div>
       <section className="board pboard">

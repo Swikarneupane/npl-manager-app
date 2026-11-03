@@ -6,7 +6,7 @@
 import { R, ri, rf, pick, clamp, shuffle, ovr, Match } from './engine.js';
 import { adjustHappy, logDecision } from './depth.js';
 import { OS_NAMES } from './data.js';
-import { LEAGUES, LEAGUE_BY, REAL_2026, NATION, NATIONS, CODE_BY_NAME, FULL_MEMBERS, TEST_TEAMS, LEAGUE2_TEAMS, CHALLENGE_GROUPS, T20WC_2026, T20WC_2024, worldCupsFor } from './world-data.js';
+import { LEAGUES, LEAGUE_BY, REAL_2026, NATION, NATIONS, CODE_BY_NAME, FULL_MEMBERS, TEST_TEAMS, LEAGUE2_TEAMS, CHALLENGE_GROUPS, worldCupsFor } from './world-data.js';
 
 export const LABEL = 'in-game, not ICC';
 export const nm = (c) => (NATION[c] ? NATION[c].name : c);

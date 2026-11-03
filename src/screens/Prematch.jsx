@@ -127,7 +127,7 @@ export default function Prematch() {
   if (narrow) return (
     <MScreen top={{ title: <><Dot id={f.home} /><span style={{ margin: '0 6px 0 2px' }}>v</span><Dot id={f.away} />{tshort(G, opp)}</>, sub: '', right: <><b>{f.date} {f.night ? '7:15' : '3:00'}</b><br />{stageName(f)}</> }} label="Build-up steps"
       tabs={KEYS.map((k, i) => [k, T(G, ['Opposition', 'Pitch', 'XI', 'Plan', 'Talk'][i], NP_STEPS[i]), p.seen.includes(i + 1) ? '✓' : null, true])} tab={mtab} onTab={(k) => go(KEYS.indexOf(k) + 1)}
-      actions={<><button type="button" className="btn btn-primary" style={{ flex: '1 1 auto' }} onClick={next}>{nextLabel}</button><button type="button" className="btn btn-ghost" onClick={assist}>Assistant</button></>}>
+      actions={<><button type="button" className="btn btn-primary" style={{ flex: '1 1 auto' }} onClick={next}>{nextLabel}</button><button type="button" className="btn btn-ghost" onClick={assist}>{T(G, "Assistant decides", "सहायकले गर्छन्")}</button></>}>
       <div style={{ paddingTop: 14 }}><Step f={f} compact /></div>
       <div className="stack" style={{ gap: 6, marginTop: 20, paddingTop: 12, borderTop: '1px solid var(--rule)' }}>
         <p className="mhead" style={{ marginTop: 0 }}>Tonight's pulse</p>

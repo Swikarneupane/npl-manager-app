@@ -213,7 +213,8 @@ function MBoard({ lm, gold }) {
 function CompGauge({ v, label }) { return <div className={`gauge${v < 40 ? ' low' : v >= 70 ? ' high' : ''}`}><span style={{ minWidth: 72 }}>{label}</span><Meter pct={v} /><span className="num" style={{ minWidth: 70, textAlign: 'right' }}>{compLabel(v)}</span></div>; }
 function MLive({ lm, toFeed }) {
   const { G } = useGame(); const i = lm.inn; const m = lm.m;
-  if (!lm.started || !i) return <div style={{ paddingTop: 12 }}><StartDone lm={lm} /></div>;
+  if (!lm.started) return <div style={{ paddingTop: 12 }}><StartDone lm={lm} /></div>;
+  if (!i) return <p className="mut" style={{ paddingTop: 16 }}>{lm.pending && lm.pending.type === 'toss' ? 'You won the toss: choose to bat or bowl.' : 'Toss coming up…'}</p>;
   const bat = (id, strike) => { if (!id || !i.bs[id] || i.bs[id].out) return null; const p = G.P(id), s = i.bs[id];
     return <li key={id}><span className="grow"><b style={{ fontWeight: 600 }}>{p.name}{strike ? '*' : ''}</b> <span className="faint t-small">{s.f ? `4s ${s.f}` : ''}{s.f && s.s ? ' · ' : ''}{s.s ? `6s ${s.s}` : ''}</span></span><span className="board-f" style={{ fontSize: 20, fontWeight: 600 }}>{s.r} <span className="faint" style={{ fontWeight: 500 }}>({s.b})</span></span></li>; };
   const bw = i.cur ? i.bw[i.cur] || { balls: 0, r: 0, w: 0 } : null;
@@ -275,6 +276,7 @@ function MTactics({ lm }) {
   const batting = i && i.bat === G.user;
   const cur = !i ? 'auto' : i.aggr === 'auto' ? 'auto' : String(nearest(+i.aggr));
   const rem = i ? i.order.filter((id) => !i.bs[id].out && !i.bs[id].in && !i.bs[id].batted) : [];
+  if (lm.done) return <div className="stack" style={{ gap: 8, paddingTop: 14 }}><p className="b6">{lm.m.result ? `${lm.m.result.text}.` : 'Match over.'}</p><p className="faint t-small">Tactics are set again in the next build-up.</p></div>;
   const nb = lm.nextBat && rem.includes(lm.nextBat) ? lm.nextBat : rem[0];
   const need = i && i.target ? (i.target - i.runs) / (Math.max(1, lm.m.maxBalls - i.balls) / 6) : null;
   return (
@@ -287,6 +289,9 @@ function MTactics({ lm }) {
       {i && !batting && <BowlPlan lm={lm} />}
       {!i && <p className="faint t-small">Tactics open once the match starts.</p>}
       {i && lm.started && !lm.done && <Dugout lm={lm} />}
+      {lm.started && !lm.done && <div className="field"><span className="lbl">Simulate</span>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}><button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => lm.sim('innings')}>Sim innings</button><button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => lm.sim('match')}>Sim match</button></div>
+        <p className="faint t-small">Your plan, the captain's bowling and the recommended key-moment calls play out to the end.</p></div>}
       <hr className="hr" style={{ margin: 0 }} />
       <div className="field"><span className="lbl" id="cm">Pause the game</span>
         <div className="seg" role="group" aria-labelledby="cm" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,minmax(0,1fr))' }}>{[['ball', 'Ball'], ['over', 'Over'], ['key', 'Key'], ['quick', 'Sim']].map(([k, l]) => <button key={k} type="button" className={lm.mode === k ? 'on' : ''} style={{ padding: '0 2px', minHeight: 40, fontSize: 12.5 }} onClick={() => lm.setMode(k)}>{l}</button>)}</div></div>

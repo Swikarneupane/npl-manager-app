@@ -8,6 +8,7 @@ import { useNarrow, nn } from '../lib/util.js';
 import { T, tn } from '../lib/i18n.js';
 import { autosave } from '../lib/save.js';
 import { ovr, fmtL } from '../game/engine.js';
+import { gradeOfL } from '../game/office.js';
 import { PROVINCES } from '../game/data.js';
 import { GRADE, ACADEMY_MAX, ACADEMY_FEE, academy, scoutBudget, sendScout, signToAcademy, keepWatching, shortlistReport, promote, releaseAcademy, academyTalk, scoutNote, roleLabel, potShown, objective, personalTopic, canTalk } from '../game/club.js';
 
@@ -87,7 +88,7 @@ export default function Scouting() {
   const a = C.acad;
   const sub = `${out} scout${out === 1 ? '' : 's'} out · ${fresh} new report${fresh === 1 ? '' : 's'} · academy match every week${a ? ` · last: ${a.won ? 'won' : 'lost'}` : ''}`;
   const hs = G.staffLevel(G.user, 'scout');
-  const foot = <p className="faint t-small" style={{ marginTop: 8 }}>Better scouts narrow potential faster{hs ? `; your head scout (level ${hs}) adds to every report` : '; a head scout would add to every report'}. Scouts are generated staff; prospects they find are generated players.</p>;
+  const foot = <p className="faint t-small" style={{ marginTop: 8 }}>Better scouts narrow potential faster{hs ? `; your grade ${gradeOfL(hs)} head scout adds to every report` : '; a head scout would add to every report'}. Scouts are generated staff; prospects they find are generated players.</p>;
   if (narrow) return (
     <MScreen top={{ title: tn(G, 'Scouting'), sub: `${out} out` }} pin={<p className="t-small mut">{sub}</p>} label="Scouting" tab={tab} onTab={setTab}
       tabs={[['prov', T(G, 'Provinces', 'प्रदेश')], ['reports', T(G, 'Reports', 'रिपोर्ट'), fresh || null], ['academy', T(G, 'Academy', 'एकेडेमी'), academy(G).length, true]]}>

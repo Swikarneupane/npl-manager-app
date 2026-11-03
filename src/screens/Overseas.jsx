@@ -23,7 +23,7 @@ export default function Overseas() {
   return (
     <div className="ospg stack" style={{ gap: 14 }}>
       <div className="sechead" style={{ alignItems: 'center' }}>
-        <Link to="/squad" className="t-small row" style={{ gap: 4, alignItems: 'center' }}>‹ Squad</Link>
+        <Link to="/squad" className="t-small row wide" style={{ gap: 4, alignItems: 'center' }}>‹ Squad</Link>
         <span className="t-small faint">{os.filter((p) => !p.temp).length} of 6–8</span>
       </div>
       <h1 className="t-h1">Overseas players</h1>

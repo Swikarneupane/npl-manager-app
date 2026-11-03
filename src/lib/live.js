@@ -32,7 +32,18 @@ export class LiveMatch {
   waitUser(label) { this.persist(); return new Promise((res) => { this.wait = { res, label }; this.refresh(); }); }
   resume() { if (this.wait) { const r = this.wait.res; this.wait = null; r(); } this.refresh(); }
   resolvePending(v) { const p = this.pending; this.pending = null; if (p) p.res(v); this.refresh(); }
-  sim(to) { this.simTo = to; this.innIdx = this.m.inns.length; if (this.pending && this.pending.type === 'bowler') this.resolvePending(null); this.resume(); }
+  // Simming hands any open call to the defaults: the captain's bowler, the usual toss choice,
+  // no review, and the recommended key-moment option.
+  sim(to) {
+    this.simTo = to; this.innIdx = this.m.inns.length; const p = this.pending;
+    if (p) {
+      if (p.type === 'bowler') this.resolvePending(null);
+      else if (p.type === 'toss') this.resolvePending(this.m.night ? 'field' : 'bat');
+      else if (p.type === 'drs') this.resolvePending(p.info && p.info.hint === 'doubt');
+      else if (p.type === 'key') this.resolvePending(p.pick);
+    }
+    this.resume();
+  }
   // The assistant (or any fast sim) resolves key moments; otherwise the match pauses on a gold card.
   async askKey(inn, km) {
     if (this.fast() || this.G.s.settings.assistant) return resolveKey(this.G, this.m, inn, km, km.rec, true);
@@ -44,6 +55,7 @@ export class LiveMatch {
   setMode(m) { this.mode = m; if (m !== 'ball' && this.wait && this.wait.label === 'Next ball') this.resume(); this.refresh(); }
 
   start() {
+    if (this.started) return; // a second tap must never start the same match twice
     const self = this, G = this.G;
     this.started = true;
     const hooks = {

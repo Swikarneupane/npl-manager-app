@@ -4,7 +4,7 @@ import { useGame } from '../lib/store.jsx';
 import { Dot } from './bits.jsx';
 import MoreSheet, { auctionLink } from './MoreSheet.jsx';
 import DecisionSheet from './DecisionSheet.jsx';
-import { MTop } from './MScreen.jsx';
+import { MTop, useBack } from './MScreen.jsx';
 import { unreadCount } from './news.jsx';
 import { fmtL } from '../game/engine.js';
 import { seasonNo, tr, userNextFixture, nextUnplayed, useNarrow } from '../lib/util.js';
@@ -14,6 +14,8 @@ import { savedMatchFor } from '../lib/flow.js';
 
 const PHASES = { preseason: 'Pre-season', league: 'League', playoffs: 'Playoffs', seasonEnd: 'Season over', offseason: 'Off-season', retention: 'Retention', auction: 'Auction' };
 const OFF = ['offseason', 'retention', 'auction'];
+// Desktop detail pages without a back link of their own.
+const DESK_BACK = ['/contract/', '/story/', '/press', '/worldcup', '/rankings'];
 
 // A match is live while it is being played, or part-played and saved.
 export function isLive(G, ui) { return !!((ui.live && ui.live.started && !ui.live.done) || savedMatchFor(G, userNextFixture(G))); }
@@ -44,14 +46,14 @@ function BottomBar({ more, openMore, closeMore, moreBtn }) {
         : item('/match', 'Match', { on: at(MATCH_ROUTES), dot: live ? 'live' : null })}
       {item('/season', 'League', { on: at(LEAGUE_ROUTES) })}
       <a href="#more" ref={moreBtn} className={onMore ? 'on' : ''} role="button" aria-haspopup="dialog" aria-expanded={more} onClick={(e) => { e.preventDefault(); if (more) closeMore(); else openMore(); }}>
-        {tnShort(G, 'More')}{unreadCount(G) > 0 && <span className="badge" aria-label={`${unreadCount(G)} unread`}>{unreadCount(G)}</span>}
+        {tnShort(G, 'More')}{unreadCount(G) > 0 && <span className="badge" aria-label={`${unreadCount(G)} unread`}>{unreadCount(G) > 99 ? '99+' : unreadCount(G)}</span>}
       </a>
     </nav>
   );
 }
 
 export default function Shell({ children }) {
-  const { G, ui, modal } = useGame(); const loc = useLocation(); const narrow = useNarrow();
+  const { G, ui, modal } = useGame(); const loc = useLocation(); const narrow = useNarrow(); const back = useBack();
   const t = G.teams[G.user]; const ph = G.s.phase;
   const uf = userNextFixture(G), nu = nextUnplayed(G); const live = isLive(G, ui);
   const matchSmall = live ? 'Live' : uf && nu && uf === nu ? 'Next' : '';
@@ -106,7 +108,7 @@ export default function Shell({ children }) {
           <hr />
           {L('/world', 'World')}{L('/history', 'History')}{L('/club', 'Club')}{L('/settings', 'Settings')}
         </nav>
-        <main className="main" id="main">{children}</main>
+        <main className="main" id="main">{DESK_BACK.some((r) => loc.pathname.startsWith(r)) && <button type="button" className="linkbtn t-small desk-back" onClick={back}>‹ Back</button>}{children}</main>
       </div>
       {overlays}
     </>

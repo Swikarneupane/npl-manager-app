@@ -1,7 +1,6 @@
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useGame } from '../lib/store.jsx';
 import { Dot, Ovs } from '../components/bits.jsx';
-import { Icon } from '../components/icons.jsx';
 import { stageName, tname, tshort } from '../lib/util.js';
 
 const sr = (r, b) => (b ? Math.round((100 * r) / b) : '–');
@@ -52,7 +51,7 @@ export default function Scorecard() {
   return (
     <div className="scorepg stack" style={{ gap: 14 }}>
       <div className="sechead" style={{ alignItems: 'center' }}>
-        {A ? <Link to="/career" className="t-small row" style={{ gap: 4, alignItems: 'center' }}><Icon name="back" size={18} />Career</Link> : <Link to="/season?tab=results" className="t-small row" style={{ gap: 4, alignItems: 'center' }}><Icon name="back" size={18} />Results</Link>}
+        {A ? <Link to="/career" className="t-small row wide" style={{ gap: 4, alignItems: 'center' }}>‹ Career</Link> : <Link to="/season?tab=results" className="t-small row wide" style={{ gap: 4, alignItems: 'center' }}>‹ Results</Link>}
         <span className="t-micro faint">{f.date}{A ? ` ${f.y}` : ''} · Kirtipur</span>
       </div>
       <h1 className="t-h3">Scorecard · {stageName(f)}{A ? ` · ${f.y}` : ''}</h1>
