@@ -1,0 +1,72 @@
+/* Careers, the calendar, competitions and national squads (phase 3, W1). Uses the app's tokens only. */
+.cr-clock{display:flex;align-items:center;gap:12px 18px;flex-wrap:wrap;padding:12px 16px;border:1px solid var(--rule);border-radius:8px;background:var(--surface);margin-bottom:16px}
+.cr-clock .grow{flex:1 1 180px}
+.cr-clock.m{border-width:0 0 1px;border-radius:0;padding:12px 0;margin:0;background:transparent;gap:8px 12px}
+.cr-clock.m .cr-today{flex:1 1 100%;flex-direction:row;gap:8px;align-items:baseline}
+.cr-teams{font-size:20px;line-height:26px;font-weight:600;display:flex;flex-direction:column}
+.cr-teams .tm,.cr-row .tm{display:flex;align-items:center}
+.cr-btns{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:4px}
+.cr-btns .btn{min-height:46px}
+.cr-wcard{padding:14px 0 16px;border-bottom:1px solid var(--rule)}
+
+/* calendar */
+.cr-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:1px solid var(--rule);border-left:1px solid var(--rule)}
+.cr-cal .dow{font-size:12px;color:var(--ink-3);padding:6px 8px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);background:var(--sunk)}
+.cr-day{min-height:96px;padding:6px 6px 8px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);display:flex;flex-direction:column;gap:4px;min-width:0}
+.cr-day.out{background:var(--sunk)}
+.cr-day.out .n{color:var(--ink-3)}
+.cr-day .n{font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.cr-day.now .n{color:var(--crimson);font-weight:600}
+.cr-ev{display:block;font-size:12px;line-height:16px;padding:3px 6px;border-radius:4px;background:var(--blue-soft);color:var(--ink);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr-ev.club{background:var(--crimson-soft)}
+.cr-ev.ph{background:var(--gold-soft)}
+.cr-ev.done{opacity:.72}
+.cr-ev b{font-weight:600}
+.cr-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.cr-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);margin-top:10px}
+.cr-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;background:var(--blue-soft);border:1px solid var(--blue)}
+.cr-legend i.club{background:var(--crimson-soft);border-color:var(--crimson)}
+.cr-legend i.ph{background:var(--gold-soft);border-color:var(--gold)}
+.cr-agenda{list-style:none;margin:0;padding:0}
+.cr-agenda li{display:grid;grid-template-columns:64px minmax(0,1fr);gap:10px;padding:10px 0;border-bottom:1px solid var(--rule)}
+.cr-agenda .d{font-variant-numeric:tabular-nums;color:var(--ink-3);font-size:13px}
+.cr-agenda .d b{display:block;color:var(--ink);font-size:18px;line-height:22px;font-weight:600}
+
+/* competitions */
+.cr-stages{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 2px}
+.cr-stage{font-size:12.5px;padding:3px 10px;border-radius:999px;border:1px solid var(--rule-strong);color:var(--ink-2)}
+.cr-stage.on{border-color:var(--crimson);color:var(--ink);font-weight:600}
+.cr-stage.done{color:var(--ink-3);text-decoration:line-through}
+.cr-fx{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:4px 12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--rule);width:100%;background:none;border-left:0;border-right:0;border-top:0;text-align:left;color:inherit;font:inherit;cursor:pointer}
+.cr-fx:disabled{cursor:default}
+.cr-fx .d{font-size:12.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.cr-fx .r{font-size:13px;color:var(--ink-2);grid-column:2 / -1}
+.cr-fx.me .t{font-weight:600}
+.cr-card{padding:10px 0 16px;border-bottom:1px solid var(--rule-strong)}
+.cr-card h3{font-size:14px;font-weight:600;margin:12px 0 4px}
+.cr-split{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:36px;align-items:start}
+@media (max-width:1100px){.cr-split{grid-template-columns:minmax(0,1fr)}}
+.cr-leaders{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+
+/* national squad */
+.cr-sq td,.cr-sq th{white-space:nowrap}
+.cr-sq .pick{width:28px;padding-right:0}
+.cr-sq tr.out td{color:var(--ink-3)}
+.cr-sq tr.sel td.name{font-weight:600}
+.cr-pill{display:inline-block;font-size:11.5px;line-height:16px;padding:0 6px;border-radius:4px;border:1px solid var(--rule-strong);color:var(--ink-2);margin-left:6px}
+.cr-pill.c{border-color:var(--crimson);color:var(--crimson)}
+.cr-pill.b{border-color:var(--blue);color:var(--blue)}
+.cr-pill.g{border-color:var(--gold);color:var(--gold)}
+.cr-tool{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+.cr-prow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--rule)}
+.cr-prow .l2{grid-column:2 / -1}
+.cr-prow input{width:20px;height:20px;margin:0}
+
+/* jobs */
+.cr-jobs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.cr-job{display:flex;flex-direction:column;gap:8px}
+@media (max-width:760px){
+  .cr-day{min-height:58px;padding:4px 3px}
+  .cr-ev{font-size:0;height:6px;padding:0;border-radius:3px}
+  .cr-cal .dow{padding:4px 3px;font-size:11px;text-align:center}
+}

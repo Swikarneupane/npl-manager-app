@@ -9,9 +9,10 @@ import * as Office from './office.js';
 import * as Living from './living.js';
 import * as World from './world.js';
 import * as Occasions from './occasions.js';
+import * as WorldLink from './worldlink.js';
 // Phase 2 modules; each may export migrate, afterMatch, seasonStart, seasonEnd, offseason, auctionSetup,
 // and todayTasks (items for the Home "today" list).
-const MODULES=[Depth,Matchday,Occasions,Club,Office,Living,World];
+const MODULES=[Depth,Matchday,Occasions,Club,Office,Living,World,WorldLink];
 // ===== Game state & league logic =====
 const SLABS={NEP:[12,9,6],OS:[30,22,15]};
 const BOWL_PHASES={pp:6,mid:9,death:5}, PHASE_CAP={pp:3,mid:5,death:3};

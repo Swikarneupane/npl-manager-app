@@ -1,0 +1,58 @@
+#name Afghanistan
+#member full
+#asOf 2026-10-01
+#source Wikipedia, "Afghanistan national cricket team", Current squad (updated 6 January 2025)
+#source Wikipedia, "2026 Men's T20 World Cup squads" (Afghanistan squad)
+#source ARY News, "Afghanistan announce all-format squads for Bangladesh, Zimbabwe series" (ACB squads, 1 October 2026)
+#source Wikipedia player articles (infobox: birth date, batting, bowling, teams), checked November 2026
+#source NPL Manager src/game/data.js and os-extra.js (players already in the NPL game, spelt identically so they alias)
+#note Domestic team is the player's first-class region where the sources name one. Rahmanullah Zadran, Noor Rahman, Mohammad Akram and Abdullah Tarakhail (October 2026 squads) are left out: batting hand and bowling type could not be verified.
+#team AFG-BEA|Band-e-Amir Region|BEA
+#team AFG-AMO|Amo Region|AMO
+#team AFG-MA|Mis Ainak Region|MAR
+#team AFG-SG|Speen Ghar Region|SGR
+#team AFG-BST|Boost Region|BST
+Ibrahim Zadran;2001;BAT;80;15;RFM;R;0/2/0;AFG-MA
+Rahmat Shah;1993;BAT;74;20;LB;R;-2/1/2;AFG-BST
+Hashmatullah Shahidi;1994;BAT;74;10;OB;L;-2/1/2;AFG-BEA
+Sediqullah Atal;2001;BAT;72;0;-;L;-;AFG-BEA
+Najibullah Zadran;1993;BAT;72;0;-;L;2/0/-3;AFG-BEA
+Hazratullah Zazai;1998;BAT;70;10;SLA;L;3/0/-3;AFG-BST
+Karim Janat;1998;BAT;68;0;-;R;-;AFG-BEA
+Bahir Shah;2000;BAT;66;10;OB;R;-3/0/3;AFG-SG
+Darwish Rasooli;1999;BAT;66;20;OB;R;-;-
+Riaz Hassan;2002;BAT;64;0;-;R;-;AFG-BEA
+Abdul Malik;1998;BAT;64;15;OB;R;-2/0/2;AFG-AMO
+Ihsanullah Janat;1997;BAT;62;0;-;R;-;AFG-BST
+Azmatullah Omarzai;2000;AR;72;72;RFM;R;-;-
+Mohammad Nabi;1985;AR;66;66;OB;R;-;-
+Gulbadin Naib;1991;AR;62;62;RFM;R;-;AFG-AMO
+Ijaz Ahmad Ahmadzai;2003;AR;62;52;RM;R;-;AFG-AMO
+Shahidullah Kamal;1999;AR;60;50;SLA;L;-;AFG-AMO
+Ismat Alam;2002;AR;55;60;RFM;R;-2/0/2;AFG-SG
+Nangeyalia Kharote;2004;AR;50;66;SLA;L;-;AFG-BST
+Rahmanullah Gurbaz;2001;WK;80;0;-;R;2/0/-3;-
+Ikram Alikhil;2000;WK;66;0;-;L;-;AFG-BEA
+Afsar Zazai;1993;WK;62;0;-;R;-;AFG-MA
+Mohammad Ishaq;2005;WK;60;0;-;R;-;AFG-AMO
+Rashid Khan;1998;BOWL;55;92;LB;R;2/0/-2;-
+Noor Ahmad;2005;BOWL;20;80;LWS;R;1/0/-1;-
+Allah Mohammad Ghazanfar;2006;BOWL;15;78;OB;R;-;AFG-MA
+Mujeeb Ur Rahman;2001;BOWL;26;75;OB;R;-;-
+Qais Ahmad;2000;BOWL;34;70;LB;R;-;AFG-SG
+Zahir Khan;1998;BOWL;20;66;LWS;L;-2/0/2;-
+Zia-ur-Rehman Akbar;1997;BOWL;40;66;SLA;R;-3/0/3;AFG-MA
+Sharafuddin Ashraf;1995;BOWL;30;62;SLA;R;-;-
+Khalil Gurbaz;2001;BOWL;20;60;LB;R;-;AFG-MA
+Fazalhaq Farooqi;2000;BOWL;30;78;LF;L;1/0/-2;-
+Naveen-ul-Haq;1999;BOWL;35;74;RFM;R;2/0/-4;-
+Fareed Ahmad;1994;BOWL;20;70;LFM;L;-;AFG-SG
+Yamin Ahmadzai;1992;BOWL;20;68;RFM;R;-2/0/2;AFG-SG
+Bilal Sami;2003;BOWL;15;66;RM;R;-;AFG-BEA
+Ziaur Rahman Sharifi;1998;BOWL;15;66;RFM;R;-;-
+Mohammad Saleem Safi;2002;BOWL;10;64;RF;R;-;-
+Abdullah Ahmadzai;2003;BOWL;15;64;RFM;R;-;-
+Nijat Masood;1998;BOWL;15;64;RM;R;-;AFG-MA
+Naveed Zadran;2005;BOWL;15;64;RM;R;-;AFG-MA
+Wafadar Momand;1999;BOWL;15;62;RM;R;-;AFG-BEA
+Sayed Shirzad;1994;BOWL;20;62;LM;R;-;-

@@ -1,0 +1,25 @@
+#name Kuwait
+#member associate
+#asOf 2024-09-09
+#source Wikipedia, "Kuwait national cricket team", Current squad (updated 9 September 2024, the latest list available)
+#note Domestic teams are not listed: no first-class or one-day domestic structure was verified for this nation.
+#note Kuwait Gen Keeper is a generated placeholder (fm.gen = 1): the source lists only one wicket-keeper.
+Ravija Sandaruwan;1992;BAT;56;15;OB;R;-;-
+Meet Bhavsar;2004;BAT;52;15;SLA;L;-;-
+Bilal Tahir;1998;BAT;52;15;OB;L;-;-
+Mohammad Amin;1987;BAT;50;10;OB;R;-;-
+Clinto Anto;1994;BAT;50;0;-;R;-;-
+Muhammad Umar;2003;BAT;48;10;LB;R;-;-
+Mohammed Aslam;1990;AR;52;54;SLA;R;-;-
+Adnan Idrees;1990;AR;52;52;OB;R;-;-
+Yasin Patel;1997;AR;50;52;SLA;L;-;-
+Shiraz Khan;1994;AR;50;52;LB;R;-;-
+Nimish Lathief;1989;AR;46;48;OB;L;-;-
+Usman Patel;1990;WK;50;0;-;R;-;-
+Sayed Monib;1992;BOWL;15;54;RM;R;-;-
+Mohamed Shafeeq;1994;BOWL;15;52;RM;R;-;-
+Ilyas Ahmed;1990;BOWL;15;52;LM;L;-;-
+Shahrukh Quddus;1996;BOWL;15;50;RM;R;-;-
+Nawaf Ahmed;1992;BOWL;15;50;RM;L;-;-
+Mirza Ahmed;2004;BOWL;15;48;RM;R;-;-
+Kuwait Gen Keeper;1999;WK;46;0;-;R;g;-

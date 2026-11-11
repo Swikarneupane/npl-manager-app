@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { GameProvider } from './lib/store.jsx';
 import { initStorage } from './lib/storage.js';
+import { loadDB } from './world/players.js';
 import App from './App.jsx';
 import '@fontsource/ibm-plex-sans/400.css';
 import '@fontsource/ibm-plex-sans/500.css';
@@ -17,7 +18,8 @@ import './styles/npl.css';
 import './styles/app.css';
 
 // Load the save file (native file on desktop/Android) before the first render.
-initStorage().finally(() => {
+// the world database loads alongside the save; the game still starts if it fails
+Promise.all([initStorage(), loadDB().catch((e) => console.warn('world database', e))]).finally(() => {
   createRoot(document.getElementById('root')).render(
     <React.StrictMode>
       <BrowserRouter>

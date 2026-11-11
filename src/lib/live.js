@@ -5,13 +5,18 @@ import { sleep } from './util.js';
 import { afterFixture } from './flow.js';
 import { autosave, saveLocal } from './save.js';
 import { applyPlan, keyMoment, resolveKey, addExpert, alsoFixture, simAlso } from '../game/matchday.js';
+import { newWorldMatch, recordWorld, injuries } from '../world/match.js';
 
 export const SPEEDS = { 0.5: 1700, 1: 950, 2: 480, 4: 170 };
 
+// A world fixture (a national side's match) is played the same way: G is then the stand-in from
+// world/match.js (worldGame), world = { S } its season, and the real game is G.real.
 export class LiveMatch {
-  constructor(G, f, onChange, saved) {
-    this.G = G; this.f = f; this.onChange = onChange;
-    this.m = saved ? Match.restore(G, saved.data) : G.newMatch(f);
+  constructor(G, f, onChange, saved, world) {
+    this.G = G; this.f = f; this.onChange = onChange; this.world = world || null; this.RG = world ? G.real : G;
+    this.m = saved ? Match.restore(G, saved.data) : world ? newWorldMatch(G, f) : G.newMatch(f);
+    // key moments are written for 20 overs; a 50-over match plays without them
+    this.noKey = !!world && this.m.maxBalls > 120; this.inj0 = world ? (saved && saved.inj0) || injuries(G) : null;
     this.done = false; this.started = false; this.wait = null; this.simTo = null; this.pauseReq = false;
     this.pending = null; this.mode = G.s.settings.mode; this.prevOver = null; this.nextBat = null; this.nextBowler = null; this.lastInn = null; this.innIdx = 1;
     this.error = null; this.snap = null; this.resumed = false;
@@ -22,8 +27,9 @@ export class LiveMatch {
   takeSnap() { this.snap = this.m.serialize(); }
   persist(urgent = false) {
     if (!this.snap || this.done) return;
-    this.G.s.liveMatch = { n: this.f.n, year: this.G.year, mode: this.mode, prevOver: this.prevOver, data: this.snap };
-    saveLocal(this.G, urgent);
+    const L = { n: this.f.n, year: this.G.year, mode: this.mode, prevOver: this.prevOver, data: this.snap };
+    if (this.world) { delete L.n; L.w = this.f.id; L.sid = this.world.S.id; L.inj0 = this.inj0; }
+    this.RG.s.liveMatch = L; saveLocal(this.RG, urgent);
   }
   get inn() { return this.m.inns[this.m.inns.length - 1]; }
   speed() { return SPEEDS[this.G.s.settings.speed] || 480; }
@@ -46,6 +52,7 @@ export class LiveMatch {
   }
   // The assistant (or any fast sim) resolves key moments; otherwise the match pauses on a gold card.
   async askKey(inn, km) {
+    if (!km) return null;
     if (this.fast() || this.G.s.settings.assistant) return resolveKey(this.G, this.m, inn, km, km.rec, true);
     const idx = await new Promise((res) => { this.pending = { type: 'key', km, res, pick: km.rec }; this.persist(); this.refresh(); });
     return resolveKey(this.G, this.m, inn, km, idx, false);
@@ -64,7 +71,7 @@ export class LiveMatch {
       // A bowler picked ahead of time (nextBowler) is used without stopping; otherwise the game
       // stops at the overs the mode asks about, with the captain's pick preselected.
       chooseBowler: async (inn, m) => {
-        const km = keyMoment(G, m, inn, 'bowler');
+        const km = self.noKey ? null : keyMoment(G, m, inn, 'bowler');
         if (km) { const b = await self.askKey(inn, km); if (b) { self.nextBowler = null; return b; } }
         const want = self.nextBowler; self.nextBowler = null;
         const ok = want && m.bowlerOptions(inn).includes(want) ? want : null;
@@ -81,7 +88,7 @@ export class LiveMatch {
       beforeOver: async (inn) => {
         if (self.lastInn && self.lastInn !== inn) { self.lastInn = inn; self.prevOver = null; if (!self.fast()) await self.waitUser('Start the second innings'); }
         self.lastInn = inn; applyPlan(G, self.m, inn);
-        const km = keyMoment(G, self.m, inn, 'over'); if (km) await self.askKey(inn, km);
+        const km = self.noKey ? null : keyMoment(G, self.m, inn, 'over'); if (km) await self.askKey(inn, km);
         self.refresh();
       },
       overEnd: async (inn) => {
@@ -102,6 +109,13 @@ export class LiveMatch {
         await sleep(self.mode === 'key' && Math.floor(inn.balls / 6) < 15 && !key ? self.speed() * 0.45 : self.speed());
       },
     };
+    if (this.world) {
+      // a national match: recorded into the world (table, stats, the board), never into the NPL
+      this.m.run(hooks)
+        .then(() => { recordWorld(this.RG, this.world.S, this.f, this.m, this.inj0); this.done = true; autosave(this.RG); this.refresh(); })
+        .catch((e) => { console.error(e); this.error = e.message; this.refresh(); });
+      this.refresh(); return;
+    }
     const af = alsoFixture(G, this.f);
     if (af && af.res) this.also = { f: af };
     else if (af) this.alsoP = simAlso(G, af).then((a) => { this.also = a; this.refresh(); return a; }).catch((e) => { console.error(e); return null; });

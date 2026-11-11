@@ -58,21 +58,7 @@ export const T20WC_2026 = {
 };
 export const T20WC_2024 = { y: 2024, fmt: 'T20I', name: 'T20 World Cup 2024', hosts: 'USA and West Indies', when: 'Jun 2024', real: true, nepal: { stage: 'Group stage' } };
 
-// Future World Cups the game simulates. The winter is the off-season they fall in.
-// Hosts as announced by the ICC; after 2031 the hosts are not set and the game leaves them open.
-export const WORLD_CUPS = [
-  { y: 2027, winter: 2027, fmt: 'ODI', name: 'ODI World Cup 2027', hosts: 'South Africa, Zimbabwe and Namibia', when: 'Oct–Nov 2027', cities: ['Johannesburg', 'Cape Town', 'Durban', 'Centurion', 'Harare', 'Bulawayo', 'Windhoek'] },
-  { y: 2028, winter: 2027, fmt: 'T20I', name: 'T20 World Cup 2028', hosts: 'Australia and New Zealand', when: 'Early 2028', cities: ['Melbourne', 'Sydney', 'Adelaide', 'Perth', 'Brisbane', 'Hobart', 'Auckland', 'Christchurch', 'Wellington'] },
-  { y: 2030, winter: 2029, fmt: 'T20I', name: 'T20 World Cup 2030', hosts: 'England, Ireland and Scotland', when: 'Mid 2030', cities: ['London', 'Birmingham', 'Manchester', 'Southampton', 'Leeds', 'Dublin', 'Belfast', 'Edinburgh'] },
-  { y: 2031, winter: 2031, fmt: 'ODI', name: 'ODI World Cup 2031', hosts: 'India and Bangladesh', when: 'Late 2031', cities: ['Mumbai', 'Kolkata', 'Ahmedabad', 'Chennai', 'Bengaluru', 'Delhi', 'Dhaka', 'Chattogram'] },
-];
-// After 2031: a T20 World Cup every odd winter and an ODI World Cup every four years, hosts not known.
-export function worldCupsFor(w) {
-  const list = WORLD_CUPS.filter((c) => c.winter === w);
-  if (w > 2031 && (w - 2031) % 4 === 0) list.push({ y: w, winter: w, fmt: 'ODI', name: `ODI World Cup ${w}`, hosts: 'Hosts not yet named', when: `${w}`, cities: [] });
-  if (w >= 2031 && w % 2 === 1 && !list.some((c) => c.fmt === 'T20I')) list.push({ y: w + 1, winter: w, fmt: 'T20I', name: `T20 World Cup ${w + 1}`, hosts: 'Hosts not yet named', when: `${w + 1}`, cities: [] });
-  return list;
-}
+// Future World Cups, the pathway and their real facts now live in src/data/world/calendar.js.
 
 // Teams for rankings and simulated internationals: code, name, T20I and ODI strength (the game's
 // scale: the strength of a generated XI, where about 74 is an even match for Nepal's 2026 squad).
@@ -86,21 +72,14 @@ export const NATIONS = [
   ['ITA', 'Italy', 66, 62, 0], ['HK', 'Hong Kong', 66, 64, 0], ['PNG', 'Papua New Guinea', 65, 63, 0], ['UGA', 'Uganda', 65, 63, 0],
   ['JER', 'Jersey', 63, 63, 0], ['KEN', 'Kenya', 62, 61, 0], ['KUW', 'Kuwait', 62, 60, 0], ['QAT', 'Qatar', 61, 59, 0],
   ['DEN', 'Denmark', 60, 60, 0], ['BHR', 'Bahrain', 60, 58, 0], ['SIN', 'Singapore', 59, 58, 0], ['TAN', 'Tanzania', 58, 57, 0],
+  ['GER', 'Germany', 58, 56, 0], ['MAS', 'Malaysia', 59, 55, 0], ['KSA', 'Saudi Arabia', 58, 55, 0], ['NGA', 'Nigeria', 56, 53, 0],
+  ['ESP', 'Spain', 55, 52, 0], ['BER', 'Bermuda', 55, 53, 0], ['VAN', 'Vanuatu', 54, 50, 0], ['SAM', 'Samoa', 53, 49, 0],
+  ['BOT', 'Botswana', 52, 49, 0], ['FRA', 'France', 52, 49, 0],
 ];
 export const NATION = Object.fromEntries(NATIONS.map((n) => [n[0], { code: n[0], name: n[1], t20: n[2], odi: n[3], test: !!n[4] }]));
 export const CODE_BY_NAME = Object.fromEntries(NATIONS.map((n) => [n[1], n[0]]));
 export const FULL_MEMBERS = ['IND', 'AUS', 'ENG', 'SA', 'NZ', 'PAK', 'AFG', 'WI', 'SL', 'BAN', 'ZIM', 'IRE'];
 export const TEST_TEAMS = NATIONS.filter((n) => n[4]).map((n) => n[0]);
 
-// The 50-over pathway, top to bottom.
-export const PATHWAY = [
-  ['wc', 'ODI World Cup', 'The 50-over World Cup'],
-  ['wcq', 'World Cup Qualifier', "League 2's top four go straight in, with the Play-off's top four"],
-  ['po', 'Qualifier Play-off', "League 2's bottom four and the Challenge League's top four · the bottom teams can drop a tier"],
-  ['l2', 'CWC League 2', '8 teams, 144 ODIs in tri-series over four years'],
-  ['cl', 'Challenge League', 'The third tier of 50-over cricket · two groups of six'],
-];
-// CWC League 2, 2023-27: the real eight teams. The table itself is in-game.
+// CWC League 2, 2023-27: the real eight teams (the final table is in src/data/world/calendar.js).
 export const LEAGUE2_TEAMS = ['CAN', 'NAM', 'NEP', 'NED', 'OMA', 'SCO', 'UAE', 'USA'];
-// CWC Challenge League 2024-26: the real groups (the winners and runners-up of each go to the Play-off).
-export const CHALLENGE_GROUPS = { A: ['DEN', 'JER', 'KEN', 'KUW', 'PNG', 'QAT'], B: ['BHR', 'HK', 'ITA', 'SIN', 'TAN', 'UGA'] };

@@ -1,0 +1,26 @@
+#name Hong Kong
+#member associate
+#asOf 2026-08-08
+#source Wikipedia, "Hong Kong national cricket team", Current squad (updated 8 August 2026)
+#note Domestic teams are not listed: no first-class or one-day domestic structure was verified for this nation.
+#source NPL Manager src/game/os-extra.js (Babar Hayat spelt identically so he aliases)
+Babar Hayat;1992;BAT;63;10;RM;R;-;-
+Nizakat Khan;1992;BAT;60;15;LB;R;-;-
+Anshuman Rath;1997;BAT;58;15;SLA;L;-;-
+Martin Coetzee;1988;BAT;54;10;RM;R;-;-
+Kalhan Challu;2003;BAT;52;10;OB;R;-;-
+Anas Khan;1993;BAT;50;15;SLA;L;-;-
+Yasim Murtaza;1990;AR;54;58;SLA;L;-;-
+Aizaz Khan;1993;AR;56;56;RM;R;-;-
+Kinchit Shah;1995;AR;54;48;OB;L;-;-
+Hafeez Khan;2004;AR;48;50;OB;R;-;-
+Zeeshan Ali;1989;WK;54;0;-;R;-;-
+Shahid Wasif;1997;WK;50;0;-;R;-;-
+Shiv Mathur;2008;WK;48;0;-;R;-;-
+Ehsan Khan;1984;BOWL;25;58;OB;R;-;-
+Ayush Shukla;2002;BOWL;15;58;RM;R;-;-
+Ateeq Iqbal;1991;BOWL;20;56;RFM;R;-;-
+Mohammad Ghazanfar;1994;BOWL;15;54;LB;R;-;-
+Mohammad Waheed;2003;BOWL;15;54;RM;R;-;-
+Nasrulla Rana;2002;BOWL;15;52;RM;R;-;-
+Hassan Khan Mohammad;2000;BOWL;15;52;RM;R;-;-

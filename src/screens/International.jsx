@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useGame } from '../lib/store.jsx';
 import { autosave } from '../lib/save.js';
@@ -6,33 +6,94 @@ import { Dot } from '../components/bits.jsx';
 import MScreen, { useTab } from '../components/MScreen.jsx';
 import { useNarrow } from '../lib/util.js';
 import { T, tn } from '../lib/i18n.js';
-import { nm, tableOf, teamRank, decideClash, afterWinter } from '../game/world.js';
-import { PATHWAY, WORLD_CUPS, T20WC_2026, T20WC_2024 } from '../game/world-data.js';
+import { nm, decideClash, pathState, t20State, nextNepal, tournaments, today, worldTick } from '../game/world.js';
+import { info, placing, stageTables, sbase, monthOf, lastDay, cupStage } from '../world/intl.js';
+import { teamRank } from '../world/rankings.js';
+import { squadFor, tableOf } from '../world/state.js';
+import { short, label as dayLabel } from '../world/dates.js';
+import { standings } from '../world/comp.js';
+import { T20WC_2026, T20WC_2024 } from '../game/world-data.js';
+import { REAL } from '../data/world/calendar.js';
 import '../styles/world.css';
 
-const ord = (n) => { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
-const fromCompact = (rows) => rows.map((r) => ({ code: r[0], p: r[1], w: r[2], l: r[3], nr: r[4], pts: r[5] }));
+export const ord = (n) => { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
+export const nrrS = (x) => (x >= 0 ? '+' : '−') + Math.abs(x).toFixed(2);
+export const span = (a, b) => (a === b ? short(a) : `${short(a)} – ${short(b)}`);
+// A standings table for one group of a season. cut: the line under the top `cut`; status(i): the right-hand note.
+export function Standings({ rows, title, sub, cut, status, real, compact }) {
+  return (
+    <div style={{ minWidth: 0 }}>
+      {title && <div className="wd-th"><h3 className="t-h3">{title}</h3><span className="faint t-small">{real ? 'real result' : 'in-game'}</span></div>}
+      <div className="tblwrap"><table className={`tbl compact${compact ? ' plain' : ''}`} style={{ marginTop: 6 }}>
+        <thead><tr><th style={{ paddingLeft: compact ? 0 : undefined }}>#</th><th>Team</th><th className="r">P</th><th className="r">W</th><th className="r">L</th><th className="r">NR</th><th className="r">Pts</th><th className="r">NRR</th>{status && <th />}</tr></thead>
+        <tbody>{rows.map((r, i) => <tr key={r.id} className={`${r.id === 'NEP' ? 'me' : ''}${cut && i === cut - 1 ? ' cut' : ''}`}><td style={{ paddingLeft: compact ? 0 : undefined }}>{i + 1}</td><td className="name">{nm(r.id)}</td><td className="r">{r.p}</td><td className="r">{r.w}</td><td className="r">{r.l}</td><td className="r">{r.nr + (r.t || 0)}</td><td className="r b6">{r.pts}</td><td className="r faint">{nrrS(r.nrr)}</td>{status && <td className={`t-small ${cut && i < cut ? 'blu' : 'faint'}`}>{status(i, r)}</td>}</tr>)}</tbody>
+      </table></div>
+      {sub && <p className="faint t-micro" style={{ marginTop: 6 }}>{sub}</p>}
+    </div>);
+}
+const groupsOf = (S, k) => { const T0 = stageTables(S, k); const labels = (info(S).labels[k] || []); return Object.keys(T0).map((g, i) => ({ key: g, label: labels[i] || (g === 'super' ? info(S).stages[1] || 'Super stage' : g === 'all' || g === 'series' ? '' : `Group ${g}`), rows: standings(T0[g]) })); };
+const CompLink = ({ S, children }) => <Link to={`/comp/${encodeURIComponent(S.id)}`} style={{ color: 'inherit' }}>{children || sbase(S)}</Link>;
 
-// Where Nepal stand on the 50-over pathway, and what comes next.
-export function pathState(G) {
-  const w = G.s.world; const nextODI = WORLD_CUPS.filter((c) => c.fmt === 'ODI' && c.y >= G.year - 1).find((c) => !w.wcHist.some((h) => h.y === c.y && h.fmt === 'ODI')) || { y: (w.l2.to || 2031), name: `ODI World Cup ${w.l2.to}`, hosts: 'Hosts not yet named', when: `${w.l2.to}` };
-  const q = w.qual[`odi${nextODI.y}`];
-  if (!w.po) return { stage: 'po', cup: nextODI, title: `Road to the ${nextODI.y} World Cup`, next: 'Next: ICC CWC Qualifier Play-off · Dec 4–21, 2026 · Kirtipur and Mulpani · a real fixture, played in your save' };
-  if (q) return { stage: 'wc', cup: nextODI, title: `Nepal are going to the ${nextODI.y} World Cup`, next: `${nextODI.name} · ${nextODI.hosts} · ${nextODI.when} · qualified in your save` };
-  const C = w.tier === 'cl' ? w.cl : w.l2; const name = w.tier === 'cl' ? 'Challenge League' : 'CWC League 2';
-  return { stage: w.tier, cup: nextODI, title: `Road to the ${nextODI.y > C.to ? C.to : nextODI.y} World Cup`, next: `Now: ${name} ${C.from}–${String(C.to).slice(2)} · tables and rankings are in-game` };
+// The 50-over pathway, top to bottom, with Nepal's place in it.
+function Pathway({ ps }) {
+  const L = [
+    ['wc', ps.cup.name, `${ps.cup.hosts} · Oct–Nov ${ps.W} · 14 teams`],
+    ['wcq', 'World Cup Qualifier', `${ps.W === 2027 ? '22 Feb – 23 Mar 2027 · ' : ''}10 teams for 4 places`],
+    ['po', 'Qualifier Play-off', `${ps.W === 2027 ? '4–21 Dec 2026 · Kirtipur and Mulpani · ' : ''}top four to the Qualifier`],
+    ['l2', 'CWC League 2', '8 teams · tri-series of ODIs · top four to the Qualifier'],
+    ['cl', 'Challenge League', '12 teams in two leagues · List A · top two of each to the Play-off'],
+  ];
+  return (
+    <ol className="wd-path">{L.map(([k, name, sub]) => { const on = k === ps.at; const S = ps.step[k]; const pos = ps.pos(k);
+      const state = S ? (S.done ? (S.real ? 'Finished (real)' : 'Finished · in-game') : S.fx.some((f) => f.res) ? 'Under way · in-game' : `From ${dayLabel(S.start)}`) : 'Field not drawn yet';
+      return (
+        <li key={k} className={on ? 'on' : ''}><span className={k === 'wc' ? 'gld b6' : 'b6'}>{S ? <CompLink S={S}>{name}</CompLink> : name}</span>
+          <span className={`t-small${on ? '' : ' mut'}`}>{on && <b>{ps.out ? 'Nepal went out here. ' : 'Nepal are here. '}</b>}{sub}<br /><span className="faint">{state}{S && pos >= 0 && S.done ? ` · Nepal ${ord(pos + 1)}` : ''}</span></span></li>); })}</ol>);
 }
 
-function Table({ rows, cut = 4, status, title, sub }) {
-  const { G } = useGame();
+function NepalTab() {
+  const { G } = useGame(); const ps = pathState(G); const t2 = t20State(G); const next = nextNepal(G, 6);
+  const cur = ['l2', 'cl', 'po', 'wcq'].map((k) => [k, ps.step[k]]).filter(([, S]) => S && S.teams.includes('NEP'));
+  const sq = useMemo(() => { try { return squadFor(G, 'NEP', next[0] ? next[0][1].fmt : 'T20').map((p) => p.id); } catch { return []; } }, [G, next.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  const mine = sq.filter((id) => G.P(id) && G.P(id).team === G.user);
   return (
-    <div>
-      <div className="wd-th"><h2 className="t-h3">{title}</h2><span className="faint t-small">in-game</span></div>
-      <table className="tbl compact plain" style={{ marginTop: 6 }}>
-        <thead><tr><th style={{ paddingLeft: 0 }}>#</th><th>Team</th><th className="r">P</th><th className="r">W</th><th className="r">L</th><th className="r">NR</th><th className="r">Pts</th>{status && <th />}</tr></thead>
-        <tbody>{rows.map((r, i) => <tr key={r.code} className={`${r.code === 'NEP' ? 'me' : ''}${i === cut - 1 ? ' cut' : ''}`}><td style={{ paddingLeft: 0 }}>{i + 1}</td><td style={r.code === 'NEP' ? { fontWeight: 600 } : undefined}>{nm(r.code)}</td><td className="r">{r.p}</td><td className="r">{r.w}</td><td className="r">{r.l}</td><td className="r">{r.nr}</td><td className="r b6">{r.pts}</td>{status && <td className={`t-small ${i < cut ? 'blu' : 'faint'}`}>{status(i)}</td>}</tr>)}</tbody>
-      </table>
-      {sub && <p className="faint t-micro" style={{ marginTop: 6 }}>{sub}</p>}
+    <div className="split wd-split">
+      <section className="stack" style={{ gap: 28, minWidth: 0 }}>
+        <div>
+          <h2 className="t-h3" style={{ marginBottom: 4 }}>The 50-over pathway</h2>
+          <p className="mut t-small" style={{ marginBottom: 12 }}>Three tiers feed the ODI World Cup. The highlighted step is where Nepal are in your save.</p>
+          <Pathway ps={ps} />
+        </div>
+        {cur.slice().reverse().map(([k, S]) => {
+          const gs = groupsOf(S, S.stage); const cut = { l2: 4, cl: 2, po: 4, wcq: 4 }[k]; const note = { l2: (i) => (i < 4 ? 'Qualifier' : 'Play-off'), cl: (i) => (i < 2 ? 'Play-off' : i >= 4 ? 'Drops out' : ''), po: (i) => (i < 4 ? 'Qualifier' : 'Challenge League'), wcq: (i) => (i < 4 ? 'World Cup' : '') }[k];
+          const grp = gs.find((g) => g.key === 'super' && g.rows.some((r) => r.id === 'NEP')) || gs.find((g) => g.rows.some((r) => r.id === 'NEP')) || gs[0]; if (!grp) return null;
+          return <Standings key={S.id} title={<CompLink S={S}>{sbase(S)}{grp.label ? ` · ${grp.label}` : ''}</CompLink>} rows={grp.rows} cut={cut} status={grp.rows.every((r) => !r.p) ? null : note} real={S.real}
+            sub={S.real ? `Final table as published. Source: ${S.id === 'CL-2024' ? 'Wikipedia, 2024–26 CWC Challenge League' : 'Wikipedia, 2023–27 CWC League 2'}.` : S.done ? 'Final table · in-game.' : `${S.fx.filter((f) => f.res).length} of ${S.fx.length} matches played · in-game.`} />; })}
+        <div>
+          <h2 className="t-h3" style={{ marginBottom: 4 }}>The T20 route · {t2.name.replace("ICC Men's ", '')}</h2>
+          <p className="mut t-small" style={{ marginBottom: 8 }}>{t2.hosts} · from {dayLabel(t2.start)} · 20 teams</p>
+          <ul className="mlist">
+            <li style={{ padding: '8px 0' }}><span className="grow">Twelve automatic places<br /><span className="l2">Hosts, the previous World Cup's best and the ranking</span></span><span className={`t-small ${t2.via === 'auto' ? 'blu' : 'faint'}`}>{t2.via === 'auto' ? 'Nepal' : '—'}</span></li>
+            <li style={{ padding: '8px 0' }}><span className="grow">Asia regional final<br /><span className="l2">Two places in the Global Qualifier</span></span><span className={`t-small ${t2.via === 'rq' ? 'crim' : 'faint'}`}>{t2.rq ? <CompLink S={t2.rq}>{t2.rq.done ? 'Played' : 'Fixtures'}</CompLink> : t2.via === 'rq' ? 'Nepal' : '—'}</span></li>
+            <li style={{ padding: '8px 0' }}><span className="grow">Global Qualifier<br /><span className="l2">16 teams; the best of each region and the next three go through</span></span><span className={`t-small ${t2.gq && t2.gq.teams.includes('NEP') ? 'crim' : 'faint'}`}>{t2.gq ? <CompLink S={t2.gq}>{t2.gq.teams.includes('NEP') ? 'Nepal' : 'Fixtures'}</CompLink> : t2.via === 'gq' ? 'Nepal go straight in' : '—'}</span></li>
+          </ul>
+          <p className="t-small" style={{ marginTop: 6 }}><b>Nepal:</b> {t2.status}{t2.T === 2028 ? ' (real: Nepal go straight to the 2028 Global Qualifier).' : '.'}</p>
+        </div>
+      </section>
+      <aside className="stack" style={{ gap: 22, minWidth: 0 }}>
+        <div><h2 className="sec">Nepal's next games</h2>
+          {next.length ? <ul className="mlist">{next.map(([S, f]) => { const o = f.a === 'NEP' ? f.b : f.a; return <li key={f.id} style={{ padding: '8px 0' }}><span className="grow"><CompLink S={S}>v {nm(o)}</CompLink><br /><span className="l2">{sbase(S)}{/Kirtipur|Mulpani/.test(S.name || '') ? ` · ${(S.name || '').split(' · ').pop()}` : ''}</span></span><span className="t-small mut">{dayLabel(f.d).replace(/ \d{4}$/, '')}<br />{info(S).fmtL}</span></li>; })}</ul>
+            : <p className="t-small faint">No fixtures scheduled yet.</p>}
+        </div>
+        <Clash />
+        <div><h2 className="sec">Your players in the Nepal squad</h2>
+          {mine.length ? <ul className="mlist">{mine.map((id) => { const p = G.P(id); const caps = G.intlCaps(p); return <li key={id}><span className="grow"><Link to={`/player/${id}?tab=nepal`} className="b6" style={{ color: 'inherit' }}>{p.name}</Link><br /><span className="l2">{caps != null ? `${caps} caps` : 'Caps not verified'}{p.intlG && (p.intlG.odi + p.intlG.t20i) ? ` · ${p.intlG.odi + p.intlG.t20i} in your save` : ''}</span></span><span className={`t-small ${caps ? 'blu' : 'gld'}`}>{caps ? 'In the squad' : 'Uncapped'}</span></li>; })}</ul>
+            : <p className="t-small faint">None of your players are in the squad.</p>}
+          <p className="faint t-micro" style={{ marginTop: 6 }}>The selectors pick from ratings and form. Each event adds experience; call-ups lift morale.</p>
+        </div>
+        <Record />
+        <p className="t-small"><Link to="/nepal">Squad, calendar and central contracts ›</Link></p>
+      </aside>
     </div>);
 }
 
@@ -43,7 +104,7 @@ function Clash() {
   return (
     <div className="panel stack" style={{ gap: 8 }}>
       <h2 className="sec" style={{ margin: 0 }}>{T(G, 'Clash with your calendar', 'तालिका टकराव')}</h2>
-      <p className="t-small">The {c.comp} ({c.when}, in-game) overlaps your pre-season camp by {c.days} days. {names.join(', ')} {names.length > 1 ? 'are' : 'is'} likely to be with Nepal.</p>
+      <p className="t-small">The {c.comp} ({c.when}, in-game) overlaps your pre-season camp. {names.join(', ')} {names.length > 1 ? 'are' : 'is'} likely to be with Nepal.</p>
       {c.status === 'open' ? <>
         <ul className="wd-fx"><li><span className="blu">Move the camp:</span> Rs 3 L; everyone trains together.</li><li><span className="crim">Train without them:</span> free; they start the NPL 8 fitness down.</li></ul>
         <div className="row" style={{ gap: 8 }}><button type="button" className="btn btn-sm btn-blue" onClick={() => go('move')}>{T(G, 'Move the camp', 'क्याम्प सार्नुहोस्')}</button><button type="button" className="btn btn-sm" onClick={() => go('without')}>{T(G, 'Train without them', 'उनीहरूबिना प्रशिक्षण')}</button></div></>
@@ -51,109 +112,80 @@ function Clash() {
     </div>);
 }
 
-function MyPlayers() {
-  const { G } = useGame(); const N = G.s.nepal; const squad = (N.lastSquad && N.lastSquad.length ? N.lastSquad : G.pickNepal().squad);
-  const mine = squad.filter((id) => G.P(id) && G.P(id).team === G.user);
-  return (
-    <div>
-      <h2 className="sec">Your players in the Nepal squad</h2>
-      {mine.length ? <ul className="mlist">{mine.map((id) => { const p = G.P(id); const odi = (p.intlLog || []).filter((x) => x.fmt === 'ODI'); const r = odi.reduce((a, x) => a + x.r, 0), w = odi.reduce((a, x) => a + x.w, 0); const first = !(G.intlCaps(p) || 0);
-        return <li key={id}><span className="grow"><Link to={`/player/${id}?tab=nepal`} className="b6" style={{ color: 'inherit' }}>{p.name}</Link>{G.teams[G.user].captainId === id ? ' (c)' : ''}<br /><span className="l2">{odi.length ? `ODIs in your save: ${r} runs, ${w} wickets` : 'No ODIs in your save yet'}</span></span><span className={`t-small ${first ? 'gld' : 'blu'}`}>{first ? 'First call-up' : 'Called up'}</span></li>; })}</ul>
-        : <p className="t-small faint">None of your players are in the squad.</p>}
-      <p className="faint t-micro" style={{ marginTop: 6 }}>A strong winter with Nepal lifts form and can add a rating point; a poor one costs form. Each series also costs fitness.</p>
-    </div>);
-}
-
+// Nepal's finishes: the save's events, newest first, then the real ones before it.
 function Record() {
-  const { G } = useGame(); const w = G.s.world;
-  const list = [...w.wcHist.slice().reverse().map((h) => [`${h.name} · ${h.hosts}`, `${h.nepal}${h.wins ? ` · ${h.wins} win${h.wins > 1 ? 's' : ''}` : ''} · in-game`]),
-    [`${T20WC_2026.name} · ${T20WC_2026.hosts}`, 'Group stage · beat Scotland'], [`${T20WC_2024.name} · ${T20WC_2024.hosts}`, 'Group stage']];
-  if (w.l2.prev || w.l2.done) { const rows = w.l2.prev ? fromCompact(w.l2.prev.rows) : tableOf(w.l2.rows); const i = rows.findIndex((r) => r.code === 'NEP'); const c = w.l2.prev || w.l2; if (i >= 0) list.push([`CWC League 2 · ${c.from}–${String(c.to).slice(2)}`, `${ord(i + 1)} · in-game`]); }
-  return <div><h2 className="sec">Nepal's recent record</h2><ul className="mlist">{list.map(([a, b]) => <li key={a} style={{ padding: '8px 0' }}><span className="grow t-small">{a}</span><span className="t-small mut">{b}</span></li>)}</ul></div>;
-}
-
-function NepalTab() {
-  const { G } = useGame(); const w = G.s.world; const ps = pathState(G);
-  const C = w.tier === 'cl' ? w.cl : w.l2; const cur = tableOf(C.rows); const curName = w.tier === 'cl' ? 'Challenge League' : 'CWC League 2';
-  const finalL2 = w.l2.prev ? { ...w.l2.prev, rows: fromCompact(w.l2.prev.rows) } : w.l2.done ? { from: w.l2.from, to: w.l2.to, rows: tableOf(w.l2.rows) } : null;
-  return (
-    <div className="split wd-split">
-      <section className="stack" style={{ gap: 28, minWidth: 0 }}>
-        <div>
-          <h2 className="t-h3" style={{ marginBottom: 4 }}>The 50-over pathway</h2>
-          <p className="mut t-small" style={{ marginBottom: 12 }}>Three tiers feed the World Cup. The highlighted step is where Nepal are in your save.</p>
-          <ol className="wd-path">{PATHWAY.map(([k, label, sub]) => { const on = k === ps.stage; return (
-            <li key={k} className={on ? 'on' : ''}><span className={k === 'wc' ? 'gld b6' : 'b6'}>{k === 'wc' ? ps.cup.name : label}</span><span className={`t-small${on ? '' : ' mut'}`}>{on && <b>Nepal are here. </b>}{k === 'wc' ? `${ps.cup.hosts} · ${ps.cup.when}` : sub}</span></li>); })}</ol>
-        </div>
-        {!finalL2 || (C !== w.l2 || !w.l2.done) ? <Table title={`${curName} · ${C.from}–${String(C.to).slice(2)}${C.done ? ' · final table' : ''}`} rows={cur} cut={w.tier === 'cl' ? 2 : 4} status={cur.every((r) => !r.p) ? null : (i) => (w.tier === 'cl' ? (i < 2 ? 'Play-off' : '') : i < 4 ? 'Qualifier' : 'Play-off')} sub={cur.every((r) => !r.p) ? 'The cycle starts with the tri-series in your next pre-season.' : 'Simulated in your save, including Nepal’s ODIs played with the match engine.'} /> : null}
-        {finalL2 && <Table title={`CWC League 2 · ${finalL2.from}–${String(finalL2.to).slice(2)} · final table`} rows={finalL2.rows} status={(i) => (i < 4 ? 'Qualifier' : 'Play-off')} sub={finalL2.from === 2023 ? 'The eight teams are the real 2023–27 field. The table is in-game, not the real standings; Nepal’s place in the bottom four matches the real December 2026 Play-off in Kathmandu.' : 'In-game.'} />}
-        {w.po && <Table title={`Qualifier Play-off · ${w.po.y}`} rows={fromCompact(w.po.rows)} status={(i) => (i < 4 ? 'Qualifier' : 'Drops a tier')} sub={w.po.nepW != null ? `Nepal's ${w.po.nepW} wins come from the five Play-off games played with the match engine.` : 'In-game.'} />}
-        {w.wcq && <Table title={`World Cup Qualifier · ${w.wcq.y}`} rows={fromCompact(w.wcq.rows)} status={(i) => (i < 4 ? 'World Cup' : '')} sub={`The top four go to the ${w.wcq.cup} in your save.`} />}
-      </section>
-      <aside className="stack" style={{ gap: 22, minWidth: 0 }}>
-        <MyPlayers />
-        <Clash />
-        <Record />
-        <p className="t-small"><Link to="/nepal">Squad, calendar and central contracts ›</Link></p>
-      </aside>
-    </div>);
+  const { G } = useGame(); const list = [];
+  for (const S of Object.values(G.s.wd ? G.s.wd.seasons : {})) { const k = info(S).kind; if (!S.done || !S.teams.includes('NEP') || ['bilat', 'tri'].includes(k)) continue; const p = placing(S).indexOf('NEP');
+    list.push([S.endF ?? lastDay(S), S, info(S).cup ? cupStage(S, 'NEP') : p >= 0 ? ord(p + 1) : '—']); }
+  list.sort((a, b) => b[0] - a[0]);
+  for (const h of (G.s.world.wcHist || []).slice().reverse()) list.push([0, null, `${h.nepal} · older save`, h.name]);
+  return <div><h2 className="sec">Nepal's record</h2><ul className="mlist">
+    {list.slice(0, 8).map(([d, S, res, nm2]) => <li key={S ? S.id : nm2} style={{ padding: '8px 0' }}><span className="grow t-small">{S ? <CompLink S={S} /> : nm2}<br /><span className="l2">{S ? (S.real ? 'Real result' : `${monthOf(d)} · in-game`) : ''}</span></span><span className="t-small mut">{res}</span></li>)}
+    <li style={{ padding: '8px 0' }}><span className="grow t-small">{T20WC_2026.name} · {T20WC_2026.hosts}<br /><span className="l2">Real result</span></span><span className="t-small mut">Group stage · beat Scotland</span></li>
+    <li style={{ padding: '8px 0' }}><span className="grow t-small">{REAL.accpc26.name}<br /><span className="l2">Real result</span></span><span className="t-small mut">Champions · beat UAE</span></li>
+    <li style={{ padding: '8px 0' }}><span className="grow t-small">{T20WC_2024.name} · {T20WC_2024.hosts}<br /><span className="l2">Real result</span></span><span className="t-small mut">Group stage</span></li>
+  </ul></div>;
 }
 
 function CompsTab() {
-  const { G } = useGame(); const w = G.s.world; const ps = pathState(G);
-  const rows = [[T20WC_2026.name, T20WC_2026.when, T20WC_2026.hosts, 'Group stage, 1 win', 'Played', 'faint']];
-  const l2 = w.l2.prev || (w.l2.done ? w.l2 : null);
-  if (l2) { const t = w.l2.prev ? fromCompact(w.l2.prev.rows) : tableOf(w.l2.rows); const i = t.findIndex((r) => r.code === 'NEP'); rows.push([`CWC League 2`, `${l2.from}–${String(l2.to).slice(2)}`, 'Tri-series', i >= 0 ? ord(i + 1) : '—', 'Finished · in-game', 'blu', i >= 0]); }
-  rows.push(['Qualifier Play-off', w.po ? `Dec ${w.po.y}` : 'Dec 4–21, 2026', 'Kirtipur and Mulpani', w.po ? (w.po.top.includes('NEP') ? 'Through' : w.po.rows.some((r) => r[0] === 'NEP') ? 'Out' : 'Not needed') : 'Playing', w.po ? 'Played · in-game' : 'Next', w.po ? 'faint' : 'crim', true]);
-  if (w.wcq) rows.push(['World Cup Qualifier', `${w.wcq.y}`, 'In-game venue', w.wcq.top.includes('NEP') ? 'Qualified' : w.wcq.rows.some((r) => r[0] === 'NEP') ? 'Missed out' : 'Not reached', 'Played · in-game', 'faint', true]);
-  if (!w.l2.done) rows.push([w.tier === 'cl' ? 'Challenge League' : 'CWC League 2', `${(w.tier === 'cl' ? w.cl : w.l2).from}–${String((w.tier === 'cl' ? w.cl : w.l2).to).slice(2)}`, 'Tri-series', 'Playing', 'Under way · in-game', 'blu', true]);
-  for (const c of WORLD_CUPS.filter((c) => c.y >= G.year - 1)) { const h = w.wcHist.find((x) => x.y === c.y && x.fmt === c.fmt); const q = w.qual[`${c.fmt === 'ODI' ? 'odi' : 't20'}${c.y}`];
-    rows.push([c.name, c.when, c.hosts, h ? h.nepal : q === true ? 'Qualified' : q === false ? 'Did not qualify' : c.fmt === 'ODI' ? 'Needs a top finish at the Qualifier' : 'Route through the regional qualifier', h ? `${h.champ} won · in-game` : 'Later', 'faint']); }
-  rows.push(['World Test Championship', `${w.wtc.from}–${String(w.wtc.to).slice(2)}`, 'Full members only', 'Not eligible', 'Long-term goal', 'dim']);
+  const { G } = useGame(); const t = today(G); const [from, to] = [t - 200, t + 540]; const { have, later } = tournaments(G, from, to);
+  const status = (S) => (S.done ? 'Played' : S.fx.some((f) => f.res) ? 'Under way' : 'Next');
+  const nep = (S) => { if (!S.teams.includes('NEP')) return S.done ? '—' : 'Not in it'; if (!S.done) return 'In it'; return info(S).cup ? cupStage(S, 'NEP') : `${ord(placing(S).indexOf('NEP') + 1)}`; };
   return (
     <div style={{ marginTop: 24 }}>
-      <div className="tblwrap"><table className="tbl"><thead><tr><th>Competition</th><th>When</th><th>Where</th><th>Nepal</th><th>Status</th></tr></thead>
-        <tbody>{rows.map((r) => <tr key={r[0] + r[1]} className={r[5] === 'dim' ? 'dim' : r[6] ? 'me' : ''}><td className="name">{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td><td className={r[5] === 'dim' ? '' : r[5]}>{r[4]}</td></tr>)}</tbody></table></div>
-      <p className="faint t-small" style={{ marginTop: 8 }}>Hosts follow the ICC's announcements; field sizes and formats after October 2026 are the game's. Everything after the save starts is simulated. Next for Nepal: {ps.next.replace(/^Next: |^Now: /, '')}.</p>
+      <div className="tblwrap"><table className="tbl"><thead><tr><th>Competition</th><th>When</th><th>Teams</th><th>Nepal</th><th>Status</th></tr></thead>
+        <tbody>
+          {have.map((S) => <tr key={S.id} className={S.teams.includes('NEP') ? 'me' : ''}><td className="name"><CompLink S={S}>{sbase(S)}</CompLink>{info(S).realFixture && <span className="faint t-micro"> · real fixture</span>}</td><td>{span(S.start, S.endF ?? lastDay(S))}</td><td>{S.teams.length}</td><td>{nep(S)}</td><td className={S.done ? 'faint' : 'blu'}>{status(S)} · {S.done ? `${nm(S.champ)} won` : 'in-game'}</td></tr>)}
+          {later.map((it) => <tr key={it.id} className="dim"><td className="name">{it.name.split(' · ')[0]}</td><td>{span(it.start, it.ends ? it.ends[it.ends.length - 1] : it.end)}</td><td>—</td><td>{it.teams && it.teams.includes('NEP') ? 'In it' : 'To be decided'}</td><td className="faint">Field drawn from earlier results</td></tr>)}
+        </tbody></table></div>
+      <p className="faint t-small" style={{ marginTop: 8 }}>Real fixtures and hosts follow the ICC's announcements (sources in the game's calendar data); formats the ICC has not announced, and every result after October 2026, are the game's. Bilateral series are in Results.</p>
     </div>);
 }
 
-function SeriesTab() {
-  const { G } = useGame(); const f = G.s.world.feed;
+function ResultsTab() {
+  const { G } = useGame(); const [onlyNep, setOnly] = useState(false); const t = today(G);
+  const rows = []; for (const S of Object.values(G.s.wd ? G.s.wd.seasons : {})) { if (S.real) continue; const done = S.fx.filter((f) => f.res); if (!done.length) continue; const last = Math.max(...done.map((f) => f.d)); if (t - last > 120) continue; if (onlyNep && !S.teams.includes('NEP')) continue;
+    const k = info(S).kind; let line;
+    if (k === 'bilat') { const [a, b] = S.teams; const tb = S.tables.series || {}; const wa = (tb[a] || {}).w || 0, wb = (tb[b] || {}).w || 0; line = S.done ? (wa === wb ? `Series drawn ${wa}–${wb}` : `${nm(wa > wb ? a : b)} win ${Math.max(wa, wb)}–${Math.min(wa, wb)}`) : `${nm(a)} ${wa} – ${wb} ${nm(b)} so far`; }
+    else line = S.done ? `${nm(S.champ)} won${S.runner ? `, beating ${nm(S.runner)}` : ''}` : `${done.length} of ${S.fx.length} played`;
+    rows.push({ S, last, line }); }
+  rows.sort((a, b) => b.last - a.last);
   return (
     <div style={{ marginTop: 20 }}>
-      <p className="faint t-small">Around the world · in-game</p>
-      {f.length ? <ul className="inbox">{f.map((x, i) => <li key={i}><span className="when">{x.when}</span><div><p className="ttl">{x.nep && <span className="crim b6">Nepal · </span>}{x.t}</p>{x.sub && <p className="mut t-small">{x.sub}</p>}</div></li>)}</ul>
-        : <p className="t-small faint">The first series around the world are played after the NPL final, alongside Nepal's winter.</p>}
+      <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}><p className="faint t-small">Around the world · the last four months · in-game</p>
+        <div className="seg" role="group" aria-label="Filter"><button type="button" className={!onlyNep ? 'on' : ''} onClick={() => setOnly(false)}>All</button><button type="button" className={onlyNep ? 'on' : ''} onClick={() => setOnly(true)}>Nepal</button></div></div>
+      {rows.length ? <ul className="inbox">{rows.slice(0, 40).map(({ S, last, line }) => <li key={S.id}><span className="when">{short(last)}</span><div><p className="ttl">{S.teams.includes('NEP') && <span className="crim b6">Nepal · </span>}<CompLink S={S}>{(S.name || sbase(S)).split(' · ').slice(0, 2).join(' · ')}</CompLink></p><p className="mut t-small">{line}</p></div></li>)}</ul>
+        : <p className="t-small faint">No international results yet. The world's games are played alongside the NPL and through the off-season.</p>}
     </div>);
 }
 
 export default function International() {
   const { G, update } = useGame(); const narrow = useNarrow();
-  useEffect(() => { if (afterWinter(G)) { autosave(G); update(); } }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const [tab, setTab] = useTab(['nepal', 'comps', 'series'], 'nepal'); const w = G.s.world; const ps = pathState(G);
-  const C = w.tier === 'cl' ? w.cl : w.l2; const pos = (() => { const src = C.done && w.l2.done && !w.l2.prev ? tableOf(w.l2.rows) : tableOf(C.rows); const i = src.findIndex((r) => r.code === 'NEP'); return src.every((r) => !r.p) ? '—' : i >= 0 ? ord(i + 1) : '—'; })();
-  const odi = teamRank(G, 'odi'), t20 = teamRank(G, 't20i');
-  const tabs = [['nepal', tn(G, 'Nepal')], ['comps', T(G, 'Competitions', 'प्रतियोगिता')], ['series', T(G, 'Series around the world', 'विश्वभरका शृंखला')]];
+  useEffect(() => { worldTick(G); autosave(G); update(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const [tab, setTab] = useTab(['nepal', 'comps', 'results'], 'nepal');
+  if (!G.s.wd) return <div className="wd"><p className="t-small faint">The cricket world is not set up in this save yet.</p></div>;
+  const ps = pathState(G); const odi = teamRank(G, 'ODI'), t20 = teamRank(G, 'T20');
+  const tierS = ['l2', 'cl'].map((k) => ps.step[k]).find((S) => S && S.teams.includes('NEP')); const tierPos = tierS ? (() => { const g = Object.keys(tierS.tables).find((k) => tierS.tables[k].NEP); const rows = g ? tableOf(tierS, g) : []; const i = rows.findIndex((r) => r.id === 'NEP'); return i >= 0 && rows.some((r) => r.p) ? ord(i + 1) : '—'; })() : '—';
+  const tabs = [['nepal', tn(G, 'Nepal')], ['comps', T(G, 'Competitions', 'प्रतियोगिता')], ['results', T(G, 'Results', 'नतिजा')]];
   const hero = (
     <section className="board wd-hero" aria-label="Nepal">
       <div className="wd-hero-in">
         <div className="stack" style={{ gap: 6 }}>
-          <span className="blbl wd-flagline"><span className="wd-flag" aria-hidden="true" />Nepal · men's team</span>
+          <span className="blbl wd-flagline"><span className="wd-flag" aria-hidden="true" />Nepal · men's team · {dayLabel(today(G))}</span>
           <span className="bf wd-hero-t">{ps.title}</span>
           <span className="blbl" style={{ fontSize: 14 }}>{ps.next}</span>
         </div>
         <div className="cells" style={{ gap: '10px 28px' }}>
-          <div className="cell"><span className="blbl">{w.tier === 'cl' ? 'Challenge League' : 'League 2'}</span><span className="bf mid">{pos}</span></div>
+          <div className="cell"><span className="blbl">{tierS && info(tierS).kind === 'cl' ? 'Challenge League' : 'League 2'}</span><span className="bf mid">{tierPos}</span></div>
           <div className="cell"><span className="blbl">ODI ranking</span><span className="bf mid">{odi ? odi.pos : '—'}</span></div>
           <div className="cell"><span className="blbl">T20I ranking</span><span className="bf mid">{t20 ? t20.pos : '—'}</span></div>
         </div>
       </div>
     </section>);
-  const body = tab === 'nepal' ? <NepalTab /> : tab === 'comps' ? <CompsTab /> : <SeriesTab />;
+  const body = tab === 'nepal' ? <NepalTab /> : tab === 'comps' ? <CompsTab /> : <ResultsTab />;
   if (narrow) return (
     <MScreen top={{ title: <><Dot id={G.user} />{tn(G, 'International')}</>, sub: 'in-game', right: <>ODI {odi ? odi.pos : '—'}<br />T20I {t20 ? t20.pos : '—'}</> }} pinRaw={<div className="wd-mhero">{hero}</div>}
-      tabs={[['nepal', tn(G, 'Nepal')], ['comps', T(G, 'Competitions', 'प्रतियोगिता')], ['series', T(G, 'Series', 'शृंखला')]]} tab={tab} onTab={setTab} label="International sections">
+      tabs={tabs} tab={tab} onTab={setTab} label="International sections">
       {body}
     </MScreen>);
   return (

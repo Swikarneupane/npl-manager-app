@@ -1,0 +1,29 @@
+#name Oman
+#member associate
+#asOf 2026-02-21
+#source Wikipedia, "Oman national cricket team", Current squad (updated 21 February 2026)
+#note Domestic teams are not listed: no first-class or one-day domestic structure was verified for this nation.
+#source NPL Manager src/game/os-extra.js (Aqib Ilyas, Zeeshan Maqsood spelt identically so they alias; not in the February 2026 squads)
+Jatinder Singh;1989;BAT;62;10;OB;R;-;-
+Aqib Ilyas;1992;BAT;64;0;-;R;-;-
+Zeeshan Maqsood;1987;BAT;63;0;-;L;-;-
+Karan Sonavale;1994;BAT;56;10;OB;R;-;-
+Khalid Kail;1996;BAT;56;0;-;R;-;-
+Ashish Odedara;1991;BAT;54;0;-;R;-;-
+Aamir Kaleem;1981;AR;60;58;SLA;L;-;-
+Mohammad Nadeem;1982;AR;56;58;RFM;R;-;-
+Wasim Ali;1998;AR;56;52;SLA;L;-;-
+Aryan Bisht;2004;AR;52;52;RM;R;-;-
+Bilal Shah;1998;AR;50;55;RM;R;-;-
+Sufyan Mehmood;1991;AR;50;56;RM;R;-;-
+Nadeem Khan;2001;AR;50;56;SLA;L;-;-
+Rafiullah;1996;AR;48;56;RFM;R;-;-
+Muzahir Raza;2002;AR;48;54;RM;R;-;-
+Hammad Mirza;1998;WK;58;0;-;R;-;-
+Vinayak Shukla;1994;WK;54;0;-;R;-;-
+Shakeel Ahmed;1988;BOWL;20;62;SLA;L;-;-
+Jay Odedra;1989;BOWL;20;60;OB;R;-;-
+Samay Shrivastava;1991;BOWL;15;58;LB;R;-;-
+Hasnain Shah;1998;BOWL;15;60;RFM;R;-;-
+Shah Faisal;1997;BOWL;15;60;LFM;L;-;-
+Jiten Ramanandi;1994;BOWL;15;58;LM;L;-;-

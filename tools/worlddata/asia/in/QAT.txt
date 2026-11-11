@@ -1,0 +1,32 @@
+#name Qatar
+#member associate
+#asOf 2023-09-21
+#source Wikipedia, "Qatar national cricket team", Current squad (updated 21 September 2023, the latest list available)
+#note Domestic teams are not listed: no first-class or one-day domestic structure was verified for this nation.
+#note Owais Ahmed is left out (no birth year in the source).
+Kamran Khan;1988;BAT;54;15;RM;R;-;-
+Zaheer Ibrahim;1988;BAT;50;10;OB;R;-;-
+Khurram Shahzad;1988;BAT;50;10;OB;R;-;-
+Saqlain Arshad;1992;BAT;48;10;OB;R;-;-
+Jassim Khan;1999;BAT;46;10;RM;R;-;-
+Uzair Amir;1995;BAT;46;0;-;R;-;-
+Muhammad Tanveer;1981;AR;52;54;RM;R;-;-
+Ikramullah Khan;1992;AR;50;52;LM;L;-;-
+Assad Borham;1992;AR;50;50;OB;R;-;-
+Akash Babu;1990;AR;48;50;LB;L;-;-
+Valeed Veetil;1985;AR;46;50;LB;R;-;-
+Adnan Mirza;1989;AR;46;50;SLA;R;-;-
+Himanshu Rathod;1986;AR;46;48;OB;R;-;-
+Mirza Mohammed Baig;1994;AR;46;48;RM;L;-;-
+Mohammed Irshad;1991;AR;46;50;RM;R;-;-
+Imal Liyanage;1994;WK;50;0;-;R;-;-
+Mohammed Rizlan;1985;WK;50;0;-;R;-;-
+Mohammed Nadeem;1983;BOWL;20;54;SLA;R;-;-
+Muhammad Murad;1989;BOWL;15;54;LFM;L;-;-
+Gayan Munaweera;1991;BOWL;20;54;LFM;L;-;-
+Amir Farooq;1995;BOWL;15;52;LFM;R;-;-
+Yousuf Ali;1999;BOWL;15;50;SLA;L;-;-
+Sandun Withanage;1992;BOWL;15;50;LB;L;-;-
+Muhammad Jabir;1995;BOWL;15;50;RFM;R;-;-
+Bukhar Illikkal;1991;BOWL;15;48;SLA;L;-;-
+Bipin Kumar;1993;BOWL;15;48;RFM;R;-;-

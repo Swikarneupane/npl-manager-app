@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useGame } from '../lib/store.jsx';
+import { useGame, GameScope } from '../lib/store.jsx';
 import { Dot, Modal as ModalBox, Seg } from '../components/bits.jsx';
 import { LiveMatch } from '../lib/live.js';
 import { ordinal } from '../game/game.js';
@@ -16,12 +16,21 @@ import { autosave } from '../lib/save.js';
 import { xiStatus } from './Home.jsx';
 import { Actions, BatPlan, BowlPlan, nextOver } from '../components/MatchPlan.jsx';
 import { openDecisions } from '../components/DecisionSheet.jsx';
+import { nextEvent, hasClub, applyCallUps, seasonName, nationName, continueWorld } from '../world/career.js';
+import { worldGame, savedWorld } from '../world/match.js';
+import { short } from '../world/dates.js';
+
+// A team's colour: NPL franchises have their own; national sides use blue for yours and grey for the other.
+const tc = (G, id) => `var(--t-${String(id).toLowerCase()}, ${id === G.user ? 'var(--blue)' : 'var(--ink-3)'})`;
+// "Match 12 of 28" / "Qualifier 1" in the NPL; the competition and date for a national match.
+const matchLabel = (lm) => (lm.world ? `${seasonName(lm.world.S)} · ${short(lm.f.d)}` : lm.f.stage === 'L' ? `Match ${lm.f.n}` : stageName(lm.f));
+const cardLink = (lm) => (lm.world ? `/comp/${lm.world.S.id}?tab=fixtures&fx=${encodeURIComponent(lm.f.id)}` : `/scorecard/${lm.f.n}`);
 
 const MODES = [['ball', 'Every ball'], ['over', 'Every over'], ['key', 'Key moments'], ['quick', 'Quick sim']];
 
 function Board({ lm }) {
   const { G } = useGame(); const m = lm.m, i = lm.inn;
-  if (!i) return <><div className="bf mid">{tname(G, lm.f.home)} v {tname(G, lm.f.away)}</div><p className="blbl" style={{ marginTop: 8 }}>{lm.started ? 'Toss coming up…' : 'Match not started'}</p></>;
+  if (!i) return <><div className="bf mid">{tname(G, lm.m.home)} v {tname(G, lm.m.away)}</div><p className="blbl" style={{ marginTop: 8 }}>{lm.started ? 'Toss coming up…' : 'Match not started'}</p></>;
   const other = m.inns.length > 1 ? m.inns[0] : null;
   const rr = i.balls ? (i.runs / (i.balls / 6)).toFixed(2) : '0.00';
   const wp = m.winProb();
@@ -56,7 +65,7 @@ function Board({ lm }) {
       </div>
       <div className="wprow" style={{ marginTop: 16, display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr) auto', gap: 14, alignItems: 'center' }}>
         <span className="bf" style={{ fontSize: 18 }}>{tshort(G, a)} {pa}%</span>
-        <div className="wp" role="img" aria-label={`Win probability ${tshort(G, a)} ${pa} percent`}><i style={{ width: `${pa}%`, background: `var(--t-${a.toLowerCase()})` }} /><i style={{ width: `${100 - pa}%`, background: `var(--t-${b.toLowerCase()})` }} /></div>
+        <div className="wp" role="img" aria-label={`Win probability ${tshort(G, a)} ${pa} percent`}><i style={{ width: `${pa}%`, background: tc(G, a) }} /><i style={{ width: `${100 - pa}%`, background: tc(G, b) }} /></div>
         <span className="bf" style={{ fontSize: 18, color: 'var(--board-ink-2)' }}>{100 - pa}% {tshort(G, b)}</span>
       </div>
       {lm.done && m.result && <p className="bf" style={{ fontSize: 22, marginTop: 12 }}>{m.result.text}</p>}
@@ -133,11 +142,11 @@ function StartDone({ lm }) {
       <p className="t-small mut">Answer {due.length > 1 ? 'them' : 'it'} to start the match. Not answering in time picks the cautious option for you, and the board notices.</p>
       <div className="acts-row"><button className="btn btn-primary btn-lg" onClick={() => openDecisions(G, ui, update)}>Decide</button><button className="btn btn-lg" disabled>{lm.resumed ? 'Resume match' : 'Start match'}</button></div>
     </section>);
-  if (lm.done) return <div className="acts-row"><button className="btn btn-primary btn-lg" onClick={() => { ui.liveSeen = true; ui.live = null; update(); nav(lm.afterPath || afterMatchRoute(G, lm.f)); }}>Continue</button><Link className="btn btn-lg" to={`/scorecard/${lm.f.n}`}>Full scorecard</Link></div>;
+  if (lm.done) return <div className="acts-row"><button className="btn btn-primary btn-lg" onClick={() => { ui.liveSeen = true; ui.live = null; update(); nav(lm.afterPath || afterMatchRoute(G, lm.f)); }}>Continue</button><Link className="btn btn-lg" to={cardLink(lm)}>Full scorecard</Link></div>;
   return (
     <section className="panel plan">
       <div className="acts-row"><button className="btn btn-primary btn-lg" onClick={() => lm.start()}>{lm.resumed ? 'Resume match' : 'Start match'}</button></div>
-      {lm.resumed ? <p className="faint t-small">Picking up where you left off.</p> : <p className="faint t-small">Your XI: {xiStatus(G)}. <Link to="/squad">Change</Link></p>}
+      {lm.resumed ? <p className="faint t-small">Picking up where you left off.</p> : lm.world ? <p className="faint t-small">{lm.f.fmt === 'ODI' ? '50 overs a side' : '20 overs a side'}. Your XI, captain and keeper come from the national squad. <Link to={`/nation?fmt=${lm.f.fmt}`}>Change</Link></p> : <p className="faint t-small">Your XI: {xiStatus(G)}. <Link to="/squad">Change</Link></p>}
       <div className="field"><span className="lbl">Control mode</span><Seg options={MODES} value={lm.mode} onChange={(v) => lm.setMode(v)} label="Control mode" /></div>
       <div className="field"><span className="lbl">Playback speed</span><Seg options={[['0.5', '0.5×'], ['1', '1×'], ['2', '2×'], ['4', '4×']]} value={String(G.s.settings.speed)} onChange={(v) => update(() => { G.s.settings.speed = +v; })} label="Playback speed" /></div>
     </section>
@@ -160,7 +169,7 @@ function PendingModal({ lm, sheet }) {
   const { G } = useGame(); const p = lm.pending; if (!p) return null;
   const Modal = sheet ? BottomSheet : ModalBox;
   if (p.type === 'toss') return (
-    <Modal><p className="faint t-small">Toss · {tname(G, lm.f.home)} v {tname(G, lm.f.away)}</p><h2 className="t-h2" style={{ marginTop: 6 }}>You won the toss.</h2>
+    <Modal><p className="faint t-small">Toss · {tname(G, lm.m.home)} v {tname(G, lm.m.away)}</p><h2 className="t-h2" style={{ marginTop: 6 }}>You won the toss.</h2>
       <p className="mut" style={{ marginTop: 8 }}>{lm.m.dew ? 'Dew is expected later tonight, which helps the side batting second.' : `Conditions look even. The pitch ${lm.m.pitch > 1.03 ? 'favours batters' : lm.m.pitch < 0.97 ? 'has something for bowlers' : 'looks true'}.`}</p>
       <div className="acts"><button className="btn btn-primary btn-lg" onClick={() => lm.resolvePending('bat')}>Bat first</button><button className="btn btn-lg" onClick={() => lm.resolvePending('field')}>Bowl first</button></div></Modal>);
   if (p.type === 'drs') {
@@ -185,7 +194,7 @@ function aggrShort(lm) { const i = lm.inn; if (!i || i.bat !== lm.G.user) return
 
 function MBoard({ lm, gold }) {
   const { G } = useGame(); const m = lm.m, i = lm.inn; const f = lm.f;
-  const head = <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span className="blbl" style={{ display: 'flex', alignItems: 'center' }}>{i && <Dot id={i.bat} />}{tshort(G, f.home)} v {tshort(G, f.away)}{i ? (i.target ? ` · chasing ${i.target}` : ' · batting') : ''}</span><span className="blbl">{f.stage === 'L' ? `Match ${f.n}` : stageName(f)}</span></div>;
+  const head = <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span className="blbl" style={{ display: 'flex', alignItems: 'center' }}>{i && <Dot id={i.bat} />}{tshort(G, m.home)} v {tshort(G, m.away)}{i ? (i.target ? ` · chasing ${i.target}` : ' · batting') : ''}</span><span className="blbl">{lm.world ? short(f.d) : matchLabel(lm)}</span></div>;
   if (!i) return <section className="board" style={{ borderRadius: 0, borderWidth: '0 0 1px', padding: '12px 16px', flex: 'none' }} aria-label="Scoreboard">{head}<p className="bf" style={{ fontSize: 28, marginTop: 6 }}>{lm.started ? 'Toss coming up' : 'Match not started'}</p></section>;
   const rr = i.balls ? (i.runs / (i.balls / 6)).toFixed(2) : '0.00'; const wp = m.winProb();
   let p = wp.p; if (lm.done && m.result) p = m.result.winner === i.bat ? 1 : m.result.winner ? 0 : 0.5;
@@ -203,7 +212,7 @@ function MBoard({ lm, gold }) {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'auto minmax(0,1fr) auto', gap: 8, alignItems: 'center', marginTop: 8 }}>
         <span className="bf" style={{ fontSize: 14 }}>{pa}%</span>
-        <div className="wp" role="img" aria-label={`Win probability: ${tshort(G, i.bat)} ${pa} percent, ${tshort(G, i.bowl)} ${100 - pa} percent`}><i style={{ width: `${pa}%`, background: `var(--t-${i.bat.toLowerCase()})` }} /><i style={{ width: `${100 - pa}%`, background: `var(--t-${i.bowl.toLowerCase()})` }} /></div>
+        <div className="wp" role="img" aria-label={`Win probability: ${tshort(G, i.bat)} ${pa} percent, ${tshort(G, i.bowl)} ${100 - pa} percent`}><i style={{ width: `${pa}%`, background: tc(G, i.bat) }} /><i style={{ width: `${100 - pa}%`, background: tc(G, i.bowl) }} /></div>
         <span className="bf" style={{ fontSize: 14, color: 'var(--board-ink-2)' }}>{100 - pa}%</span>
       </div>
       {lm.done && m.result && <p className="bf" style={{ fontSize: 18, marginTop: 8 }}>{m.result.text}</p>}
@@ -232,7 +241,7 @@ function MLive({ lm, toFeed }) {
         <span className="t-small mut">This over</span>
         <div className="balls" style={{ gap: 5 }}>{i.overSeq.map((x, k) => <Ball key={k} x={x} />)}{!complete && Array.from({ length: Math.max(0, 6 - legal) }, (_, k) => <span key={`n${k}`} className="ball next" />)}</div>
       </div>
-      <div style={{ padding: '10px 0', borderBottom: '1px solid var(--rule)' }}><PhaseRail lm={lm} compact /></div>
+      {!lm.noKey && <div style={{ padding: '10px 0', borderBottom: '1px solid var(--rule)' }}><PhaseRail lm={lm} compact /></div>}
       <AlsoLive lm={lm} line />
       <FeedList lm={lm} items={recent} />
       <button type="button" className="btn btn-ghost" style={{ width: '100%', marginTop: 6, color: 'var(--blue)' }} onClick={toFeed}>All commentary</button>
@@ -266,7 +275,7 @@ function MCard({ lm }) {
         <tbody>{rows.map((id) => { const b = inn.bs[id]; const live = !b.out; return <tr key={id}><td style={{ paddingLeft: 0, fontWeight: live ? 500 : 400 }}>{G.P(id).name}{live && (id === inn.striker) ? '*' : ''} <span className="faint t-micro">{b.out ? b.how : 'not out'}</span></td><td className="r b6">{b.r}</td><td className="r">{b.b}</td><td className="r faint">{b.b ? ((100 * b.r) / b.b).toFixed(1) : '–'}</td></tr>; })}
           <tr><td style={{ paddingLeft: 0 }} className="faint">Extras</td><td className="r">{inn.extras}</td><td /><td /></tr></tbody></table>
       {inn.fow.length > 0 && <p className="t-small mut" style={{ marginTop: 10 }}><span className="faint">FoW</span> {inn.fow.map((x) => x.split(' ')[0]).join(', ')}</p>}
-      {lm.started && <Link to={`/scorecard/${lm.f.n}`} className="t-small" style={{ display: 'inline-block', marginTop: 8 }}>Full scorecard with bowling</Link>}
+      {lm.started && <Link to={cardLink(lm)} className="t-small" style={{ display: 'inline-block', marginTop: 8 }}>Full scorecard with bowling</Link>}
     </>
   );
 }
@@ -303,7 +312,7 @@ function MTactics({ lm }) {
 function MActions({ lm, toTac }) {
   const { G, update, ui } = useGame(); const nav = useNavigate(); const i = lm.inn;
   if (lm.error) return null;
-  if (lm.done) return <><button type="button" className="btn btn-primary" style={{ flex: '1 1 auto' }} onClick={() => { ui.liveSeen = true; ui.live = null; update(); nav(lm.afterPath || afterMatchRoute(G, lm.f)); }}>Continue</button><Link className="btn" to={`/scorecard/${lm.f.n}`}>Scorecard</Link></>;
+  if (lm.done) return <><button type="button" className="btn btn-primary" style={{ flex: '1 1 auto' }} onClick={() => { ui.liveSeen = true; ui.live = null; update(); nav(lm.afterPath || afterMatchRoute(G, lm.f)); }}>Continue</button><Link className="btn" to={cardLink(lm)}>Scorecard</Link></>;
   if (!lm.started) { const due = G.decisionsDue(); return due.length ? <button type="button" className="btn btn-primary" style={{ flex: '1 1 auto' }} onClick={() => openDecisions(G, ui, update)}>Answer {due.length} decision{due.length > 1 ? 's' : ''} to play</button> : <button type="button" className="btn btn-primary" style={{ flex: '1 1 auto' }} onClick={() => lm.start()}>{lm.resumed ? 'Resume match' : 'Start match'}</button>; }
   const { pend, n } = i ? nextOver(lm) : {};
   if (pend && i.bowl === G.user) { const pick = lm.pending.pick; return <><button type="button" className="btn btn-primary" style={{ flex: '1 1 auto' }} onClick={() => lm.resolvePending(pick)}>Bowl over {n} · {pick ? last(G.P(pick).name) : 'captain'}</button><button type="button" className="btn" onClick={() => lm.resolvePending(null)}>Captain</button></>; }
@@ -333,30 +342,48 @@ function MatchMobile({ lm }) {
   );
 }
 
+// The national match the user plays next: one in progress (saved), or the next event when it is a
+// national fixture due today.
+function worldLive(G, ui, update) {
+  const sw = savedWorld(G); const ev = sw ? null : nextEvent(G);
+  const wf = sw ? [sw.S, sw.f] : ev && ev.kind === 'world' && ev.day <= G.s.wd.day ? [ev.S, ev.f] : null;
+  if (!wf) return null;
+  const lm = new LiveMatch(worldGame(G, wf[0], wf[1]), wf[1], update, sw, { S: wf[0] }); lm.afterPath = '/'; return lm;
+}
+
 export default function Match() {
   const { G, ui, update, toast } = useGame(); const nav = useNavigate(); const narrow = useNarrow();
   let lm = ui.live;
-  const f = userNextFixture(G);
-  if ((!lm || (lm.done && ui.liveSeen)) && f && f === nextUnplayed(G)) { lm = ui.live = new LiveMatch(G, f, update, savedMatchFor(G, f)); ui.liveSeen = false; }
+  const ev = G.s.wd ? nextEvent(G) : null;
+  const f = hasClub(G) ? userNextFixture(G) : null;
+  if (!lm || (lm.done && ui.liveSeen)) { const w = G.s.wd ? worldLive(G, ui, update) : null; if (w) { lm = ui.live = w; ui.liveSeen = false; } }
+  if ((!lm || (lm.done && ui.liveSeen)) && f && f === nextUnplayed(G) && !(ev && ev.kind === 'world')) { const saved = savedMatchFor(G, f); if (!saved) applyCallUps(G, f); lm = ui.live = new LiveMatch(G, f, update, saved); ui.liveSeen = false; }
   if (lm) lm.onChange = update;
   if (!lm) {
-    if (!f) return <><h1 className="t-h1">No match to play</h1><p className="mut" style={{ marginTop: 8 }}>{G.s.phase === 'preseason' ? 'The season has not started yet.' : 'Your next match will appear here.'}</p></>;
+    if (ev && ev.kind === 'world') return <><h1 className="t-h1">Next: {nationName(G, ev.f.a)} v {nationName(G, ev.f.b)}</h1><p className="mut" style={{ marginTop: 8 }}>{seasonName(ev.S)} · {short(ev.f.d)}. The world moves on to the match day first.</p>
+      <div className="row" style={{ marginTop: 16 }}><button className="btn btn-primary btn-lg" onClick={async () => { toast('Moving on to the match day…'); await continueWorld(G); autosave(G); ui.live = null; update(); }}>Continue to {short(ev.f.d)}</button><button className="btn btn-lg" onClick={() => nav('/')}>Home</button></div></>;
+    if (!f) return <><h1 className="t-h1">No match to play</h1><p className="mut" style={{ marginTop: 8 }}>{!hasClub(G) ? 'Your next national match will appear here.' : G.s.phase === 'preseason' ? 'The season has not started yet.' : 'Your next match will appear here.'}</p></>;
     return <><h1 className="t-h1">Next: {tname(G, f.home)} v {tname(G, f.away)}</h1><p className="mut" style={{ marginTop: 8 }}>Other matches come first.</p>
       <div className="row" style={{ marginTop: 16 }}><button className="btn btn-primary btn-lg" onClick={async () => { toast('Simulating other matches…'); await simUntilUser(G); autosave(G); ui.live = null; update(); }}>Simulate to this match</button><button className="btn btn-lg" onClick={() => nav('/')}>Home</button></div></>;
   }
-  if (narrow) return <MatchMobile lm={lm} />;
+  const page = narrow ? <MatchMobile lm={lm} /> : <MatchDesk lm={lm} />;
+  return lm.world ? <GameScope G={lm.G}>{page}</GameScope> : page;
+}
+function MatchDesk({ lm }) {
+  const { G } = useGame();
   const m = lm.m; const toss = m.toss ? `${tname(G, m.toss.win)} won the toss and chose to ${m.toss.dec}` : 'Toss to come';
   const live = lm.started && !lm.done && !lm.error;
+  const where = lm.world ? `${seasonName(lm.world.S)} · ${short(lm.f.d)} · ${lm.f.fmt === 'ODI' ? 'ODI' : 'T20I'}` : `${stageName(lm.f)} · TU International Cricket Ground, Kirtipur · ${lm.f.night ? 'Under lights' : 'Day match'}`;
   return (
     <div style={{ maxWidth: 1220 }} className="stack matchpg">
-      <div className="mhd narrow"><div className="stack"><p className="t-h3">{tshort(G, lm.f.home)} v {tshort(G, lm.f.away)}</p><p className="t-micro faint">{lm.f.stage === 'L' ? `Match ${lm.f.n}` : stageName(lm.f)} · Kirtipur · {lm.f.night ? 'under lights' : 'day match'}</p></div>{live && <span className="ptag c">● LIVE</span>}</div>
-      <p className="faint t-small wide" style={{ marginBottom: 10 }}>{stageName(lm.f)} · TU International Cricket Ground, Kirtipur · {lm.f.night ? 'Under lights' : 'Day match'} · {toss}</p>
+      <div className="mhd narrow"><div className="stack"><p className="t-h3">{tshort(G, lm.m.home)} v {tshort(G, lm.m.away)}</p><p className="t-micro faint">{matchLabel(lm)}{lm.world ? '' : ` · Kirtipur · ${lm.f.night ? 'under lights' : 'day match'}`}</p></div>{live && <span className="ptag c">● LIVE</span>}</div>
+      <p className="faint t-small wide" style={{ marginBottom: 10 }}>{where} · {toss}</p>
       <section className="board" aria-label="Scoreboard"><Board lm={lm} /></section>
-      {lm.inn && <PhaseRail lm={lm} />}
+      {lm.inn && !lm.noKey && <PhaseRail lm={lm} />}
       <div className="plan-slot"><Plan lm={lm} /></div>
       <div className="overrow"><Over lm={lm} /></div>
       <div className="split msplit" style={{ marginTop: 20, gap: 36 }}>
-        <section><div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '1px solid var(--rule-strong)', paddingBottom: 8 }}><h2 className="t-h3">Commentary</h2>{lm.started && <Link to={`/scorecard/${lm.f.n}`} className="t-small">Scorecard</Link>}</div><Feed lm={lm} /></section>
+        <section><div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '1px solid var(--rule-strong)', paddingBottom: 8 }}><h2 className="t-h3">Commentary</h2>{lm.started && <Link to={cardLink(lm)} className="t-small">Scorecard</Link>}</div><Feed lm={lm} /></section>
         <aside className="stack wide" style={{ gap: 12, alignContent: 'start' }}><CompPanel lm={lm} />{live && <Dugout lm={lm} />}<AlsoLive lm={lm} /><Players lm={lm} bowlerOnly /></aside>
       </div>
       {live && <div className="mact"><Actions lm={lm} /></div>}

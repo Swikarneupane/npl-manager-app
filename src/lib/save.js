@@ -8,7 +8,7 @@ export function loadLocal() {
 }
 export function saveLocal(G, urgent = false) {
   if (!G) return false;
-  try { G.s.pid = getPID(); G.s.savedAt = Date.now(); return writeSave(JSON.stringify(G.s), urgent); } catch { return false; }
+  try { G.hook('beforeSave'); G.s.pid = getPID(); G.s.savedAt = Date.now(); return writeSave(JSON.stringify(G.s), urgent); } catch { return false; }
 }
 export function autosave(G) { if (G && G.s.settings.autosave) saveLocal(G); }
 export function clearLocal() { clearSave(); }

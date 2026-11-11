@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useGame } from '../lib/store.jsx';
 import { Dot, Meter } from '../components/bits.jsx';
@@ -12,6 +13,97 @@ import { T, tn } from '../lib/i18n.js';
 import { lastMeeting } from '../game/depth.js';
 import { autosave } from '../lib/save.js';
 import { simUntilUser, simFixture, simToSeasonEnd, completeSquad, startSeason, savedMatchFor, quickSimUserMatch, startOffseason, matchPath, afterMatchRoute } from '../lib/flow.js';
+import * as CR from '../world/career.js';
+import { savedWorld } from '../world/match.js';
+import { NDot } from '../components/NationBits.jsx';
+import { short, label as dayLabel } from '../world/dates.js';
+import '../styles/career.css';
+
+// ===== Both jobs: the world clock, the next national match, the national board =====
+// The clock: today, the next thing that needs you across both jobs, and Continue.
+export function ClockBar({ m }) {
+  const { G, update, toast } = useGame(); const [busy, setBusy] = useState(false); if (!G.s.wd) return null;
+  const ev = CR.nextEvent(G); const now = G.s.wd.day; const due = ev && ev.day <= now;
+  const go = async () => { setBusy(true); toast('The world moves on…'); try { await CR.continueWorld(G); autosave(G); } finally { setBusy(false); update(); } };
+  return (
+    <section className={`cr-clock${m ? ' m' : ''}`} aria-label="Calendar">
+      <div className="stack cr-today"><span className="t-micro faint">Today</span><span className="b6 num">{dayLabel(now)}</span></div>
+      <div className="stack grow" style={{ minWidth: 0 }}><span className="t-micro faint">{!ev ? 'Next' : due ? 'Due today' : `Next · ${short(ev.day)} · in ${ev.day - now} day${ev.day - now === 1 ? '' : 's'}`}</span><span className="t-small ell">{CR.eventLabel(G, ev)}</span></div>
+      <div className="row" style={{ gap: 8, alignItems: 'center' }}>{!due && <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={go}>{busy ? 'Moving on…' : 'Continue'}</button>}<Link to="/calendar" className="t-small">Calendar</Link></div>
+    </section>
+  );
+}
+// The user's next national fixture: move on to the match day, then play it live or let the assistant play it.
+export function WorldCard({ ev, m }) {
+  const { G, ui, update, toast } = useGame(); const nav = useNavigate(); const [busy, setBusy] = useState(false);
+  const { S, f } = ev; const now = G.s.wd.day; const due = ev.day <= now; const me = CR.userNation(G); const opp = f.a === me ? f.b : f.a;
+  const sel = CR.selection(G, me, f.fmt); const sw = savedWorld(G); const live = (ui.live && ui.live.world && ui.live.f === f && ui.live.started && !ui.live.done) || (sw && sw.f === f);
+  const j = CR.nationJob(G); const last = S.fx.filter((x) => x.res && (x.a === opp || x.b === opp)).slice(-1)[0];
+  const go = async () => { if (!due) { setBusy(true); toast('Moving on to the match day…'); try { await CR.continueWorld(G); autosave(G); } finally { setBusy(false); update(); } return; } nav('/match'); };
+  const quick = () => update(() => { if (sw) delete G.s.liveMatch; ui.live = null; const r = CR.assistantPlays(G, S, f); autosave(G); toast(`${r.text}.`); });
+  const T2 = ({ id }) => <span className="tm"><NDot id={id} big />{CR.nationName(G, id)}</span>;
+  const body = (
+    <>
+      <p className="faint t-micro">National match · {CR.seasonName(S)} · {dayLabel(f.d)}{f.ko ? ` · ${f.ko === 'F' ? 'Final' : f.ko}` : ''}</p>
+      {m ? <p className="cr-teams"><T2 id={f.a} /><T2 id={f.b} /></p> : <H1><T2 id={f.a} /><span className="faint" style={{ fontWeight: 400 }}>v</span><T2 id={f.b} /></H1>}
+      <p className="t-small mut">{f.fmt === 'ODI' ? 'ODI · 50 overs' : 'T20I · 20 overs'} · Squad {sel.picked ? 'picked by you' : 'picked by the assistant'} · XI {sel.xi.length}/11{last ? ` · ${CR.nationName(G, opp)} last: ${last.res.text}` : ''}</p>
+      <div className={m ? 'cr-btns' : 'hero-btns'}>
+        <button type="button" className={`btn btn-primary${m ? '' : ' btn-lg'}`} disabled={busy} onClick={go}>{busy ? 'Moving on…' : !due ? `Continue to ${short(f.d)}` : live ? 'Back to the match' : 'Play live'}</button>
+        <Link to={`/nation?fmt=${f.fmt}`} className={`btn${m ? '' : ' btn-lg'}`}>Pick squad</Link>
+      </div>
+      <div className="row" style={{ gap: 8, alignItems: 'center' }}>
+        {due && !(ui.live && ui.live.world && ui.live.started && !ui.live.done) && <button type="button" className="btn btn-ghost btn-sm" onClick={quick}>{G.s.settings.assistant ? 'Let the assistant play' : 'Quick sim'}</button>}
+        {j && <span className="faint t-micro">Board confidence {j.board} · {boardMood(j.board)}</span>}
+      </div>
+    </>);
+  return m ? <section className="stack cr-wcard" style={{ gap: 8 }}>{body}</section> : <Card>{body}</Card>;
+}
+// The national board: confidence, the year's objectives and the record.
+export function NationPortal() {
+  const { G } = useGame(); const j = CR.nationJob(G); if (!j) return null;
+  const st = (o) => (o.done === true ? <span className="blu t-micro b6">Met</span> : o.done === false ? <span className="crim t-micro b6">Missed</span> : <span className="faint t-micro">In progress</span>);
+  return (
+    <section className="p-board"><Head title={`${CR.nationName(G, j.team)} board`} to="/jobs" link="Jobs" />
+      <div className="panel stack" style={{ gap: 8, padding: '12px 14px' }}>
+        <div className="sechead" style={{ margin: 0 }}><span className="t-small b6">Record P{j.rec.p} W{j.rec.w} L{j.rec.l}</span><span className="t-small mut num">{j.board} · {boardMood(j.board)}</span></div>
+        <Meter pct={j.board} blue />
+        {j.obj.length ? j.obj.map((o) => <div key={o.sid} className="sechead" style={{ margin: 0, alignItems: 'center', gap: 8 }}><Link to={`/comp/${o.sid}`} className="t-small">{o.t}</Link>{st(o)}</div>) : <p className="t-small faint">No competitions this year yet.</p>}
+        <p className="faint t-micro">Below {CR.sackLine(G)} after a missed objective and the board will dismiss you.</p>
+      </div>
+    </section>
+  );
+}
+function NationResults() {
+  const { G } = useGame(); const me = CR.userNation(G); if (!me) return null;
+  const list = []; for (const S of Object.values(G.s.wd.seasons)) for (const f of S.fx) if (f.res && (f.a === me || f.b === me)) list.push([S, f]);
+  list.sort((a, b) => b[1].d - a[1].d);
+  return (
+    <section className="p-results"><Head title="National results" to="/calendar?view=list" link="Competitions" />
+      {list.length ? list.slice(0, 4).map(([S, f]) => { const wl = f.res.nr || (f.res.tie && !f.res.w) ? '–' : f.res.w === me ? 'W' : 'L'; return (
+        <Link key={f.id} to={`/comp/${S.id}?tab=fixtures&fx=${encodeURIComponent(f.id)}`} className="rrow"><span className={`board-f wl ${wl === 'W' ? 'w' : wl === 'L' ? 'l' : ''}`}>{wl}</span><span className="t-small rrow-t">{f.res.text}</span><span className="t-micro faint">{short(f.d)}</span></Link>); })
+        : <p className="faint t-small">No national matches played yet.</p>}
+    </section>
+  );
+}
+function CompsPortal() {
+  const { G } = useGame(); const me = CR.userNation(G); if (!me || !G.s.wd) return null;
+  const now = G.s.wd.day; const list = Object.values(G.s.wd.seasons).filter((S) => S.teams.includes(me) && (S.done ? (S.end ?? 0) >= now - 45 : (S.start ?? 0) <= now + 120)).sort((a, b) => (a.start ?? 0) - (b.start ?? 0));
+  return (
+    <section className="p-caps"><Head title="Your competitions" to="/calendar?view=list" link="All competitions" />
+      {list.length ? <ul className="mlist">{list.slice(0, 5).map((S) => { const t = CR.nationJob(G) && CR.nationJob(G).obj.find((o) => o.sid === S.id); return <li key={S.id}><Link to={`/comp/${S.id}`} className="grow" style={{ color: 'inherit', textDecoration: 'none' }}>{CR.seasonName(S)}<br /><span className="l2">{S.done ? `Finished${S.champ ? ` · ${CR.nationName(G, S.champ)} won` : ''}` : `${S.fx.filter((f) => f.res).length} of ${S.fx.length} played`}{t ? ` · ${t.t}` : ''}</span></Link><span className="faint" aria-hidden="true">›</span></li>; })}</ul>
+        : <p className="faint t-small">No competitions scheduled for {CR.nationName(G, me)} yet.</p>}
+    </section>
+  );
+}
+function OffersPin() {
+  const { G } = useGame(); const n = (G.s.wd && G.s.wd.offers || []).length; if (!n) return null;
+  return <Link to="/jobs" className="pin p-pin"><span className="pin-body"><span className="t-small b6">{plural(n, 'job offer')} waiting</span><span className="t-micro">{G.s.wd.offers.map((o) => CR.nationName(G, o.team)).join(', ')}</span></span><span className="t-small b6">Jobs</span></Link>;
+}
+// A manager with no job at all: offers and applications.
+function OutOfWork() {
+  const { G } = useGame();
+  return <Card><H1>Between jobs</H1><p className="mut">The world goes on. Offers come every few months; you can also apply to a national board.</p><div className="acts"><Link className="btn btn-primary btn-lg" to="/jobs">Jobs and offers</Link></div><p className="faint t-micro">Reputation {Math.round(G.s.manager.rep)}.</p></Card>;
+}
 
 export function xiStatus(G) {
   const t = G.teams[G.user]; if (!t.xi || t.xi.length !== 11) return 'auto-pick';
@@ -54,10 +146,11 @@ function DecisionPin() {
 function Hero() {
   const { G, ui, update, toast, setG } = useGame(); const nav = useNavigate();
   const s = G.s, t = G.teams[G.user];
+  if (G.s.wd && !CR.hasClub(G)) return CR.nationJob(G) ? null : <OutOfWork />;
   const busy = (fn) => async () => { toast('Simulating…'); await fn(); autosave(G); update(); };
   if (s.sacked) return (
     <Card><H1>You have been dismissed.</H1><p className="mut">The {t.name} board has ended your contract. Board confidence fell to {t.board}.</p>
-      <div className="acts"><button className="btn btn-primary btn-lg" onClick={() => nav('/club')}>See job offers · {(s.offers || []).length}</button><button className="btn btn-lg" onClick={() => setG(null)}>Start a new game</button></div></Card>);
+      <div className="acts"><button className="btn btn-primary btn-lg" onClick={() => nav('/club')}>See job offers · {(s.offers || []).length}</button>{CR.nationJob(G) ? <button className="btn btn-lg" onClick={() => update(() => { CR.resign(G, 'club'); autosave(G); })}>Carry on with {CR.nationName(G, CR.userNation(G))} only</button> : <button className="btn btn-lg" onClick={() => setG(null)}>Start a new game</button>}</div></Card>);
   if (s.phase === 'preseason') {
     const os = G.osCount(G.user); const ok = os >= 6 || !G.osFreeAgents().some((p) => p.value <= t.osPurse);
     return (
@@ -87,7 +180,7 @@ function Hero() {
       const due = G.decisionsDue(); const gated = due.length > 0;
       const decide = (id) => openDecisions(G, ui, update, id);
       const goMatch = async () => { if (gated) { decide(); return; } if (!live) { if (before) toast('Simulating other matches…'); await simUntilUser(G); autosave(G); if (ui.live && ui.live.done) ui.live = null; } nav(matchPath(G, f, live)); };
-      const quick = async () => { if (gated) { decide(); return; } await simUntilUser(G); const ff = userNextFixture(G); if (ff) { ui.live = null; const m = await quickSimUserMatch(G, ff); autosave(G); toast(`${m.result.text}.`); update(); nav(afterMatchRoute(G, ff)); return; } update(); };
+      const quick = async () => { if (gated) { decide(); return; } await simUntilUser(G); const ff = userNextFixture(G); if (ff) { ui.live = null; if (!savedMatchFor(G, ff) && G.s.wd) CR.applyCallUps(G, ff); const m = await quickSimUserMatch(G, ff); autosave(G); toast(`${m.result.text}.`); update(); nav(afterMatchRoute(G, ff)); return; } update(); };
       return (
         <Card>
           <p className="faint t-micro">Next match · {f.date}, {f.night ? '7:15 pm' : '3:00 pm'} · {f.stage === 'L' ? `Match ${f.n}` : stageName(f)}</p>
@@ -263,17 +356,21 @@ function BoardPortal() {
 // The next match, decisions answered in place, and alerts.
 function MToday() {
   const { G, ui, update, toast } = useGame(); const nav = useNavigate(); const s = G.s;
-  const f = (s.phase === 'league' || s.phase === 'playoffs') && !s.sacked ? userNextFixture(G) : null;
+  const club = !G.s.wd || CR.hasClub(G); const ev = G.s.wd ? CR.nextEvent(G) : null;
+  const f = club && (s.phase === 'league' || s.phase === 'playoffs') && !s.sacked ? userNextFixture(G) : null;
   const pending = s.inbox.filter(isPending); const t = G.teams[G.user];
   const answer = (n, i) => update(() => { G.applyEvent(n, i); autosave(G); toast(`${n.choices[i].l}.`); });
   const st = G.standings(); const pos = (id) => ordinal(st.findIndex((x) => x.id === id) + 1);
   const form = (id) => (G.teams[id].form || []).slice(-4).join(' ') || '–';
-  const inj = t.squad.map((id) => G.P(id)).filter((p) => p.inj);
+  const inj = club ? t.squad.map((id) => G.P(id)).filter((p) => p.inj) : [];
   const unread = s.inbox.filter((n) => !n.read && !isPending(n)).length;
-  const tasks = G.tasks();
+  const tasks = club ? G.tasks() : [];
   return (
     <>
-      {f ? <MNext f={f} pos={pos} form={form} /> : <div style={{ paddingTop: 12 }}><Hero /></div>}
+      <ClockBar m />
+      {ev && ev.kind === 'world' && <WorldCard ev={ev} m />}
+      {club ? (f ? <MNext f={f} pos={pos} form={form} /> : <div style={{ paddingTop: 12 }}><Hero /></div>) : !CR.nationJob(G) && <div style={{ paddingTop: 12 }}><Hero /></div>}
+      {G.s.wd && G.s.wd.offers.length > 0 && <div style={{ paddingTop: 10 }}><OffersPin /></div>}
       {pending.length > 0 && <><p className="mhead">Needs your decision · {pending.length}</p>
         <div className="stack" style={{ gap: 10 }}>{pending.slice(0, 4).map((n) => (
           <div key={n.id} className="panel" style={{ padding: 14 }}>
@@ -287,7 +384,8 @@ function MToday() {
         {tasks.map((x) => <li key={x.key}><Link to={x.to} className="grow" style={{ color: 'inherit', textDecoration: 'none' }}>{x.text}{x.sub && <><br /><span className="l2">{x.sub}</span></>}</Link><span className="faint" aria-hidden="true">›</span></li>)}
         {inj.slice(0, 3).map((p) => <li key={p.id}><Link to={`/player/${p.id}`} className="grow" style={{ color: 'inherit', textDecoration: 'none' }}><span className="crim">{p.name}</span> out {p.inj} match{p.inj > 1 ? 'es' : ''}</Link></li>)}
         {(s.promises || []).slice(0, 2).map((pr) => <li key={pr.id}><span className="grow">{promiseText(G, pr)}</span><span className={`t-small ${pr.matchesLeft <= 1 ? 'gld' : 'faint'}`}>{pr.matchesLeft <= 1 ? 'Due next match' : `${pr.matchesLeft} left`}</span></li>)}
-        <li><span className="grow">Board confidence {nn(G, t.board)}</span><span className="faint t-small">{boardMood(t.board)}</span></li>
+        {club && <li><span className="grow">Board confidence {nn(G, t.board)}</span><span className="faint t-small">{boardMood(t.board)}</span></li>}
+        {CR.nationJob(G) && <li><Link to="/jobs" className="grow" style={{ color: 'inherit', textDecoration: 'none' }}>{CR.nationName(G, CR.userNation(G))} board {nn(G, CR.nationJob(G).board)}</Link><span className="faint t-small">{boardMood(CR.nationJob(G).board)}</span></li>}
         {unread > 0 && <li><Link to="/?tab=inbox" replace className="linkbtn">{unread} more in Inbox</Link></li>}
       </ul>
     </>
@@ -298,7 +396,7 @@ function MNext({ f, pos, form }) {
   const due = G.decisionsDue(); const live = (ui.live && !ui.live.done && ui.live.started) || !!savedMatchFor(G, f);
   const before = G.s.fixtures.filter((x) => !x.res && x.n < f.n).length;
   const go = async () => { if (due.length) { openDecisions(G, ui, update); return; } if (!live) { if (before) toast('Simulating other matches…'); await simUntilUser(G); autosave(G); if (ui.live && ui.live.done) ui.live = null; } nav(matchPath(G, f, live)); };
-  const quick = async () => { if (due.length) { openDecisions(G, ui, update); return; } await simUntilUser(G); const ff = userNextFixture(G); if (ff) { ui.live = null; const m = await quickSimUserMatch(G, ff); autosave(G); toast(`${m.result.text}.`); update(); nav(afterMatchRoute(G, ff)); return; } update(); };
+  const quick = async () => { if (due.length) { openDecisions(G, ui, update); return; } await simUntilUser(G); const ff = userNextFixture(G); if (ff) { ui.live = null; if (!savedMatchFor(G, ff) && G.s.wd) CR.applyCallUps(G, ff); const m = await quickSimUserMatch(G, ff); autosave(G); toast(`${m.result.text}.`); update(); nav(afterMatchRoute(G, ff)); return; } update(); };
   const T2 = ({ id }) => <span style={{ display: 'flex', alignItems: 'center' }}><Dot id={id} />{tname(G, id)}{f.stage === 'L' && <span className="faint t-small" style={{ fontWeight: 400, marginLeft: 8 }}>{pos(id)}</span>}</span>;
   return (
     <section className="stack" style={{ gap: 8, padding: '14px 0 16px', borderBottom: '1px solid var(--rule)' }}>
@@ -361,23 +459,35 @@ function MClub() {
     </>
   );
 }
+function MNation() {
+  return <div style={{ paddingTop: 14 }} className="stack"><NationPortal /><CompsPortal /><NationResults /></div>;
+}
 function HomeMobile() {
-  const { G } = useGame(); const [tab, setTab] = useTab(['today', 'inbox', 'club'], 'today');
+  const { G } = useGame(); const club = !G.s.wd || CR.hasClub(G); const third = club ? 'club' : 'nation';
+  const [tab, setTab] = useTab(['today', 'inbox', third], 'today');
   const dec = G.s.inbox.filter(isPending).length; const unread = G.s.inbox.filter((n) => !n.read && !isPending(n)).length;
+  const top = club ? undefined : { title: <><NDot id={CR.userNation(G)} />{CR.userNation(G) ? CR.nationName(G, CR.userNation(G)) : 'No job'}</>, sub: G.s.wd ? short(G.s.wd.day) : '', right: CR.nationJob(G) ? <>Board <b>{CR.nationJob(G).board}</b></> : <>Rep <b>{Math.round(G.s.manager.rep)}</b></> };
   return (
-    <MScreen label="Home sections" tab={tab} onTab={setTab} tabs={[['today', tn(G, 'Today'), dec], ['inbox', tn(G, 'Inbox'), unread], ['club', tn(G, 'Club')]]}>
-      {tab === 'today' && <MToday />}{tab === 'inbox' && <MInbox />}{tab === 'club' && <MClub />}
+    <MScreen top={top} label="Home sections" tab={tab} onTab={setTab} tabs={[['today', tn(G, 'Today'), dec], ['inbox', tn(G, 'Inbox'), unread], club ? ['club', tn(G, 'Club')] : ['nation', 'Nation']]}>
+      {tab === 'today' && <MToday />}{tab === 'inbox' && <MInbox />}{tab === 'club' && <MClub />}{tab === 'nation' && <MNation />}
     </MScreen>
   );
 }
 
 export default function Home() {
-  const narrow = useNarrow();
+  const { G } = useGame(); const narrow = useNarrow();
   if (narrow) return <HomeMobile />;
+  const club = !G.s.wd || CR.hasClub(G); const ev = G.s.wd ? CR.nextEvent(G) : null; const wcard = ev && ev.kind === 'world' ? <WorldCard ev={ev} /> : null;
+  if (!club) return (
+    <div className="wrap portals">
+      <div className="pcol"><ClockBar /><OffersPin />{wcard}<Hero /><NationResults /><NewsPortal /></div>
+      <div className="pcol"><NationPortal /><CompsPortal /></div>
+    </div>
+  );
   return (
     <div className="wrap portals">
-      <div className="pcol"><DecisionPin /><Hero /><Promises /><LastAnswer /><NewsPortal /><ResultsPortal /></div>
-      <div className="pcol"><TablePortal /><CapRaces /><SquadWatch /><BoardPortal /></div>
+      <div className="pcol">{G.s.wd && <ClockBar />}<DecisionPin /><OffersPin />{wcard}<Hero /><Promises /><LastAnswer /><NewsPortal /><ResultsPortal /></div>
+      <div className="pcol"><TablePortal /><CapRaces /><SquadWatch /><BoardPortal /><NationPortal />{CR.nationJob(G) && <CompsPortal />}</div>
     </div>
   );
 }

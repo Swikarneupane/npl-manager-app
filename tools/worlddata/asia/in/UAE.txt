@@ -1,0 +1,36 @@
+#name UAE
+#member associate
+#asOf 2026-01-31
+#source Wikipedia, "United Arab Emirates national cricket team", Current squad (headed as of 4 September 2025, with match entries into 2026)
+#note Domestic teams are not listed: no first-class or one-day domestic structure was verified for this nation.
+#source NPL Manager src/game/os-extra.js (Muhammad Waseem, Aayan Afzal Khan spelt identically so they alias)
+Muhammad Waseem;1994;BAT;70;15;RM;R;3/0/0;-
+Alishan Sharafu;2003;BAT;64;15;RM;R;-;-
+Harpreet Singh Bhatia;1991;BAT;60;10;RM;L;-;-
+Sohaib Khan;1998;BAT;62;0;-;R;-;-
+Asif Khan;1990;BAT;62;15;OB;R;-;-
+Akshdeep Nath;1998;BAT;58;10;RM;R;-;-
+Muhammad Zohaib;1990;BAT;58;15;OB;L;-;-
+Ethan D'Souza;2006;BAT;54;15;OB;L;-;-
+Sagar Kalyan;1996;BAT;54;10;RM;L;-;-
+Muhammad Farooq;1992;AR;52;60;LB;R;-;-
+Harshit Kaushik;1996;AR;54;58;SLA;L;-;-
+Dhruv Parashar;2004;AR;56;58;OB;R;-;-
+Aayan Afzal Khan;2005;AR;54;60;SLA;R;-;-
+Rahul Chopra;1994;WK;60;0;-;R;-;-
+Aryansh Sharma;2004;WK;60;0;-;R;-;-
+Vriitya Aravind;2002;WK;60;0;-;R;-;-
+Adeeb Usmani;2005;WK;52;15;OB;R;-;-
+Syed Haider;2001;WK;54;0;-;R;-;-
+Tanish Suri;2005;WK;52;0;-;R;-;-
+Muhammad Jawadullah;1994;BOWL;25;64;LFM;L;-;-
+Junaid Siddique;1992;BOWL;30;62;RFM;R;-;-
+Haider Ali;1994;BOWL;20;62;SLA;L;-;-
+Zuhaib Zubair;2003;BOWL;15;62;LB;R;-;-
+Muhammad Rohid;2002;BOWL;20;60;LFM;R;-;-
+Khuzaima Tanveer;1999;BOWL;15;60;RF;R;-;-
+Simranjeet Singh;1989;BOWL;20;60;SLA;R;-;-
+Matiullah Khan;1993;BOWL;20;58;RFM;R;-;-
+Saghir Khan;1999;BOWL;20;58;RFM;R;-;-
+Zahid Ali;1992;BOWL;20;56;RM;R;-;-
+Sanchit Sharma;2001;BOWL;20;56;RM;R;-;-

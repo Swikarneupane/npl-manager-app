@@ -1,0 +1,15 @@
+Onias Bascome|1995|BAT|50|25|RM|R|0,0,0|
+Alex Dore|1997|BAT|46|0||L|0,0,0|
+Tre Manders|1995|BAT|48|0||R|0,0,0|
+Zeko Burgess|1982|AR|44|46|RM|R|0,0,0|
+Derrick Brangman|1987|AR|46|50|SLA|L|0,0,0|
+Delray Rawlins|1997|AR|58|50|SLA|L|1,0,-1|
+Dominic Sabir|2003|AR|46|48|RM|R|0,0,0|
+Jonté Smith|1994|AR|46|48|RM|R|0,0,0|
+Terryn Fray|1991|WK|48|0||R|0,0,0|
+Sinclair Smith|1991|WK|46|0||R|0,0,0|
+Jarryd Richardson|2003|WK|42|0||R|0,0,0|
+Marcus Scotland|2003|WK|42|0||R|0,0,0|
+Kevon Fubler|1992|BOWL|25|50|LFM|L|0,0,0|
+Jermal Proctor|2005|BOWL|25|46|RM|R|0,0,0|
+Chare Smith|1997|BOWL|25|50|RFM|R|0,0,0|

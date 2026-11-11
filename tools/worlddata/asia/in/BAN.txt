@@ -1,0 +1,59 @@
+#name Bangladesh
+#member full
+#asOf 2026-02-19
+#source Wikipedia, "Bangladesh national cricket team", Current squad (updated 19 February 2026), citing BCB central contracts (February 2026)
+#source Wikipedia player articles for players outside the current squad, checked November 2026
+#source NPL Manager src/game/data.js and os-extra.js (players already in the NPL game, spelt identically so they alias)
+#note Domestic team is the player's National Cricket League division per the Wikipedia squad table. BPL franchises were not verified for 2026 and are left out.
+#team BAN-DHK|Dhaka Division|DHK
+#team BAN-DM|Dhaka Metropolis|DMT
+#team BAN-CTG|Chattogram Division|CTG
+#team BAN-RAJ|Rajshahi Division|RAJ
+#team BAN-KHU|Khulna Division|KHU
+#team BAN-SYL|Sylhet Division|SYL
+#team BAN-RAN|Rangpur Division|RAN
+#team BAN-BAR|Barishal Division|BAR
+#team BAN-MYM|Mymensingh Division|MYM
+Najmul Hossain Shanto;1998;BAT;76;20;OB;L;-;BAN-RAJ
+Towhid Hridoy;2000;BAT;74;0;-;R;1/1/-1;BAN-RAJ
+Mahmudul Hasan Joy;2000;BAT;68;10;OB;R;-2/0/2;BAN-CTG
+Tanzid Hasan;2000;BAT;70;0;-;L;2/0/-2;BAN-RAJ
+Mominul Haque;1991;BAT;72;25;SLA;L;-4/-2/4;BAN-CTG
+Shadman Islam;1995;BAT;68;10;SLA;L;-3/0/3;BAN-DM
+Saif Hassan;1998;BAT;68;20;OB;R;-;BAN-DHK
+Parvez Hossain Emon;2002;BAT;66;0;-;L;2/0/-2;-
+Zakir Hasan;1998;BAT;66;0;-;L;-2/0/2;BAN-SYL
+Mohammad Naim;1999;BAT;64;0;-;L;-;-
+Shahadat Hossain Dipu;2002;BAT;64;25;OB;R;-;-
+Ariful Islam;2002;BAT;62;0;-;R;-;-
+Soumya Sarkar;1993;AR;64;58;RFM;L;-;BAN-KHU
+Mehidy Hasan Miraz;1997;AR;68;76;OB;R;-;BAN-KHU
+Mahedi Hasan;1994;AR;58;70;OB;R;1/0/-2;BAN-KHU
+Shamim Hossain;2000;AR;64;40;OB;L;2/0/-2;BAN-CTG
+Mohammad Saifuddin;1996;AR;58;64;RFM;L;-;-
+Afif Hossain;1999;AR;64;45;OB;L;-;BAN-KHU
+Shakib Al Hasan;1987;AR;72;77;SLA;L;-;-
+Mushfiqur Rahim;1987;WK;76;0;-;R;-3/1/2;BAN-RAJ
+Litton Das;1994;WK;70;0;-;R;-;BAN-RAN
+Nurul Hasan;1993;WK;64;0;-;R;-;BAN-KHU
+Jaker Ali;1998;WK;68;0;-;R;-;BAN-SYL
+Anamul Haque;1992;WK;66;0;-;R;-;-
+Mahidul Islam Ankon;1999;WK;64;0;-;R;-2/0/2;-
+Amite Hasan;2001;WK;60;0;-;R;-;BAN-SYL
+Akbar Ali;2001;WK;66;0;-;R;-;-
+Nasum Ahmed;1994;BOWL;25;68;SLA;L;-;BAN-SYL
+Nayeem Hasan;2000;BOWL;25;66;OB;R;-2/0/2;BAN-CTG
+Rishad Hossain;2002;BOWL;35;72;LB;R;2/0/-2;BAN-RAN
+Taijul Islam;1992;BOWL;30;76;SLA;L;-4/0/4;BAN-RAJ
+Tanvir Islam;1996;BOWL;20;68;SLA;L;-;BAN-BAR
+Hasan Murad;2001;BOWL;25;64;SLA;R;-2/0/3;-
+Shoriful Islam;2001;BOWL;20;70;LFM;L;-;BAN-RAJ
+Taskin Ahmed;1995;BOWL;23;73;RF;L;-;-
+Mustafizur Rahman;1995;BOWL;25;76;LFM;L;3/0/-4;-
+Tanzim Hasan Sakib;2002;BOWL;35;68;RFM;R;-;-
+Khaled Ahmed;1992;BOWL;15;68;RFM;R;-2/0/2;BAN-SYL
+Hasan Mahmud;1999;BOWL;15;72;RFM;R;-;BAN-CTG
+Nahid Rana;2002;BOWL;10;74;RF;R;-2/0/2;BAN-RAJ
+Ebadot Hossain;1994;BOWL;10;70;RF;R;-2/0/2;-
+Mrittunjoy Chowdhury;2001;BOWL;20;60;LFM;L;-;-
+Rejaur Rahman Raja;1999;BOWL;20;60;RM;R;-;-

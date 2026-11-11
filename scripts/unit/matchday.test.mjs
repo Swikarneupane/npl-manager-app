@@ -76,7 +76,7 @@ test('press: answers move morale, fans, board, conduct and the rival respect; ev
 test('key moments: win-chance previews match m.winProb for the expected over, and choices are logged', async () => {
   const G = league(); const f = await toUser(G); const m = G.newMatch(f); const o = m.home === 'LL' ? m.away : m.home;
   m.inns.push(m.newInnings(o, 'LL', null)); m.inns[0].runs = 170; m.inns[0].balls = 120; m.inns[0].wkts = 6;
-  const inn = m.newInnings('LL', o, 171); m.inns.push(inn); inn.runs = 140; inn.balls = 102; inn.wkts = 4; inn.cur = m.lineups[o].xi.find((id) => G.P(id).bowl >= 50); inn.bw[inn.cur] = { balls: 18, r: 30, w: 1, dots: 0, wd: 0, nb: 0 }; czInit(m);
+  const inn = m.newInnings('LL', o, 171); m.inns.push(inn); inn.runs = 140; inn.balls = 102; inn.wkts = 4; inn.cur = m.lineups[o].xi.find((id) => G.P(id).bowl >= 50); inn.bw[inn.cur] = { balls: 18, r: 30, w: 1, dots: 0, wd: 0, nb: 0 }; czInit(m); m.edge = 0; // equal sides, so the chase is close whatever squads the league drew
   const km = MD.keyMoment(G, m, inn, 'over'); assert.ok(km, 'a close chase at the 18th over is a key moment');
   assert.ok(km.opts.length >= 2 && km.opts.length <= 3);
   assert.ok(Math.abs(km.wp0 - MD.userWin(G, m)) < 1e-9);

@@ -1,17 +1,47 @@
-// ===== Phase 2 module: world cricket =====
-// Foreign T20 leagues (light simulation), Nepali players abroad and NOC requests, Nepal's 50-over
-// pathway, World Cups, team and player rankings (the game's own, not the ICC's), the World Test
-// Championship and a feed of series around the world. State lives in G.s.world.
-// Everything here after the save starts is simulated and labelled "in-game".
-import { R, ri, rf, pick, clamp, shuffle, ovr, Match } from './engine.js';
+// ===== World cricket (game layer) =====
+// Foreign T20 leagues (a light simulation until W3), Nepali players abroad and NOC requests, the
+// pre-season clash with Nepal duty, and the bridge between the NPL game and the international
+// programme in src/world: Nepal's real world fixtures become caps, call-ups, milestones and form for
+// the players in the save, and old seasons are compacted before saving.
+// The phase 2 light World Cup, League 2 tables, Elo rankings and Test feed are retired: the
+// international game now runs in src/world (intl.js, rankings.js). State: G.s.world (leagues, NOCs,
+// clash, older World Cup history) and G.s.wd (the world).
+// Everything after the save starts is simulated and labelled "in-game".
+import { R, ri, rf, pick, clamp, shuffle, ovr } from './engine.js';
 import { adjustHappy, logDecision } from './depth.js';
-import { OS_NAMES } from './data.js';
-import { LEAGUES, LEAGUE_BY, REAL_2026, NATION, NATIONS, CODE_BY_NAME, FULL_MEMBERS, TEST_TEAMS, LEAGUE2_TEAMS, CHALLENGE_GROUPS, worldCupsFor } from './world-data.js';
+import { LEAGUES, LEAGUE_BY, REAL_2026 } from './world-data.js';
+import * as ST from '../world/state.js';
+import * as IN from '../world/intl.js';
+import * as RK from '../world/rankings.js';
+import { dayOfDate, dateOf, MONTHS } from '../world/dates.js';
 
-export const LABEL = 'in-game, not ICC';
-export const nm = (c) => (NATION[c] ? NATION[c].name : c);
+export const LABEL = RK.LABEL;
+export const nm = IN.nm;
 const W = (G) => G.s.world;
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const fmtL = (v) => (v >= 100 ? `${Math.round(v / 10) / 10} Cr` : `${v} L`);
+const RETIRED = ['elo', 'l2', 'po', 'wcq', 'cl', 'wc', 'trk', 'prk', 'gen', 'wtc', 'feed', 'tier', 'qual', 'wint', 'live', 'rankAt'];
+
+function real2026() {
+  const rows = {}; for (const L of LEAGUES) { const r = REAL_2026[L.k]; rows[L.k] = { champ: r.champ, runner: r.runner, margin: r.margin, when: r.when, story: r.story, real: true, nep: r.nep || '' }; }
+  return { y: 2026, rows, heads: [
+    { m: 'Jan', t: 'Rajshahi Warriors win the BPL final by 63 runs' }, { m: 'May', t: 'Peshawar Zalmi beat the debutants Hyderabad Kingsmen in the PSL final' },
+    { m: 'May', t: 'Royal Challengers Bengaluru win the IPL again' }, { m: 'Jul', t: 'Los Angeles Knight Riders win the MLC final by one run' }, { m: 'Sep', t: 'Antigua and Barbuda Falcons win their first CPL title' }] };
+}
+
+// ----- migrate -----
+export function migrate(G) {
+  const s = G.s; if (!s) return;
+  const w = (s.world ??= {});
+  w.v ??= 1; w.noc ??= []; w.wcHist ??= []; w.lg ??= real2026(); w.clash ??= null;
+  for (const k of RETIRED) delete w[k];
+  if (s.players) {
+    // Sandeep Lamichhane's real 2025-26 BPL season (Rajshahi Warriors won the title)
+    const L = Object.values(s.players).find((p) => p.name === 'Sandeep Lamichhane' && p.real !== false);
+    if (L) { L.abroad ??= []; if (!L.abroad.some((a) => a.y === 2026 && a.league === 'bpl')) L.abroad.push({ y: 2026, league: 'bpl', team: 'Rajshahi Warriors', real: 1, champ: 1 }); }
+  }
+  if (s.teams && s.user) { ST.migrate(G); IN.init(G); }
+}
+
 
 // ----- light match model -----
 // A result from two strengths on the game's scale: who won, both innings [runs, wkts, balls] and the margin.
@@ -28,89 +58,6 @@ export function simGame(sa, sb, fmt) {
 }
 export const scoreStr = (i) => (i[1] >= 10 ? `${i[0]}` : `${i[0]}/${i[1]}`);
 const ovStr = (b) => `${Math.floor(b / 6)}${b % 6 ? `.${b % 6}` : ''}`;
-
-// ----- strengths and Elo -----
-const eloOf = (s) => 1000 + (s - 75) * 25;
-const strOf = (r) => 75 + (r - 1000) / 25;
-// Nepal's strength comes from the real squad in the save: the average rating of the likely XI.
-export function nepStrength(G) {
-  if (!G.s.players) return 74;
-  const sel = G.pickNepal(); const P = Object.fromEntries(sel.squad.map((id) => [id, G.P(id)]));
-  if (sel.squad.length < 11) return 70;
-  const xi = G.intlLineup(sel.squad, P).xi; return xi.reduce((a, id) => a + ovr(G.P(id)), 0) / xi.length - 2;
-}
-function strength(G, code, fmt, cache) {
-  if (code === 'NEP') return cache && cache.nep != null ? cache.nep : (cache ? (cache.nep = nepStrength(G)) : nepStrength(G));
-  const e = W(G).elo[fmt === 'ODI' ? 'odi' : 't20i'][code]; return e != null ? strOf(e) : 60;
-}
-function eloUpdate(G, fmt, a, b, aWin) {
-  const E = W(G).elo[fmt === 'ODI' ? 'odi' : 't20i']; if (fmt === 'Test') return;
-  const ra = E[a] ?? 900, rb = E[b] ?? 900; const ea = 1 / (1 + Math.pow(10, (rb - ra) / 400)); const k = 20;
-  E[a] = Math.round(ra + k * ((aWin ? 1 : 0) - ea)); E[b] = Math.round(rb - k * ((aWin ? 1 : 0) - ea));
-}
-// Plays a light match between two nations and updates the rankings.
-function play(G, a, b, fmt, cache) {
-  const g = simGame(strength(G, a, fmt, cache), strength(G, b, fmt, cache), fmt); eloUpdate(G, fmt, a, b, g.aWin); return g;
-}
-
-// ----- tables -----
-// Rows: {code: [p, w, l, nr, rf, bf, ra, ba]}; points 2 a win, 1 a no result.
-const row0 = () => [0, 0, 0, 0, 0, 0, 0, 0];
-function addResult(rows, a, b, g) {
-  const A = (rows[a] ??= row0()), B = (rows[b] ??= row0());
-  const ia = g.aFirst ? g.i1 : g.i2, ib = g.aFirst ? g.i2 : g.i1; const bal = (i) => (i[1] >= 10 ? g.maxB : i[2]);
-  A[0]++; B[0]++; if (g.nr) { A[3]++; B[3]++; return; }
-  if (g.aWin) { A[1]++; B[2]++; } else { A[2]++; B[1]++; }
-  A[4] += ia[0]; A[5] += bal(ia); A[6] += ib[0]; A[7] += bal(ib); B[4] += ib[0]; B[5] += bal(ib); B[6] += ia[0]; B[7] += bal(ia);
-}
-const nrrOf = (r) => (r[5] && r[7] ? r[4] / (r[5] / 6) - r[6] / (r[7] / 6) : 0);
-// Sorted table: [{code, p, w, l, nr, pts, nrr}]
-export function tableOf(rows) {
-  return Object.entries(rows).map(([code, r]) => ({ code, p: r[0], w: r[1], l: r[2], nr: r[3], pts: r[1] * 2 + r[3], nrr: nrrOf(r) }))
-    .sort((x, y) => y.pts - x.pts || y.nrr - x.nrr || x.code.localeCompare(y.code));
-}
-function roundRobin(G, teams, fmt, rows, cache, legs = 1) { for (let k = 0; k < legs; k++) for (let i = 0; i < teams.length; i++) for (let j = i + 1; j < teams.length; j++) addResult(rows, teams[i], teams[j], play(G, teams[i], teams[j], fmt, cache)); return rows; }
-
-// ----- seeds -----
-function seedElo() { const o = { t20i: {}, odi: {} }; for (const n of NATIONS) { o.t20i[n[0]] = eloOf(n[2]); o.odi[n[0]] = eloOf(n[3]); } return o; }
-function real2026() {
-  const rows = {}; for (const L of LEAGUES) { const r = REAL_2026[L.k]; rows[L.k] = { champ: r.champ, runner: r.runner, margin: r.margin, when: r.when, story: r.story, real: true, nep: r.nep || '' }; }
-  return { y: 2026, rows, heads: [
-    { m: 'Jan', t: 'Rajshahi Warriors win the BPL final by 63 runs' }, { m: 'May', t: 'Peshawar Zalmi beat the debutants Hyderabad Kingsmen in the PSL final' },
-    { m: 'May', t: 'Royal Challengers Bengaluru win the IPL again' }, { m: 'Jul', t: 'Los Angeles Knight Riders win the MLC final by one run' }, { m: 'Sep', t: 'Antigua and Barbuda Falcons win their first CPL title' }] };
-}
-// CWC League 2 2023-27: an in-game final table for the real eight teams. Nepal finish in the bottom four,
-// which matches the real calendar: Nepal host and play the Qualifier Play-off in December 2026.
-function seedL2(G) {
-  const E = seedElo(); const fake = { s: { world: { elo: E } } }; let rows;
-  for (let t = 0; t < 40; t++) {
-    rows = {}; const T = LEAGUE2_TEAMS; const extra = shuffle(T.slice());
-    for (let i = 0; i < T.length; i++) for (let j = i + 1; j < T.length; j++) for (let k = 0; k < 5; k++) addResult(rows, T[i], T[j], nrSim(play(fake, T[i], T[j], 'ODI')));
-    for (let i = 0; i < 8; i += 2) addResult(rows, extra[i], extra[i + 1], nrSim(play(fake, extra[i], extra[i + 1], 'ODI')));
-    const pos = tableOf(rows).findIndex((x) => x.code === 'NEP'); if (pos >= 4) break;
-  }
-  return { from: 2023, to: 2027, teams: LEAGUE2_TEAMS.slice(), rows, done: true };
-}
-const nrSim = (g) => { if (R() < 0.02) g.nr = true; return g; };
-
-// ----- migrate -----
-export function migrate(G) {
-  const s = G.s; if (!s) return;
-  const w = (s.world ??= {});
-  w.v ??= 1; w.noc ??= []; w.feed ??= []; w.wcHist ??= []; w.qual ??= {};
-  w.elo ??= seedElo();
-  w.lg ??= real2026();
-  w.l2 ??= seedL2(G);
-  w.tier ??= 'l2'; w.po ??= null; w.wcq ??= null; w.cl ??= null; w.wc ??= null; w.clash ??= null;
-  w.wtc ??= { from: 2025, to: 2027, rows: {}, past: [] };
-  w.trk ??= teamSnapshot(G, null);
-  w.gen ??= genPlayers(s.players ? new Set(Object.values(s.players).map((p) => p.name)) : null);
-  if (!s.players) return;
-  // Sandeep Lamichhane's real 2025-26 BPL season (Rajshahi Warriors won the title)
-  const L = Object.values(s.players).find((p) => p.name === 'Sandeep Lamichhane' && p.real !== false);
-  if (L) { L.abroad ??= []; if (!L.abroad.some((a) => a.y === 2026 && a.league === 'bpl')) L.abroad.push({ y: 2026, league: 'bpl', team: 'Rajshahi Warriors', real: 1, champ: 1 }); }
-  w.prk ??= playerSnapshot(G, null);
-}
 
 // ===== Leagues abroad =====
 const kindLabel = (k) => (k === 'inj' ? 'injury replacement' : 'development contract');
@@ -215,286 +162,6 @@ export function decideNoc(G, id, grant, how) {
 }
 function expireNocs(G) { for (const r of openNocs(G)) decideNoc(G, r.id, assistantGrants(G, r), 'expired'); }
 
-// ===== Calendar clash with the pre-season camp =====
-function makeClash(G) {
-  const w = W(G); const y = G.year; if (w.clash && w.clash.y === y) return;
-  const sel = G.pickNepal(); const pids = sel.squad.filter((id) => G.P(id).team === G.user);
-  if (!pids.length) { w.clash = null; return; }
-  const comp = w.tier === 'cl' ? 'CWC Challenge League round' : 'CWC League 2 tri-series';
-  w.clash = { y, comp, when: `Sep ${y}`, days: ri(6, 12), pids, status: 'open' };
-  if (G.s.settings && G.s.settings.assistant) decideClash(G, 'without', 'assistant');
-}
-export function decideClash(G, pick, how) {
-  const c = W(G).clash; if (!c || c.status !== 'open') return null; const t = G.teams[G.user];
-  c.status = pick; c.how = how || 'you';
-  const names = c.pids.map((id) => G.P(id).name).join(', ');
-  c.outcome = pick === 'move' ? 'Rs 3 L to move the camp; the national players join it in full.' : `${names} miss the camp and start the season 8 fitness down.`;
-  if (pick === 'move') t.balance -= 3;
-  logDecision(G, 'clash', `${c.comp} overlaps the pre-season camp by ${c.days} days`, `${pick === 'move' ? 'Move the camp' : 'Train without them'}${how === 'expired' ? ' (not answered in time)' : how === 'assistant' ? ' (assistant)' : ''}`, c.outcome);
-  return c;
-}
-
-// ===== Pathway: League 2, Play-off, Qualifier, Challenge League =====
-// Nepal's results in a winter's events against a set of nations, as table rows.
-function nepalGamesVs(G, w, codes, fmt) {
-  const N = G.s.nepal; const out = [];
-  if (N.winter !== w || !N.results) return out;
-  for (const rec of N.results) {
-    if (!rec.official || rec.fmt !== fmt) continue; const opp = CODE_BY_NAME[(rec.short || '').replace(/^v /, '')]; if (!opp || !codes.includes(opp)) continue;
-    for (const g of rec.games) out.push({ opp, r: g.r, nep: g.nep, oppS: g.opp });
-  }
-  return out;
-}
-const parseS = (s) => { const [r, w] = String(s || '0').split('/'); return [parseInt(r, 10) || 0, w == null ? 10 : parseInt(w, 10)]; };
-function addNepalGame(rows, x, maxB) {
-  const [nr, nw] = parseS(x.nep), [or, ow] = parseS(x.oppS);
-  const g = { aWin: x.r === 'W', aFirst: true, i1: [nr, nw, maxB], i2: [or, ow, maxB], maxB, nr: x.r !== 'W' && x.r !== 'L' };
-  addResult(rows, 'NEP', x.opp, g);
-}
-// Each year of a cycle: Nepal's engine-played ODIs against cycle teams, then the rest filled in to about nine games a team.
-function cycleYear(G, w, C, cache) {
-  for (const x of nepalGamesVs(G, w, C.teams, 'ODI')) addNepalGame(C.rows, x, 300);
-  const others = C.teams.filter((c) => c !== 'NEP'); const per = Math.ceil(36 / Math.max(1, C.to - C.from));
-  for (const c of others) { let k = 0; while (((C.rows[c] || [0])[0] < per * (w - C.from + 1)) && k++ < 12) { const o = pick(others.filter((x) => x !== c)); addResult(C.rows, c, o, nrSim(play(G, c, o, 'ODI', cache))); } }
-}
-// A tri-series at the start of the NPL pre-season: four games for Nepal.
-function preseasonSeries(G) {
-  const w = W(G); const C = w.tier === 'cl' ? w.cl : w.l2; if (!C || C.done || G.year >= C.to) return null;
-  const opps = shuffle(C.teams.filter((c) => c !== 'NEP')).slice(0, 2); const cache = {}; const res = [];
-  for (const o of opps) for (let k = 0; k < 2; k++) { const g = nrSim(play(G, 'NEP', o, 'ODI', cache)); addResult(C.rows, 'NEP', o, g); res.push({ o, win: g.aWin, m: g.m }); }
-  addResult(C.rows, opps[0], opps[1], play(G, opps[0], opps[1], 'ODI', cache)); addResult(C.rows, opps[1], opps[0], play(G, opps[1], opps[0], 'ODI', cache));
-  const won = res.filter((x) => x.win).length;
-  pushFeed(G, { when: `Sep ${G.year}`, t: `${C === w.cl ? 'Challenge League' : 'CWC League 2'} tri-series: Nepal, ${nm(opps[0])} and ${nm(opps[1])}`, sub: `Nepal won ${won} of 4 · in-game`, nep: true });
-  return res;
-}
-// The 5-regular schedule on 8 teams: everyone plays everyone except their two neighbours on a ring.
-function playoff(G, teams, nepW, cache) {
-  const ring = shuffle(teams.slice()); const rows = {}; const n = ring.length; const pairs = [];
-  for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) { const d = Math.min(j - i, n - (j - i)); if (d > 1) pairs.push([ring[i], ring[j]]); }
-  const nepPairs = pairs.filter((p) => p.includes('NEP')); const wins = new Set(shuffle(nepPairs.slice()).slice(0, nepW == null ? -1 : nepW));
-  for (const [a, b] of pairs) {
-    if (nepW != null && (a === 'NEP' || b === 'NEP')) { const g = simGame(75, 75, 'ODI'); const nepA = a === 'NEP'; const nepWin = wins.has(nepPairs.find((p) => p[0] === a && p[1] === b));
-      g.aWin = nepA ? nepWin : !nepWin; addResult(rows, a, b, g); eloUpdate(G, 'ODI', a, b, g.aWin); }
-    else addResult(rows, a, b, play(G, a, b, 'ODI', cache));
-  }
-  return rows;
-}
-const compact = (rows) => tableOf(rows).map((x) => [x.code, x.p, x.w, x.l, x.nr, x.pts, Math.round(x.nrr * 100) / 100]);
-// End of a 50-over cycle: League 2's top four go to the Qualifier; the bottom four and the Challenge League's
-// top four play the Play-off; its top four join them. In the game the next League 2 is those eight.
-function endCycle(G, wint, cache) {
-  const w = W(G); const N = G.s.nepal; const year = wint + 1; const L2 = w.l2; const t2 = tableOf(L2.rows).map((x) => x.code);
-  let clTop;
-  if (w.tier === 'cl' && w.cl) clTop = tableOf(w.cl.rows).map((x) => x.code).slice(0, 4);
-  else clTop = [...shuffle(CHALLENGE_GROUPS.A.slice()).sort((a, b) => NATION[b].odi - NATION[a].odi + rf(-4, 4)).slice(0, 2), ...shuffle(CHALLENGE_GROUPS.B.slice()).sort((a, b) => NATION[b].odi - NATION[a].odi + rf(-4, 4)).slice(0, 2)];
-  const top4 = t2.slice(0, 4); const poTeams = [...t2.slice(4), ...clTop];
-  let nepW = null;
-  if (poTeams.includes('NEP')) { const rec = N.winter === wint && (N.results || []).find((r) => /^cwcq-po/.test(r.id)); nepW = rec ? rec.w : null; }
-  const poRows = playoff(G, poTeams, nepW, cache); const poT = tableOf(poRows).map((x) => x.code);
-  w.po = { y: wint, rows: compact(poRows), top: poT.slice(0, 4), nepW };
-  // the Qualifier: eight from the pathway and the two lowest-ranked full members outside the hosts
-  const cup = worldCupsFor(year).find((c) => c.fmt === 'ODI') || { y: year, name: `ODI World Cup ${year}` };
-  const hosts = cup.hosts ? NATIONS.filter((n) => cup.hosts.includes(n[1])).map((n) => n[0]) : [];
-  const fm = FULL_MEMBERS.filter((c) => !hosts.includes(c)).sort((a, b) => w.elo.odi[a] - w.elo.odi[b]).slice(0, 2);
-  const qTeams = [...top4, ...poT.slice(0, 4), ...fm]; const qRows = roundRobin(G, qTeams, 'ODI', {}, cache); const qT = tableOf(qRows).map((x) => x.code);
-  w.wcq = { y: year, cup: cup.name, rows: compact(qRows), top: qT.slice(0, 4) };
-  w.qual[`odi${cup.y}`] = qT.slice(0, 4).includes('NEP');
-  // the next cycle
-  const nextL2 = [...top4, ...poT.slice(0, 4)];
-  w.l2 = { from: L2.to, to: L2.to + 4, teams: nextL2, rows: Object.fromEntries(nextL2.map((c) => [c, row0()])), done: false, prev: { from: L2.from, to: L2.to, rows: compact(L2.rows) } };
-  if (nextL2.includes('NEP')) { w.tier = 'l2'; w.cl = null; }
-  else { w.tier = 'cl'; const grp = shuffle([...CHALLENGE_GROUPS.A, ...CHALLENGE_GROUPS.B].filter((c) => !nextL2.includes(c))).slice(0, 5); w.cl = { from: L2.to, to: L2.to + 3, teams: ['NEP', ...grp], rows: Object.fromEntries(['NEP', ...grp].map((c) => [c, row0()])) }; }
-  const nepQ = w.qual[`odi${cup.y}`]; const nepPO = poT.indexOf('NEP');
-  G.news(nepQ ? `Nepal qualify for the ${cup.name}` : (top4.includes('NEP') || nepPO >= 0 && nepPO < 4) ? `Nepal miss out at the World Cup Qualifier` : `Nepal finish ${nepPO + 1}th in the Qualifier Play-off`, 'intl',
-    { to: '/international', sub: nepQ ? 'Milestone' : 'Pathway', detail: `In-game: Play-off ${nepPO >= 0 ? `${nepPO + 1}th of 8` : 'not needed'}; Qualifier ${qT.indexOf('NEP') >= 0 ? `${qT.indexOf('NEP') + 1}th of 10` : 'not reached'}. Next: ${w.tier === 'l2' ? `CWC League 2 ${w.l2.from}–${String(w.l2.to).slice(2)}` : 'the Challenge League'}.`, ne: nepQ ? `नेपाल ${cup.name}मा छनोट` : 'नेपालको विश्वकप यात्रा' });
-}
-
-// ===== World Cups =====
-// T20: four groups of five, top two to the Super 8 (two groups of four), semi-finals and a final.
-// ODI: two groups of seven, top two to the semi-finals (the game's format).
-function knownPlayers(G, code, xi) {
-  if (code === 'NEP') return xi.map((id) => G.P(id));
-  return Object.values(G.players).filter((p) => p.nat === code && !p.retired && p.intlStatus === 'active').sort((a, b) => ovr(b) - ovr(a)).slice(0, 5);
-}
-function creditStats(wc, code, players, inn, oppInn, T) {
-  const bats = players.filter((p) => p.bat >= 50).slice(0, 5); let pool = inn[0];
-  for (const p of bats) { const r = Math.min(pool, Math.round(Math.pow(R(), 1.4) * (T ? 75 : 120) * (p.bat / 75))); pool -= r; stat(wc, p, code)[0] += r; }
-  const bowl = players.filter((p) => p.bowl >= 55).slice(0, 4); let wk = oppInn[1];
-  for (const p of bowl) { const s = stat(wc, p, code); const w = Math.min(wk, R() < 0.5 ? ri(0, 2) : ri(0, 3)); wk -= w; s[1] += w; const balls = T ? 24 : 60; s[2] += balls; s[3] += Math.round(balls / 6 * clamp((T ? 8.2 : 5.4) - (p.bowl - 70) / 12 + rf(-2, 2), 3, 14)); }
-}
-function stat(wc, p, code) { return (wc.st[p.id] ??= [0, 0, 0, 0, code, p.name]); }
-function bestLine(wc, code, players, before) {
-  let br = null, bw = null; for (const p of players) { const s = wc.st[p.id]; if (!s) continue; const b = before[p.id] || [0, 0, 0, 0]; const r = s[0] - b[0], w = s[1] - b[1]; if (!br || r > br[1]) br = [p.name, r]; if (w && (!bw || w > bw[1])) bw = [p.name, w, s[3] - b[3]]; }
-  return [br && br[1] >= 25 ? `${br[0]} ${br[1]}` : null, bw && bw[1] >= 2 ? `${bw[0]} ${bw[1]} for ${bw[2]}` : null].filter(Boolean).join(' · ');
-}
-function newCup(G, cup) {
-  const w = W(G); const fmt = cup.fmt; const E = w.elo[fmt === 'ODI' ? 'odi' : 't20i'];
-  const byElo = (cs) => cs.slice().sort((a, b) => E[b] - E[a]);
-  let field; const assoc = byElo(NATIONS.map((n) => n[0]).filter((c) => !FULL_MEMBERS.includes(c)));
-  const qkey = `${fmt === 'ODI' ? 'odi' : 't20'}${cup.y}`;
-  if (fmt === 'ODI') { const q = (w.wcq && w.wcq.cup === cup.name) ? w.wcq.top : assoc.slice(0, 4); field = [...byElo(FULL_MEMBERS).slice(0, 10), ...q].slice(0, 14); w.qual[qkey] ??= field.includes('NEP'); }
-  else {
-    const nepRank = assoc.indexOf('NEP'); const nepIn = nepRank >= 0 && (nepRank < 4 || R() < 0.6); w.qual[qkey] = nepIn;
-    const others = assoc.filter((c) => c !== 'NEP').slice(0, nepIn ? 7 : 8); field = [...FULL_MEMBERS, ...others, ...(nepIn ? ['NEP'] : [])];
-  }
-  const seeded = byElo(field); const ng = fmt === 'ODI' ? 2 : 4; const keys = 'ABCD'.slice(0, ng).split(''); const groups = Object.fromEntries(keys.map((k) => [k, []]));
-  seeded.forEach((c, i) => { const r = Math.floor(i / ng); const k = r % 2 ? keys[ng - 1 - (i % ng)] : keys[i % ng]; groups[k].push(c); });
-  const fx = []; for (const k of keys) { const g = groups[k]; const list = []; for (let i = 0; i < g.length; i++) for (let j = i + 1; j < g.length; j++) list.push([g[i], g[j]]);
-    // Nepal's last group game goes last, so it can be the decider
-    const nl = list.filter((p) => p.includes('NEP')); const rest = list.filter((p) => !p.includes('NEP')); fx.push(...shuffle(rest).map((p) => ({ st: k, a: p[0], b: p[1] })), ...nl.map((p) => ({ st: k, a: p[0], b: p[1] }))); }
-  return { y: cup.y, name: cup.name, hosts: cup.hosts, when: cup.when, fmt, cities: cup.cities || [], groups, fx, res: [], st: {}, nep: [], stage: 'group', pending: null, nepIn: field.includes('NEP'), s8: null, ko: [] };
-}
-function nepXI(G) { const sel = G.pickNepal(); const P = Object.fromEntries(sel.squad.map((id) => [id, G.P(id)])); return { squad: sel.squad, xi: sel.squad.length >= 11 ? G.intlLineup(sel.squad, P).xi : sel.squad }; }
-// One light World Cup match, with player stats for Nepal and the in-game players of other nations.
-function cupGame(G, wc, f, cache, nx) {
-  const T = wc.fmt !== 'ODI'; const g = play(G, f.a, f.b, wc.fmt, cache);
-  const pa = knownPlayers(G, f.a, nx.xi), pb = knownPlayers(G, f.b, nx.xi); const before = {}; for (const p of [...pa, ...pb]) if (wc.st[p.id]) before[p.id] = wc.st[p.id].slice(0, 4);
-  const ia = g.aFirst ? g.i1 : g.i2, ib = g.aFirst ? g.i2 : g.i1;
-  creditStats(wc, f.a, pa, ia, ib, T); creditStats(wc, f.b, pb, ib, ia, T);
-  const r = { st: f.st, a: f.a, b: f.b, win: g.aWin ? f.a : f.b, m: g.m, sa: scoreStr(ia), sb: scoreStr(ib), g: [g.aFirst ? 1 : 0, ...g.i1, ...g.i2, g.maxB], city: wc.cities.length ? pick(wc.cities) : '' };
-  if (f.a === 'NEP' || f.b === 'NEP') r.line = bestLine(wc, 'NEP', knownPlayers(G, 'NEP', nx.xi), before);
-  wc.res.push(r); return r;
-}
-const resGame = (r) => ({ aFirst: !!r.g[0], i1: r.g.slice(1, 4), i2: r.g.slice(4, 7), maxB: r.g[7], aWin: r.win === r.a });
-export function stageTable(wc, st) {
-  const rows = {}; const g = (wc.groups || {})[st]; const s8 = (wc.s8 || {})[st]; const teams = Array.isArray(g) ? g : Array.isArray(s8) ? s8 : [];
-  for (const c of teams) rows[c] = row0();
-  for (const r of wc.res || []) if (r && r.st === st && Array.isArray(r.g)) addResult(rows, r.a, r.b, resGame(r)); return tableOf(rows);
-}
-function nepRecord(wc, r) {
-  if (r.a !== 'NEP' && r.b !== 'NEP') return; const v = r.a === 'NEP' ? r.b : r.a; const won = r.win === 'NEP';
-  const stage = r.st === 'X' || r.st === 'Y' ? 'Super 8' : r.st === 'SF' ? 'Semi-final' : r.st === 'F' ? 'Final' : `Group ${r.st}`;
-  wc.nep.push({ v, r: won ? 'W' : 'L', m: r.m, stage, line: r.line || '', nep: r.a === 'NEP' ? r.sa : r.sb, opp: r.a === 'NEP' ? r.sb : r.sa, city: r.city });
-}
-// Plays group games up to Nepal's decider; returns true if that decider is pending.
-function runGroups(G, wc, cache, nx) {
-  while (wc.fx.length) {
-    const f = wc.fx[0]; const nepLast = (f.a === 'NEP' || f.b === 'NEP') && !wc.fx.slice(1).some((x) => x.st === f.st && (x.a === 'NEP' || x.b === 'NEP'));
-    if (nepLast && !wc.pending && alive(wc, f)) {
-      // everything else first, then this match waits for the user
-      const rest = wc.fx.slice(1); for (const x of rest) { const r = cupGame(G, wc, x, cache, nx); nepRecord(wc, r); }
-      wc.fx = [f]; wc.pending = { ...f, city: wc.cities.length ? pick(wc.cities) : '', scen: scenario(wc, f) }; return true;
-    }
-    wc.fx.shift(); const r = cupGame(G, wc, f, cache, nx); nepRecord(wc, r);
-  }
-  return false;
-}
-function alive(wc, f) { const t = stageTable(wc, f.st); const nep = t.find((x) => x.code === 'NEP'); if (!nep) return false; const pts = nep.pts + 2; const others = t.filter((x) => x.code !== 'NEP').map((x) => x.pts + 2 * (wc.fx.filter((y) => y.st === f.st && (y.a === x.code || y.b === x.code) && y !== f).length)); return others.filter((p) => p > pts).length < 2; }
-function scenario(wc, f) {
-  const t = stageTable(wc, f.st); const nep = t.find((x) => x.code === 'NEP') || { pts: 0 }; const opp = f.a === 'NEP' ? f.b : f.a; const next = wc.fmt === 'ODI' ? 'the semi-finals' : 'the Super 8';
-  const rem = (c) => wc.fx.filter((y) => y !== f && y.st === f.st && (y.a === c || y.b === c)).length;
-  const others = t.filter((x) => x.code !== 'NEP').map((x) => ({ code: x.code, min: x.pts, max: x.pts + 2 * rem(x.code) }));
-  const win = nep.pts + 2;
-  // losing: the opponent takes the points
-  const lose = others.map((o) => (o.code === opp ? { ...o, min: o.min + 2, max: o.max + 2 } : o));
-  if (lose.filter((o) => o.max >= nep.pts).length <= 1 && lose.filter((o) => o.max > nep.pts).length <= 1 && lose.filter((o) => o.max >= nep.pts).length < 2) return 'Nepal are through; the group placing is at stake';
-  if (others.filter((o) => o.max >= win).length <= 1) return `Win and Nepal reach ${next}`;
-  if (others.filter((o) => o.min > win).length <= 1) return `Win and Nepal could reach ${next} on net run rate`;
-  return 'Nepal need a win and other results';
-}
-// After the groups: the next stages, all simulated.
-function finishCup(G, wc, cache, nx) {
-  if (wc.fx.length) { for (const f of wc.fx) nepRecord(wc, cupGame(G, wc, f, cache, nx)); wc.fx = []; }
-  const keys = Object.keys(wc.groups || {}); const T = keys.map((k) => stageTable(wc, k).map((x) => x.code)); while (T.length < 4) T.push([]);
-  const pad = (c, i) => c || T.flat()[i] || keys[0];
-  let semis;
-  if (wc.fmt !== 'ODI') {
-    wc.s8 = { X: [T[0][0], T[1][1], T[2][0], T[3][1]].filter(Boolean), Y: [T[1][0], T[0][1], T[3][0], T[2][1]].filter(Boolean) };
-    for (const k of ['X', 'Y']) { const g = wc.s8[k]; for (let i = 0; i < g.length; i++) for (let j = i + 1; j < g.length; j++) nepRecord(wc, cupGame(G, wc, { st: k, a: g[i], b: g[j] }, cache, nx)); }
-    const x = stageTable(wc, 'X').map((r) => r.code), y = stageTable(wc, 'Y').map((r) => r.code); semis = [[pad(x[0], 0), pad(y[1], 1)], [pad(y[0], 2), pad(x[1], 3)]];
-  } else semis = [[pad(T[0][0], 0), pad(T[1][1], 1)], [pad(T[1][0], 2), pad(T[0][1], 3)]];
-  const fin = semis.map(([a, b]) => { const r = cupGame(G, wc, { st: 'SF', a, b }, cache, nx); nepRecord(wc, r); return r.win; });
-  const f = cupGame(G, wc, { st: 'F', a: fin[0], b: fin[1] }, cache, nx); nepRecord(wc, f);
-  wc.champ = f.win; wc.runner = f.win === f.a ? f.b : f.a; wc.finalM = f.m; wc.stage = 'done'; wc.pending = null;
-  // trim the stats to the leaders the screen shows
-  const lead = leaders(wc); const keep = new Set([...lead.runs, ...lead.wkts, ...lead.econ].map((x) => x.id)); for (const id of Object.keys(wc.st)) if (!keep.has(id) && wc.st[id][4] !== 'NEP') delete wc.st[id];
-  const nepStage = !wc.nepIn ? 'Did not qualify' : wc.champ === 'NEP' ? 'Champions' : wc.nep.some((x) => x.stage === 'Final') ? 'Runners-up' : wc.nep.some((x) => x.stage === 'Semi-final') ? 'Semi-finals' : wc.nep.some((x) => x.stage === 'Super 8') ? 'Super 8' : 'Group stage';
-  wc.nepStage = nepStage;
-  const W2 = W(G); W2.wcHist = W2.wcHist.filter((h) => !(h.y === wc.y && h.fmt === wc.fmt));
-  W2.wcHist.push({ y: wc.y, fmt: wc.fmt, name: wc.name, hosts: wc.hosts, champ: nm(wc.champ), runner: nm(wc.runner), finalM: wc.finalM, nepal: nepStage, wins: wc.nep.filter((x) => x.r === 'W').length });
-  // what the tournament does for your players
-  const mine = nx.squad.filter((id) => G.P(id).team === G.user && wc.nepIn); const good = ['Champions', 'Runners-up', 'Semi-finals', 'Super 8'].includes(nepStage);
-  for (const id of mine) { const p = G.P(id); p.fit = clamp(p.fit - 8, 30, 100); if (good) { p.form = clamp(p.form + 2, -10, 10); p.value = Math.round(p.value * 1.05 * 2) / 2; adjustHappy(G, id, 4, `${wc.name}: ${nepStage}`); } }
-  pushFeed(G, { when: wc.when, t: `${wc.name}: ${nm(wc.champ)} beat ${nm(wc.runner)} ${wc.finalM} in the final`, sub: `Nepal: ${nepStage} · in-game`, nep: wc.nepIn });
-  G.news(`${nm(wc.champ)} win the ${wc.name}. Nepal: ${nepStage.toLowerCase()}`, 'intl', { to: '/worldcup', sub: good ? 'Milestone' : 'World Cup', detail: `In-game. Final: ${nm(wc.champ)} beat ${nm(wc.runner)} ${wc.finalM}.${mine.length ? ` Your players there: ${mine.map((id) => G.P(id).name).join(', ')}${good ? ' (form +2, value +5%)' : ''}.` : ''}`, ne: `${nm(wc.champ)} विश्वकप विजेता` });
-}
-export function leaders(wc) {
-  const L = Object.entries(wc.st).map(([id, s]) => ({ id, r: s[0], w: s[1], balls: s[2], rc: s[3], code: s[4], name: s[5], econ: s[2] ? s[3] / (s[2] / 6) : 99 }));
-  const minB = wc.fmt === 'ODI' ? 120 : 48;
-  return { runs: L.slice().sort((a, b) => b.r - a.r).slice(0, 5), wkts: L.filter((x) => x.w).sort((a, b) => b.w - a.w || a.econ - b.econ).slice(0, 5), econ: L.filter((x) => x.balls >= minB).sort((a, b) => a.econ - b.econ).slice(0, 3) };
-}
-// The decider without watching: a light result, then the rest of the tournament.
-export function resolvePending(G) {
-  const wc = W(G).wc; if (!wc || !wc.pending) return null; const cache = {}; const nx = nepXI(G);
-  wc.fx ??= []; const f = wc.fx.shift() || wc.pending; const r = cupGame(G, wc, f, cache, nx); nepRecord(wc, r);
-  logDecision(G, 'world', `${wc.name}: Nepal v ${nm(f.a === 'NEP' ? f.b : f.a)}`, 'Result only', `${r.win === 'NEP' ? 'Nepal won' : 'Nepal lost'} ${r.m}`);
-  wc.pending = null; finishCup(G, wc, cache, nx); return r;
-}
-// The decider with the real engine, for following it live. Opponents use the nation's in-game players where
-// there are any (copies, so their club records are untouched) and generated players for the rest.
-export async function playPendingLive(G) {
-  const wc = W(G).wc; if (!wc || !wc.pending) return null; const f = wc.pending; const opp = f.a === 'NEP' ? f.b : f.a; const nx = nepXI(G);
-  const T = wc.fmt !== 'ODI'; const gen = G.genOppXI(nm(opp), Math.round(strength(G, opp, wc.fmt)));
-  const names = ((W(G).gen || {})[opp] || []).map((g) => g[0]); gen.forEach((p, i) => { if (names[i]) p.name = names[i]; });
-  const known = knownPlayers(G, opp, []).slice(0, 5); const oppXI = gen.map((p, i) => (known[i] && known[i].role === p.role ? { ...known[i], id: p.id, stats: {}, form: 0, fit: 100, inj: 0, team: null, src: known[i].id } : p));
-  const squad = nx.squad; const P = {}; for (const id of squad) P[id] = G.P(id); for (const p of oppXI) P[p.id] = p;
-  const proxy = { user: null, players: P, teams: { NEP: { id: 'NEP', name: 'Nepal', squad }, OPP: { id: 'OPP', name: nm(opp), squad: oppXI.map((p) => p.id) } },
-    lineup: (tid) => G.intlLineup(tid === 'NEP' ? squad : oppXI.map((p) => p.id), P), staffLevel: () => 0, injuryLength: (t, b) => b };
-  const m = new Match(proxy, 'NEP', 'OPP', { lang: 'both', overs: T ? 20 : 50, noRain: true, night: true, dew: false });
-  const city = f.city || ''; const lines = [];
-  const inj0 = squad.map((id) => [id, G.P(id).inj]);
-  await m.run({ onLine: (e, mm) => { if (mm.inns.length < 2 || !(e.ball || e.c === 'crowd' || e.c === 'over')) return; const i = mm.inns[1];
-    const fix = (x) => String(x || '').replace(/Kirtipur/g, city || 'the ground').replace(/\bOPP\b/g, nm(opp)).replace(/\bNEP\b/g, 'Nepal'); const t = fix(e.t); const ne = e.ne && !/कीर्तिपुर/.test(e.ne) ? fix(e.ne) : null; if (e.c === 'crowd' && /कीर्तिपुर/.test(t)) return;
-    lines.push({ o: e.o || '', t, ne, c: e.c || '', ev: e.ev || '', s: [i.runs, i.wkts, i.balls] }); if (lines.length > 70) lines.shift(); } });
-  for (const [id, v] of inj0) { const p = G.P(id); p.inj = v; p.injCounted = false; }
-  const i1 = m.inns[0], i2 = m.inns[1]; const nepWon = m.result.winner === 'NEP';
-  const mg = /by .*$/.exec(m.result.text || ''); const margin = mg ? mg[0] : (nepWon || m.result.winner === 'OPP' ? '' : 'no result');
-  const toC = (b) => (b === 'NEP' ? 'NEP' : opp);
-  const a = toC(i1.bat), b = toC(i2.bat);
-  const before = {}; for (const id of nx.xi) if (wc.st[id]) before[id] = wc.st[id].slice(0, 4);
-  for (const inn of [i1, i2]) { for (const [id, s] of Object.entries(inn.bs)) { const p = P[id]; if (!p || (inn.bat !== 'NEP' && !p.src)) continue; const key = p.src || id; (wc.st[key] ??= [0, 0, 0, 0, inn.bat === 'NEP' ? 'NEP' : opp, p.name])[0] += s.r || 0; }
-    for (const [id, s] of Object.entries(inn.bw)) { const p = P[id]; if (!p || (inn.bowl !== 'NEP' && !p.src)) continue; const key = p.src || id; const st = (wc.st[key] ??= [0, 0, 0, 0, inn.bowl === 'NEP' ? 'NEP' : opp, p.name]); st[1] += s.w || 0; st[2] += s.balls || 0; st[3] += s.r || 0; } }
-  const r = { st: f.st, a, b, win: nepWon ? 'NEP' : m.result.winner === 'OPP' ? opp : (R() < 0.5 ? 'NEP' : opp), m: margin || 'in a tie', sa: scoreStr([i1.runs, i1.wkts]), sb: scoreStr([i2.runs, i2.wkts]), g: [1, i1.runs, i1.wkts, i1.balls, i2.runs, i2.wkts, i2.balls, T ? 120 : 300], city, live: 1 };
-  r.line = bestLine(wc, 'NEP', nx.xi.map((id) => G.P(id)), before);
-  eloUpdate(G, wc.fmt, a, b, r.win === a); wc.res.push(r); wc.fx = []; nepRecord(wc, r);
-  const bats = (inn) => [inn.striker, inn.non].filter((id) => inn.bs[id]).map((id) => [P[id].name, inn.bs[id].r, inn.bs[id].b, !!inn.bs[id].out, P[id].team || null]);
-  wc.live = { a, b, s1: [i1.runs, i1.wkts, i1.balls], target: i2.target, maxB: T ? 120 : 300, lines, end: [i2.runs, i2.wkts, i2.balls], bats: bats(i2), result: `${r.win === 'NEP' ? 'Nepal' : nm(opp)} won ${r.m}`,
-    mine: nx.xi.filter((id) => G.P(id).team === G.user).map((id) => { const bs = i1.bat === 'NEP' ? i1.bs[id] : i2.bs[id]; const bw = i1.bowl === 'NEP' ? i1.bw[id] : i2.bw[id]; return [G.P(id).name, bs ? `${bs.r} (${bs.b})` : '', bw ? `${ovStr(bw.balls)}–${bw.r}–${bw.w}` : '']; }) };
-  logDecision(G, 'world', `${wc.name}: Nepal v ${nm(opp)}`, 'Followed it live', wc.live.result);
-  wc.pending = null; finishCup(G, wc, {}, nx); return r;
-}
-
-// ===== Test cricket and the feed =====
-function pushFeed(G, it) { const f = W(G).feed; f.unshift(it); if (f.length > 16) f.length = 16; }
-function testSeries(G, a, b, n, cache) {
-  const E = W(G).elo.odi; const C = W(G).wtc; let wa = 0, wb = 0, d = 0;
-  for (let k = 0; k < n; k++) { if (R() < 0.22) { d++; continue; } const pa = 1 / (1 + Math.pow(10, (E[b] - E[a]) / 400) ); if (R() < pa) wa++; else wb++; }
-  for (const [c, w, l] of [[a, wa, wb], [b, wb, wa]]) { const r = (C.rows[c] ??= [0, 0, 0, 0]); r[0] += n; r[1] += w; r[2] += l; r[3] += d; }
-  return `${wa === wb ? `drawn ${wa}–${wb}` : `${nm(wa > wb ? a : b)} win ${Math.max(wa, wb)}–${Math.min(wa, wb)}`}`;
-}
-export const wtcTable = (C) => Object.entries(C.rows).map(([code, r]) => ({ code, p: r[0], w: r[1], l: r[2], d: r[3], pct: r[0] ? Math.round(((r[1] * 12 + r[3] * 4) / (r[0] * 12)) * 1000) / 10 : 0 })).sort((x, y) => y.pct - x.pct || y.p - x.p);
-function worldSeries(G, wint, cache) {
-  const C = W(G).wtc; const tests = shuffle(TEST_TEAMS.slice());
-  const mon = ['Nov', 'Dec', 'Jan', 'Feb', 'Mar']; const when = () => { const m = pick(mon); return `${m} ${m === 'Nov' || m === 'Dec' ? wint : wint + 1}`; };
-  for (let i = 0; i + 1 < tests.length; i += 2) { const n = ri(2, 5); const res = testSeries(G, tests[i], tests[i + 1], n, cache); pushFeed(G, { when: when(), t: `${nm(tests[i])} v ${nm(tests[i + 1])} · ${n} Tests · ${res}`, sub: 'World Test Championship points · in-game' }); }
-  const lim = shuffle(NATIONS.map((n) => n[0]).filter((c) => c !== 'NEP' && NATION[c].t20 >= 70));
-  for (let i = 0; i + 1 < Math.min(lim.length, 8); i += 2) { const fmt = R() < 0.5 ? 'ODI' : 'T20I'; const n = 3; let wa = 0; for (let k = 0; k < n; k++) if (play(G, lim[i], lim[i + 1], fmt, cache).aWin) wa++;
-    pushFeed(G, { when: when(), t: `${nm(lim[i])} v ${nm(lim[i + 1])} · ${n} ${fmt}s · ${nm(wa >= 2 ? lim[i] : lim[i + 1])} win ${Math.max(wa, n - wa)}–${Math.min(wa, n - wa)}`, sub: 'in-game' }); }
-  // the WTC final at the end of a cycle, in June
-  if (wint + 1 >= C.to) { const t = wtcTable(C); if (t.length >= 2) { const a = t[0].code, b = t[1].code; const pa = 1 / (1 + Math.pow(10, (W(G).elo.odi[b] - W(G).elo.odi[a]) / 400)); const win = R() < pa ? a : b;
-    C.past.push({ from: C.from, to: C.to, champ: nm(win), runner: nm(win === a ? b : a) }); pushFeed(G, { when: `Jun ${C.to}`, t: `World Test Championship final: ${nm(win)} beat ${nm(win === a ? b : a)}`, sub: `${C.from}–${String(C.to).slice(2)} cycle · in-game` }); }
-    W(G).wtc = { from: C.to, to: C.to + 2, rows: {}, past: C.past.slice(-4) }; }
-}
-// Nepal's winter results feed the rankings and the feed.
-function nepalSeries(G, wint) {
-  const N = G.s.nepal; if (N.winter !== wint || !N.results) return;
-  for (const rec of N.results) {
-    const mine = (rec.squad || []).filter((id) => G.P(id) && G.P(id).team === G.user).length;
-    pushFeed(G, { when: rec.month, t: `${rec.name} · Nepal won ${rec.w}, lost ${rec.l}`, sub: `${rec.official ? '' : 'Not a full international · '}${mine ? `${mine} of your players in the squad · ` : ''}in-game`, nep: true });
-    if (!rec.official) continue; const opp = CODE_BY_NAME[(rec.short || '').replace(/^v /, '')]; const fmt = rec.fmt === 'ODI' ? 'ODI' : 'T20I';
-    const o = opp || 'PNG'; for (const g of rec.games) if (g.r === 'W' || g.r === 'L') eloUpdate(G, fmt, 'NEP', o, g.r === 'W');
-  }
-}
 // International form feeds back into the players: a strong winter lifts form and a rating point; a poor one costs form.
 function intlForm(G, wint) {
   const N = G.s.nepal; if (N.winter !== wint || !N.duty) return;
@@ -507,87 +174,152 @@ function intlForm(G, wint) {
   }
 }
 
-// ===== Rankings (the game's own) =====
-export function teamSnapshot(G, prev) {
-  const w = G.s.world; const out = { label: LABEL };
-  for (const f of ['t20i', 'odi']) { const E = w.elo[f]; const list = Object.keys(E).sort((a, b) => E[b] - E[a]); const pm = prev ? Object.fromEntries((prev[f] || []).map((r, i) => [r[0], i + 1])) : {};
-    out[f] = list.map((c) => [c, Math.round(E[c] / 5), pm[c] || null]); }
-  return out;
+// ===== Calendar clash with the pre-season camp =====
+// Nepal fixtures in the weeks before the NPL take the user's national players out of the camp.
+function nepalFixtures(G, from, to) {
+  const out = []; for (const S of Object.values(G.s.wd ? G.s.wd.seasons : {})) if (S.teams.includes('NEP')) for (const f of S.fx) if ((f.a === 'NEP' || f.b === 'NEP') && f.d >= from && f.d <= to) out.push([S, f]);
+  return out.sort((a, b) => a[1].d - b[1].d);
 }
-function inPool(G, p, ranked) {
-  if (p.retired) return false;
-  if (p.nat === 'NEP') return ranked.has(p.id) || (G.intlCaps(p) || 0) > 0;
-  return p.intlStatus === 'active';
+function makeClash(G) {
+  const w = W(G); const y = G.year; if (w.clash && w.clash.y === y) return; if (!G.s.wd) return;
+  const fx = nepalFixtures(G, dayOfDate(y, 8, 15), dayOfDate(y, 9, 25)); if (!fx.length) { w.clash = null; return; }
+  const S = fx[0][0]; const sq = ST.squadFor(G, 'NEP', fx[0][1].fmt, S).map((p) => p.id); const pids = sq.filter((id) => G.P(id) && G.P(id).team === G.user);
+  if (!pids.length) { w.clash = null; return; }
+  const days = new Set(fx.map((x) => x[1].d)).size;
+  w.clash = { y, comp: IN.sbase(S), when: IN.monthOf(fx[0][1].d), days: Math.max(4, days * 2), pids, status: 'open' };
+  if (G.s.settings && G.s.settings.assistant) decideClash(G, 'without', 'assistant');
 }
-// Generated internationals for the stronger nations, so the lists are not only the players in the save:
-// [name, role, bat, bowl, form]. Their skill follows the nation's strength. They exist only in the rankings.
-// The name pools pair real first names and surnames; these pairs (and anyone in the save) are real people.
-const REAL_NAMES = new Set(['Kamindu Mendis', 'Jamie Overton', 'Rachin Ravindra', 'Ankit Rajput', 'Mahedi Hasan', 'Shamar Joseph', 'Blair Tickner', 'Jake Fraser', 'Mohammad Nawaz', 'Hasan Ali', 'Usman Khan', 'Kusal Mendis', 'Jake Doran', 'Ollie Price', 'Tom Price', 'Tom Lamb', 'Kane Williamson', 'Mitchell Bracewell']);
-function genPlayers(taken) {
-  const out = {}; const roles = ['BAT', 'BAT', 'BAT', 'AR', 'BOWL', 'BOWL'];
-  for (const code of Object.keys(OS_NAMES)) { const n = NATION[code]; if (!n || n.t20 < 76) continue; const pool = OS_NAMES[code]; const used = new Set();
-    out[code] = roles.map((role) => { let nm2; let k = 0; do { const fi = ri(0, pool.f.length - 1), li = ri(0, pool.l.length - 1); nm2 = Math.abs(fi - li) >= 2 ? `${pool.f[fi]} ${pool.l[li]}` : null; } while ((!nm2 || used.has(nm2) || REAL_NAMES.has(nm2) || (taken && taken.has(nm2))) && k++ < 60); used.add(nm2); const lv = n.t20 + ri(-4, 6);
-      return [nm2, role, role === 'BOWL' ? ri(25, 40) : role === 'AR' ? lv - 4 : lv, role === 'BAT' ? ri(10, 35) : role === 'AR' ? lv - 4 : lv, 0]; }); }
-  return out;
+export function decideClash(G, pick, how) {
+  const c = W(G).clash; if (!c || c.status !== 'open') return null; const t = G.teams[G.user];
+  c.status = pick; c.how = how || 'you';
+  const names = c.pids.map((id) => G.P(id).name).join(', ');
+  c.outcome = pick === 'move' ? 'Rs 3 L to move the camp; the national players join it in full.' : `${names} miss the camp and start the season 8 fitness down.`;
+  if (pick === 'move') t.balance -= 3;
+  logDecision(G, 'clash', `${c.comp} overlaps the pre-season camp by ${c.days} days`, `${pick === 'move' ? 'Move the camp' : 'Train without them'}${how === 'expired' ? ' (not answered in time)' : how === 'assistant' ? ' (assistant)' : ''}`, c.outcome);
+  return c;
 }
-function genPool(G) { const out = []; for (const [code, L] of Object.entries(W(G).gen || {})) L.forEach((g, i) => out.push({ id: `g:${code}:${i}`, name: g[0], nat: code, role: g[1], bat: g[2], bowl: g[3], form: g[4], age: 27, gen: true })); return out; }
-// A ranked player: a real one from the save, or a generated one ({id, name, nat, gen}).
-export function whoRanked(G, id) { if (!String(id).startsWith('g:')) return G.P(id); const [, code, i] = id.split(':'); const g = ((W(G).gen || {})[code] || [])[+i]; return g ? { id, name: g[0], nat: code, gen: true, team: null } : null; }
-function recent(p, fmt, k) { const L = (p.intlLog || []).filter((x) => (fmt === 'odi' ? x.fmt === 'ODI' : x.fmt !== 'ODI')).slice(-8); return L.reduce((a, x) => a + (k === 'r' ? x.r : x.w), 0); }
-function lastSeason(p) { const ys = Object.keys(p.stats || {}).map(Number).sort((a, b) => b - a); return ys.length ? p.stats[ys[0]] : null; }
-// Ratings from skill, form, recent international or league numbers, and the strength of the side (as the
-// ICC's weight opponents, a player in a strong team rates higher). The game's own numbers.
-export function playerRatings(G, p, fmt) {
-  const st = p.gen ? null : lastSeason(p); const nep = p.nat === 'NEP'; const odi = fmt === 'odi'; const exp = odi ? Math.min(Math.max(0, (p.age || 27) - 22), 10) * 3 : 0;
-  const n = NATION[p.nat]; const side = n ? ((odi ? n.odi : n.t20) - 75) * 6 : -30;
-  const bat = Math.round(clamp(220 + (p.bat - 40) * 11 + p.form * 6 + exp + side + (nep ? recent(p, fmt, 'r') / 6 : st ? st.r / 10 : p.gen ? ri(0, 30) : 0), 0, 950));
-  const bowl = Math.round(clamp(220 + (p.bowl - 40) * 11 + p.form * 5 + exp + side + (nep ? recent(p, fmt, 'w') * 4 : st ? st.w * 3 : p.gen ? ri(0, 30) : 0), 0, 950));
-  return { bat: p.bat >= 40 ? bat : 0, bowl: p.bowl >= 45 ? bowl : 0, ar: p.bat >= 48 && p.bowl >= 52 ? Math.round(bat * bowl / 1000) : 0 };
-}
-// Top 20 in each list plus every Nepali, with the previous rank for the movement column.
-export function playerSnapshot(G, prev) {
-  const ranked = new Set(G.pickNepal().ranked.slice(0, 20)); const pool = [...Object.values(G.players).filter((p) => inPool(G, p, ranked)), ...genPool(G)];
-  for (const L of Object.values(W(G).gen || {})) for (const g of L) g[4] = clamp(Math.round(g[4] * 0.5 + rf(-4, 4)), -10, 10);
-  const out = { label: LABEL, y: G.year };
-  for (const f of ['t20i', 'odi']) { out[f] = {}; const R2 = pool.map((p) => [p, playerRatings(G, p, f)]);
-    for (const k of ['bat', 'bowl', 'ar']) { const list = R2.filter((x) => x[1][k] > 0).sort((a, b) => b[1][k] - a[1][k]); const pm = prev && prev[f] ? Object.fromEntries((prev[f][k] || []).map((r) => [r[0], r[2]])) : {};
-      out[f][k] = list.map((x, i) => [x[0].id, x[1][k], i + 1, pm[x[0].id] || null]).filter((r) => r[2] <= 20 || (whoRanked(G, r[0]) || {}).nat === 'NEP').slice(0, 36); } }
-  return out;
-}
-export function recalcRankings(G) { const w = W(G); w.trk = teamSnapshot(G, w.trk); w.prk = playerSnapshot(G, w.prk); w.rankAt = G.year; }
-export const teamRank = (G, fmt, code = 'NEP') => { const L = W(G).trk[fmt] || []; const i = L.findIndex((r) => r[0] === code); return i < 0 ? null : { pos: i + 1, pts: L[i][1], prev: L[i][2] }; };
 
-// ===== After Nepal's winter =====
-// Idempotent: runs once per winter, from flow.startOffseason or lazily from the later hooks and the screens.
-export function afterWinter(G) {
-  const w = W(G); const N = G.s.nepal; if (!w || !N || N.winter == null) return false; const wint = N.winter;
-  if (w.wint === wint) return false; w.wint = wint; const cache = {};
-  nepalSeries(G, wint); intlForm(G, wint); worldSeries(G, wint, cache);
-  // League 2 (or the Challenge League) this year, then the end of the cycle
-  const C = w.tier === 'cl' ? w.cl : w.l2;
-  if (C && !C.done && wint >= C.from) cycleYear(G, wint, C, cache);
-  if (wint + 1 >= w.l2.to) { w.l2.done = true; endCycle(G, wint, cache); }
-  // World Cups in this off-season
-  if (w.wc && w.wc.pending) resolvePending(G);
-  w.live = null; if (w.wc) w.wc.live = null;
-  const cups = worldCupsFor(wint);
-  for (const cup of cups) {
-    if (w.wc && w.wc.pending) resolvePending(G);
-    const wc = newCup(G, cup); const nx = nepXI(G); const full = cup.fmt === 'T20I' || wc.nepIn;
-    if (!full) { runGroups(G, wc, cache, nx); if (wc.pending) { wc.fx.shift(); wc.pending = null; } finishCup(G, wc, cache, nx); continue; }
-    w.wc = wc; const waiting = wc.nepIn && runGroups(G, wc, cache, nx);
-    if (waiting) {
-      const opp = nm(wc.pending.a === 'NEP' ? wc.pending.b : wc.pending.a);
-      G.news(`${wc.name}: Nepal v ${opp} decides their group`, 'intl', { to: '/worldcup', sub: 'World Cup', detail: `${wc.pending.scen}. Follow it live from the World Cup page. In-game.`, ne: `विश्वकप: नेपाल बनाम ${opp}` });
-      if (G.s.settings && G.s.settings.assistant) resolvePending(G);
-    } else finishCup(G, wc, cache, nx);
-  }
-  recalcRankings(G);
-  return true;
+// ===== Nepal in the world programme =====
+// The international year that starts with the NPL of year w: 1 Oct w to 30 Sep w + 1.
+export const winterOf = (day) => { const t = dateOf(day); return t.m >= 9 ? t.y : t.y - 1; };
+const tagOf = (G, p) => ({ club: p.team === G.user });
+// Nepal's finished world fixtures that the save has not seen yet: caps, call-ups, milestones, duty.
+export function nepalSync(G) {
+  const N = G.s.nepal; if (!N || !G.s.players || !G.s.wd) return;
+  const by = new Map();
+  for (const S of Object.values(G.s.wd.seasons)) { if (S.real || !S.teams.includes('NEP')) continue; for (const f of S.fx) if (f.res && !f.nx && (f.a === 'NEP' || f.b === 'NEP')) { if (!by.has(S)) by.set(S, []); by.get(S).push(f); } }
+  for (const [S, fs] of [...by].sort((a, b) => Math.min(...a[1].map((f) => f.d)) - Math.min(...b[1].map((f) => f.d)))) syncSeason(G, S, fs.sort((a, b) => a.d - b.d));
 }
+function evName(S, f) { const base = IN.sbase(S); return f.ev != null ? `${base}, tri-series ${f.ev + 1}` : base; }
+function evShort(S, f) {
+  const k = IN.info(S).kind; if (k === 'bilat') { const o = S.teams[0] === 'NEP' ? S.teams[1] : S.teams[0]; return `v ${nm(o)}`; }
+  const s = { l2: 'League 2', cl: 'Challenge League', po: 'CWC Qualifier Play-Off', wcq: 'World Cup Qualifier', wc: 'ODI World Cup', t20wc: 'T20 World Cup', gq: 'T20 Global Qualifier', rq: 'T20 regional final', asia: 'Asia Cup', accpc: 'ACC Premier Cup', tri: 'Tri-series' }[k] || IN.sbase(S);
+  return f.ev != null ? `${s} (${f.ev + 1})` : s;
+}
+function syncSeason(G, S, fs) {
+  const N = G.s.nepal; const wd = G.s.wd; const I = IN.st(G); const inf = IN.info(S); const official = inf.official; const F = inf.fmt === 'ODI' ? 'ODI' : 'T20I'; const fk = F === 'ODI' ? 'odi' : 't20i';
+  // exact appearances from the season stats; the scorecards say who batted and bowled
+  const T = wd.st[S.id] || {}; const seenM = (I.nm[S.id] ??= {}); const delta = {};
+  for (const id in T) { const p = G.players[id]; if (!p || p.nat !== 'NEP') continue; const dd = T[id][0] - (seenM[id] || 0); if (dd > 0) delta[id] = dd; seenM[id] = T[id][0]; }
+  const parts = fs.map((f) => { const ids = {}; for (const inn of f.card || []) { if (inn.t === 'NEP') for (const b of inn.bat) ids[b[0]] = { ...(ids[b[0]] || {}), r: b[1], b: b[2] }; else for (const b of inn.bowl) ids[b[0]] = { ...(ids[b[0]] || {}), w: b[3], rc: b[2], balls: b[1] }; } return ids; });
+  for (const id in delta) { let extra = delta[id] - parts.filter((x) => x[id]).length; for (let i = 0; i < parts.length && extra > 0; i++) if (!parts[i][id]) { parts[i][id] = { r: 0, w: 0 }; extra--; } }
+  for (let i = 0; i < fs.length; i++) {
+    // during the off-season screens the winter just played stays open (an early-October game joins it)
+    const f = fs[i]; f.nx = 1; const off = ['offseason', 'retention', 'auction'].includes(G.s.phase); const w = off ? Math.min(winterOf(f.d), G.year - 1) : winterOf(f.d);
+    if (N.winter == null || N.winter < w) { if (N.winter != null && N.formDone !== N.winter) closeWinter(G, N.winter); N.winter = w; N.results = []; N.duty = {}; }
+    const cur = N.winter === w; const key = `${S.id}${f.ev != null ? `#${f.ev}` : ''}`; const month = IN.monthOf(f.d);
+    let rec = cur ? (N.results ??= []).find((x) => x.id === key) : null;
+    if (cur && !rec) {
+      const squad = ST.squadFor(G, 'NEP', f.fmt, S).map((p) => p.id).filter((id) => G.players[id]);
+      rec = { id: key, sid: S.id, name: evName(S, f), short: evShort(S, f), fmt: F, month, official, real: inf.realFixture, w: 0, l: 0, nr: 0, games: [], squad, fringe: [], pl: [] };
+      N.results.push(rec); const before = new Set(N.lastSquad || []); const sset = new Set(squad);
+      for (const id of squad) { const p = G.P(id); if (before.has(id)) continue; p.morale = clamp(p.morale + 8, 0, 100); if (p.team === G.user) G.news(`${p.name} named in Nepal's squad for ${rec.short}`, 'intl', { ...tagOf(G, p), sub: 'Call-up', ne: `${p.name} राष्ट्रिय टोलीमा`, detail: `${rec.name} · ${month} · in-game`, tags: ['Morale +8'] }); }
+      for (const id of before) { if (sset.has(id)) continue; const p = G.P(id); if (!p || p.retired) continue; p.morale = clamp(p.morale - 6, 0, 100); if (p.team === G.user) G.news(`${p.name} left out of the Nepal squad for ${rec.short}`, 'intl', { ...tagOf(G, p), sub: 'Dropped', ne: `${p.name} टोलीबाट बाहिर`, detail: 'Selectors went with form and ratings.', tags: ['Morale −6'] }); }
+      N.lastSquad = squad;
+    }
+    const opp = f.a === 'NEP' ? f.b : f.a; const r = f.res; const res = r.nr ? '–' : r.w === 'NEP' ? 'W' : 'L'; const sc = (t) => { const x = (r.sc || []).find((z) => z[0] === t); return x ? `${x[1]}/${x[2]}` : ''; };
+    if (rec) { if (res === 'W') rec.w++; else if (res === 'L') rec.l++; else rec.nr++; rec.games.push({ r: res, nep: sc('NEP'), opp: sc(opp), v: opp, d: f.d }); }
+    for (const [id, line] of Object.entries(parts[i])) {
+      const p = G.players[id]; if (!p || p.nat !== 'NEP' || !p.intlG) continue; const runs = line.r || 0, wk = line.w || 0;
+      const dt = (N.duty ??= {})[id] ??= { games: 0, r: 0, w: 0, dev: 0, caps: 0, firstCap: false, events: [] }; dt.games++; dt.r += runs; dt.w += wk; if (rec && !dt.events.includes(rec.short)) dt.events.push(rec.short);
+      if (rec && !rec.pl.includes(id)) rec.pl.push(id);
+      if (official) { const before0 = G.intlCaps(p) || 0; p.intlG[fk]++; dt.caps++;
+        if (!before0 && !(p.intl && (p.intl.t20i == null || p.intl.odi == null))) { p.capped = true; p.uncapped = false; p.capBonus = true; const v0 = p.value; p.value = Math.round(p.value * 1.5 * 2) / 2; dt.firstCap = true;
+          if (!p.intl.debut) p.intl.debut = { fmt: F, year: w, v: nm(opp), game: true };
+          G.news(`${p.name} makes his ${F} debut for Nepal`, 'intl', { ...tagOf(G, p), sub: 'First cap', ne: `${p.name}को अन्तर्राष्ट्रिय डेब्यु`, detail: `${evShort(S, f)} · ${runs} runs${line.balls ? `, ${wk}/${line.rc}` : ''} · in-game`, tags: ['Now capped', `Value ${fmtL(v0)} → ${fmtL(p.value)}`] }); }
+        const tot = G.intlCaps(p); if ([25, 50, 100].includes(tot)) G.news(`${p.name} wins his ${tot}th cap for Nepal`, 'intl', { ...tagOf(G, p), sub: 'Milestone', ne: `${p.name}को ${tot}औँ खेल`, tags: [`${tot} caps`] }); }
+      const won = res === 'W' ? 'Nepal win' : res === 'L' ? 'Nepal lose' : 'No result';
+      if (runs >= 100) { G.news(`${p.name} scores a hundred for Nepal ${evShort(S, f)}`, 'intl', { ...tagOf(G, p), sub: 'Milestone', ne: `${p.name}को शतक`, detail: `${runs} off ${line.b} balls · ${won} · in-game`, tags: ['Form +2'] }); p.form = clamp(p.form + 2, -10, 10); }
+      else if (runs >= 50 && p.team === G.user) { G.news(`${p.name} hits a fifty for Nepal ${evShort(S, f)}`, 'intl', { ...tagOf(G, p), sub: 'Milestone', detail: `${runs} off ${line.b} balls · in-game`, tags: ['Form +1'] }); p.form = clamp(p.form + 1, -10, 10); }
+      if (wk >= 5) { G.news(`${p.name} takes five wickets for Nepal ${evShort(S, f)}`, 'intl', { ...tagOf(G, p), sub: 'Milestone', ne: `${p.name}को पाँच विकेट`, detail: `${wk}/${line.rc} · in-game`, tags: ['Form +2'] }); p.form = clamp(p.form + 2, -10, 10); }
+      p.intlLog ??= []; p.intlLog.push({ y: w, month, evt: evShort(S, f), fmt: F, r: runs, w: wk }); if (p.intlLog.length > 80) p.intlLog.splice(0, p.intlLog.length - 80);
+    }
+    // an event over: experience for everyone who played (up to potential, at most +3 a winter) and some fitness
+    const evDone = S.fx.filter((x) => (f.ev == null || x.ev === f.ev)).every((x) => x.res) && (f.ev != null || S.done);
+    if (rec && evDone && !rec.dev) { rec.dev = 1;
+      for (const id of rec.pl) { const p = G.P(id); const dt = N.duty[id]; if (!p || !dt) continue; const add = dt.dev < 3 && R() < 0.5 ? Math.min(1, Math.max(0, (p.pot || 0) - ovr(p))) : 0;
+        if (add) { if (p.role === 'BOWL') p.bowl = clamp(p.bowl + add, 10, 96); else if (p.role === 'AR') { if (p.bat >= p.bowl) p.bat = clamp(p.bat + add, 10, 96); else p.bowl = clamp(p.bowl + add, 10, 96); } else p.bat = clamp(p.bat + add, 10, 96); }
+        dt.dev += add; p.fit = clamp(p.fit - 4, 30, 100); } }
+  }
+}
+function closeWinter(G, w) { const N = G.s.nepal; if (N.formDone === w) return; N.formDone = w; intlForm(G, w); }
+// The end of Nepal's international year: form from it, and CAN's central contracts for the coming year.
+export function finishWinter(G) {
+  const N = G.s.nepal; if (!N) return; const w = G.year - 1;
+  if (N.winter == null || N.winter < w) { if (N.winter != null) closeWinter(G, N.winter); N.winter = w; N.results = []; N.duty = {}; }
+  N.results ??= []; N.duty ??= {}; closeWinter(G, w);
+  if (N.contractYear !== G.year) G.regradeContracts(G.year);
+}
+IN.onTick(nepalSync);
+
+// ----- compaction before saving -----
+// Finished seasons fold their stats into the rankings after two weeks; bilateral series older than
+// four months become one archive line; scorecards go except Nepal's of the last year.
+export function archive(G) {
+  const wd = G.s.wd; if (!wd || !wd.intl) return; const I = IN.st(G); const day = wd.day; RK.logResults(G); nepalSync(G);
+  for (const id of Object.keys(wd.seasons)) {
+    const S = wd.seasons[id]; if (S.real) continue;
+    // scorecards: two weeks for other matches, two months for Nepal's (once the save has seen them)
+    for (const f of S.fx) { if (!f.res) continue; const nep = f.a === 'NEP' || f.b === 'NEP'; const age = day - f.d;
+      if (f.card && (nep ? f.nx && age > 60 : age > 14)) delete f.card; if (!nep && age > 30) { delete f.res.top; delete f.res.pom; } }
+    if (!S.done) continue; const last = IN.lastDay(S); const kind = IN.info(S).kind;
+    if (S.teams.includes('NEP') && S.fx.some((f) => (f.a === 'NEP' || f.b === 'NEP') && f.res && !f.nx)) continue;
+    if (!S.mg && day - last > 14) { RK.mergeSeason(G, S); S.mg = 1; trimStats(G, S, kind); delete I.nm[id]; }
+    // tournaments two years on: tables, knockouts and Nepal's games stay; other group games go
+    if (S.mg && !S.old && day - last > 730 && kind !== 'bilat' && kind !== 'tri') { S.old = 1; const ko = new Set(IN.info(S).labels.map((l, k) => (COMPS_KO(S, k) ? k : -1)));
+      S.fx = S.fx.filter((f) => f.ko || ko.has(f.stage) || f.a === 'NEP' || f.b === 'NEP'); for (const f of S.fx) if (f.res) { delete f.res.top; delete f.res.pom; } }
+    if ((kind === 'bilat' || kind === 'tri') && S.mg && day - last > 120) {
+      const t = S.tables.series || S.tables.all || {}; const [a, b] = S.teams; const wa = (t[a] || {}).w || 0, wb = (t[b] || {}).w || 0;
+      const line = kind === 'bilat' ? (wa === wb ? `${wa}–${wb}` : `${wa > wb ? a : b} ${Math.max(wa, wb)}–${Math.min(wa, wb)}`) : `${S.champ || ''} won`;
+      I.arc.push([id, line, last]); delete wd.seasons[id]; delete wd.st[id]; delete I.ann[id];
+    }
+  }
+  const cut = day - 730; while (I.arc.length && (I.arc[0][2] < cut || I.arc.length > 400)) I.arc.shift();
+  for (const id of Object.keys(I.nsq)) if (!wd.seasons[id]) delete I.nsq[id];
+}
+const COMPS_KO = (S, k) => { const d = ST.defOf(S); return !!(d && d.stages[k] && (d.stages[k].ko || d.stages[k].type === 'ko')); };
+function trimStats(G, S, kind) {
+  const T = G.s.wd.st[S.id]; if (!T) return; if (kind === 'bilat' || kind === 'tri') { delete G.s.wd.st[S.id]; return; }
+  const keep = new Set(); const ids = Object.keys(T);
+  ids.slice().sort((a, b) => T[b][3] - T[a][3]).slice(0, 8).forEach((id) => keep.add(id)); ids.slice().sort((a, b) => T[b][10] - T[a][10]).slice(0, 8).forEach((id) => keep.add(id));
+  for (const id of ids) { const p = G.players[id]; if (!keep.has(id) && !(p && p.nat === 'NEP')) delete T[id]; }
+}
+
+// ----- moving the world through the off-season -----
+// Plays the international year up to the next NPL pre-season (30 September), a week at a time, yielding
+// between weeks. With a national job the clock stops at the user's first fixture instead.
+export async function playWinter(G, step = () => new Promise((r) => setTimeout(r, 0))) {
+  if (!G.s.wd) return; IN.tick(G); const end = dayOfDate(G.year, 8, 30);
+  const national = ST.userTeams(G).some((t) => ST.isUserTeam(G, t)); let day = G.s.wd.day;
+  while (day < end) { day = Math.min(end, day + 7); const stop = ST.advance(G, day, { auto: !national }); IN.tick(G); if (stop) break; await step(); }
+  maybeFinish(G); archive(G); RK.snapshot(G);
+}
+function maybeFinish(G) { if (G.s.wd && G.s.wd.day >= dayOfDate(G.year, 8, 30) && ['offseason', 'retention', 'auction', 'preseason'].includes(G.s.phase) && G.s.nepal && G.s.nepal.formDone !== G.year - 1) finishWinter(G); }
+// The tick, guarded: a world failure must never stop the season flow.
+export function worldTick(G) { safe('tick', () => { IN.tick(G); maybeFinish(G); RK.snapshot(G); }); }
 
 // ===== Hooks =====
-export function offseason(G) { safe('offseason', () => offseason0(G)); }
+export function offseason(G) { safe('offseason', () => offseason0(G)); worldTick(G); }
 function offseason0(G) {
   const w = W(G); if (!w) return; const Y = G.year - 1;
   if (w.lg.y < Y) simLeagues(G, Y);
@@ -597,20 +329,75 @@ function offseason0(G) {
 }
 // A world-layer failure must never stop the season flow: report it and carry on.
 function safe(name, fn) { try { fn(); } catch (e) { console.error(`world.${name}:`, e); } }
-export function auctionSetup(G) { safe('auctionSetup', () => { afterWinter(G); expireNocs(G); if (W(G) && W(G).wc && W(G).wc.pending) resolvePending(G); }); }
-export function seasonStart(G) { safe('seasonStart', () => seasonStart0(G)); }
+export function auctionSetup(G) { safe('auctionSetup', () => expireNocs(G)); worldTick(G); }
+export function seasonStart(G) { safe('seasonStart', () => seasonStart0(G)); worldTick(G); }
 function seasonStart0(G) {
-  const w = W(G); if (!w) return; afterWinter(G); expireNocs(G); if (w.wc && w.wc.pending) resolvePending(G);
+  const w = W(G); if (!w) return; expireNocs(G);
   const c = w.clash; if (c && c.y === G.year && c.status === 'open') decideClash(G, 'without', 'expired');
   if (c && c.y === G.year && c.status === 'without' && !c.applied) { for (const id of c.pids) { const p = G.P(id); if (p && p.team === G.user) p.fit = clamp(p.fit - 8, 30, 100); } c.applied = true; }
-  preseasonSeries(G);
   for (const p of Object.values(G.players)) { const r = p.nocRisk; if (!r) continue; delete p.nocRisk; if (r.y !== G.year || p.team !== G.user) continue;
     if (R() * 100 < r.inj) { p.inj = ri(1, 2); G.news(`${p.name} comes back from the ${LEAGUE_BY[r.league].short} injured`, 'injury', { detail: `He misses the first ${p.inj} NPL match${p.inj > 1 ? 'es' : ''}.` }); } }
 }
+export function afterMatch(G) { worldTick(G); }
+// Before an NPL match the world is moved to its day (worldlink.js): make sure every nation can field a side.
+export function beforeMatch(G) { safe('beforeMatch', () => { if (G.s.wd) { IN.seen(G); IN.ensureDefs(G); IN.injectSides(G); } }); }
+export function beforeSave(G) { safe('archive', () => archive(G)); }
 export function todayTasks(G) {
   const w = W(G); if (!w) return []; const out = [];
   for (const r of openNocs(G)) { const p = G.P(r.pid); if (!p) continue; out.push({ key: `noc-${r.id}`, text: `NOC request: ${r.team} want ${p.name}`, sub: `${LEAGUE_BY[r.league].short} ${kindLabel(r.kind)} · Rs ${r.fee} L`, to: '/world?tab=nepalis' }); }
   if (w.clash && w.clash.status === 'open') out.push({ key: 'clash', text: 'Nepal duty clashes with your pre-season camp', sub: `${w.clash.comp} · ${w.clash.pids.length} of your players`, to: '/international' });
-  if (w.wc && w.wc.pending) { const f = w.wc.pending; out.push({ key: 'wc', text: `${w.wc.name}: Nepal v ${nm(f.a === 'NEP' ? f.b : f.a)}`, sub: f.scen, to: '/worldcup' }); }
   return out;
 }
+
+// ===== For the screens =====
+export const today = (G) => (G.s.wd ? G.s.wd.day : 0);
+export const NEP = 'NEP';
+const hasNep = (f) => f.a === 'NEP' || f.b === 'NEP';
+// Nepal's next fixtures: [[season, fixture]], soonest first.
+export function nextNepal(G, n = 5) { const t = today(G); const out = []; for (const S of Object.values(G.s.wd ? G.s.wd.seasons : {})) if (S.teams.includes('NEP')) for (const f of S.fx) if (!f.res && hasNep(f) && f.d >= t) out.push([S, f]); return out.sort((a, b) => a[1].d - b[1].d).slice(0, n); }
+// Nepal's events in a window of days: [{ S, first, last, w, l, nr, n, played }].
+export function nepalEvents(G, from, to) {
+  const out = []; for (const S of Object.values(G.s.wd ? G.s.wd.seasons : {})) { if (S.real || !S.teams.includes('NEP')) continue; const fx = S.fx.filter((f) => hasNep(f) && f.d >= from && f.d <= to); if (!fx.length) continue;
+    const r = { S, first: Math.min(...fx.map((f) => f.d)), last: Math.max(...fx.map((f) => f.d)), w: 0, l: 0, nr: 0, n: fx.length, played: 0 };
+    for (const f of fx) if (f.res) { r.played++; if (f.res.nr) r.nr++; else if (f.res.w === 'NEP') r.w++; else r.l++; } out.push(r); }
+  return out.sort((a, b) => a.first - b.first);
+}
+export const winterWindow = (w) => [dayOfDate(w, 9, 1), dayOfDate(w + 1, 8, 30)];
+// The tournaments in a window (not bilateral series), and the ones still to be drawn from the programme.
+export function tournaments(G, from, to) {
+  const have = Object.values(G.s.wd ? G.s.wd.seasons : {}).filter((S) => { const k = IN.info(S).kind; return !['bilat', 'tri', 'hist'].includes(k) && (S.endF ?? IN.lastDay(S)) >= from && S.start <= to; });
+  const ids = new Set(have.map((S) => S.id)); const later = [];
+  for (let y = dateOf(from).y; y <= dateOf(to).y; y++) for (const it of IN.programme(G, y)) { if (it.teams && /^BIL|^NEPBAN/.test(it.id)) continue; if (ids.has(it.id) || it.start > to || (it.ends ? it.ends[it.ends.length - 1] : it.end) < from) continue; const made = G.s.wd.intl && G.s.wd.intl.made[it.id]; if (made && made !== 1) continue; ids.add(it.id); later.push(it); }
+  return { have: have.sort((a, b) => a.start - b.start), later: later.sort((a, b) => a.start - b.start) };
+}
+// Where Nepal stand on the 50-over pathway, for the next ODI World Cup still to finish.
+export function pathState(G) {
+  const S = (id) => (G.s.wd ? G.s.wd.seasons[id] : null) || null; let W = 2027; while (S(`WC50-${W}`) && S(`WC50-${W}`).done) W += 4;
+  const ids = { wc: `WC50-${W}`, wcq: `CWCQ-${W}`, po: `CWCPO-${W - 1}`, l2: W === 2027 ? 'CWCL2-2023' : `CWCL2-${W - 4}`, cl: W === 2027 ? 'CL-2024' : `CL-${W - 4}` };
+  const step = {}; for (const k in ids) step[k] = S(ids[k]);
+  const inS = (k) => !!(step[k] && step[k].teams.includes('NEP')); const pl = (k) => (step[k] ? IN.placing(step[k]).indexOf('NEP') : -1);
+  let at = inS('wc') ? 'wc' : inS('wcq') ? 'wcq' : inS('po') ? 'po' : inS('l2') ? 'l2' : inS('cl') ? 'cl' : 'l2'; let out = false;
+  if (at === 'wcq' && step.wcq.done && pl('wcq') >= 4) out = true;
+  if (at === 'po' && step.po.done && pl('po') >= 4) out = true;
+  if (at === 'cl' && step.cl.done) out = true;
+  const cup = { y: W, name: IN.odiName(W), hosts: W === 2027 || W === 2031 ? (step.wc ? IN.cupHosts(step.wc) : W === 2027 ? 'South Africa, Zimbabwe and Namibia' : 'India and Bangladesh') : 'Hosts not announced' };
+  const title = at === 'wc' ? `Nepal are going to the ${W} World Cup` : out ? `Nepal miss the ${W} World Cup` : `Road to the ${W} World Cup`;
+  const nx = nextNepal(G, 1)[0];
+  const next = nx ? `Next: ${IN.sbase(nx[0])} · ${nm(nx[1].a === 'NEP' ? nx[1].b : nx[1].a)} · ${IN.monthOf(nx[1].d)}` : 'No Nepal fixtures scheduled yet';
+  return { W, ids, step, at, out, cup, title, next, pos: (k) => pl(k) };
+}
+// The T20 World Cup route for the next T20 World Cup still to finish.
+export function t20State(G) {
+  const S = (id) => (G.s.wd ? G.s.wd.seasons[id] : null) || null; let T = 2028; while (S(`T20WC-${T}`) && S(`T20WC-${T}`).done) T += 2;
+  const r = IN.t20Route(G, T); const wc = S(`T20WC-${T}`), gq = S(`T20GQ-${T}`), rq = S(`T20RQ-Asia-${T}`);
+  const via = r ? (r.auto.includes('NEP') ? 'auto' : r.direct.includes('NEP') ? 'gq' : 'rq') : null;
+  const status = wc ? (wc.teams.includes('NEP') ? 'Qualified' : 'Did not qualify') : gq && gq.done ? (IN.gqQualifiers(gq).includes('NEP') ? 'Qualified' : 'Did not qualify') : gq && gq.teams.includes('NEP') ? 'At the Global Qualifier' : rq && rq.done && !(gq && gq.teams.includes('NEP')) && IN.placing(rq).indexOf('NEP') >= 2 ? 'Out in the regional final' : via === 'auto' ? 'Qualified' : via === 'gq' ? 'Straight to the Global Qualifier' : via === 'rq' ? 'Asia regional final first' : 'Route set by the previous World Cup';
+  return { T, name: IN.t20Name(T), hosts: T === 2028 ? 'Australia and New Zealand' : T === 2030 ? 'England, Ireland and Scotland' : 'Hosts not announced', start: IN.t20Start(T), wc, gq, rq, via, status };
+}
+// Batting and bowling leaders of a season, from the world stats: [{id, name, nat, r, w, ...}].
+export function leadersOf(G, S, n = 5) {
+  const T = (G.s.wd && G.s.wd.st[S.id]) || {}; const reg = (id) => G.players[id] || (G._wr && G._wr.by[id]) || null; const L = [];
+  for (const id in T) { const p = reg(id); if (p && p.gen) continue; const x = T[id]; L.push({ id, name: p ? p.name : id, nat: p ? p.nat : '', gen: !!(p && p.gen), m: x[0], r: x[3], hs: x[5], w: x[10], balls: x[8], rc: x[9], econ: x[8] ? x[9] / (x[8] / 6) : 99 }); }
+  return { runs: L.slice().sort((a, b) => b.r - a.r).slice(0, n), wkts: L.filter((x) => x.w).sort((a, b) => b.w - a.w || a.econ - b.econ).slice(0, n) };
+}
+export { MONTHS, rf, pick, shuffle };

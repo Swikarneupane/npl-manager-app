@@ -1,0 +1,36 @@
+#name Singapore
+#member associate
+#asOf 2026-08-08
+#source Wikipedia, "Singapore national cricket team", Current squad (updated 8 August 2026)
+#note Domestic teams are not listed: no first-class or one-day domestic structure was verified for this nation.
+#note Harman Singh is left out (no birth year in the source). Umair Aftab birth year is approximate (age 34 in the source).
+Aritra Dutta;1991;BAT;52;0;-;R;-;-
+Rezza Gaznavi;1992;BAT;50;10;LB;R;-;-
+Mahiyu Bhatia;2006;BAT;50;15;OB;R;-;-
+Suryansh Gulecha;2005;BAT;46;0;-;R;-;-
+Hari Kukreja;2000;BAT;46;20;RF;R;-;-
+Girin Gune;2004;BAT;44;10;LB;R;-;-
+Aaron Varghese;2004;BAT;44;0;-;R;-;-
+Riaan Naik;2009;BAT;42;0;-;R;-;-
+Mason Arthur Sherry;2007;BAT;42;0;-;R;-;-
+Manpreet Singh;1994;AR;52;50;OB;R;-;-
+Ishaan Swaney;2001;AR;44;48;SLA;L;-;-
+Umair Aftab;1992;AR;44;50;RF;R;-;-
+Raoul Sharma;2003;AR;44;46;RM;R;-;-
+Harsh Venkataram;2008;AR;42;44;RM;R;-;-
+Kabir Berlia;2008;AR;42;44;RM;R;-;-
+Aslan Jafri;2007;AR;42;46;SLA;L;-;-
+Kannusami Sathish;2002;AR;42;46;LM;R;-;-
+Aman Desai;2002;WK;46;0;-;L;-;-
+Sai Venugopal;2002;WK;44;0;-;R;-;-
+Raheel Thakkar;2007;WK;42;0;-;R;-;-
+Pratham Somani;2006;WK;42;0;-;R;-;-
+Jeevan Santhanam;2005;BOWL;15;50;SLA;L;-;-
+Pranav Sudarshan;2003;BOWL;10;48;RM;R;-;-
+Daksh Tyagi;2007;BOWL;10;46;LB;R;-;-
+Harsha Bharadwaj;2007;BOWL;10;46;LB;R;-;-
+Aarkin Kessar;2007;BOWL;10;46;RM;R;-;-
+Neil Karnik;2004;BOWL;10;46;RM;R;-;-
+Venkatesan Thiyanesh;2005;BOWL;10;46;RFM;R;-;-
+Vedant Nagpaul;2008;BOWL;10;44;OB;L;-;-
+Kapish Venkatraman;2009;BOWL;10;42;RM;R;-;-

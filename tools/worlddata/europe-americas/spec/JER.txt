@@ -1,0 +1,15 @@
+Charlie Brennan|2005|BAT|50|0||R|0,0,0|
+Jonty Jenner|1997|BAT|54|0||R|0,0,0|
+Asa Tribe|2004|BAT|56|0||R|0,0,0|
+Zak Tribe|2001|BAT|52|30|LB|R|0,0,0|
+Charles Perchard|1992|AR|50|52|RM|R|0,0,0|
+Dominic Blampied|1996|AR|48|50|LB|R|0,0,0|
+Harrison Carlyon|2001|AR|52|50|OB|R|0,0,0|
+Nick Greenwood|1999|AR|50|50|OB|R|0,0,0|
+William Perchard|2005|AR|44|48|RFM|R|0,0,0|
+Julius Sumerauer|2001|AR|46|52|RFM|R|0,0,0|
+Benjamin Ward|1998|AR|48|52|LB|R|0,0,0|
+Jake Dunford|1994|WK|52|0||R|0,0,0|
+Patrick Gouge|2003|WK|48|0||R|0,0,0|
+Theo Pullman|2006|BOWL|25|48|RM|R|0,0,0|
+George Richardson|2004|BOWL|25|50|RFM|R|0,0,0|

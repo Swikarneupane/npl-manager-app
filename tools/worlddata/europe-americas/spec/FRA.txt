@@ -1,0 +1,17 @@
+Gustav McKeon|2003|BAT|56|30|RFM|R|1,0,-1|
+Mukhtar Ghulami|1999|BAT|46|0||R|0,0,0|
+Lucas Smith|2006|BAT|44|0||R|0,0,0|
+Christian Roberts|2003|BAT|46|25|LB|R|0,0,0|
+Mustafa Omer|1999|BAT|46|25|LFM|R|0,0,0|
+Alestin Johnmary|1993|BAT|46|0||R|0,0,0|
+Usman Khan|1990|AR|46|48|RM|R|0,0,0|
+Zain Ahmad|2003|AR|46|48|LB|R|0,0,0|
+Jamshid Nasiri|2004|AR|46|46|OB|R|0,0,0|
+Rahmatullah Mangal|2003|AR|44|48|RFM|R|0,0,0|
+Dawood Ahmadzai|1994|AR|46|48|LB|R|0,0,0|
+Lingeswaran Canessane|2002|WK|46|0||R|0,0,0|
+Hevit Jackson|1996|WK|46|0||R|0,0,0|
+Faisal Safi|2002|BOWL|25|48|LM|L|0,0,0|
+Noman Amjad|2004|BOWL|25|48|RFM|R|0,0,0|
+Rohullah Mangal|2004|BOWL|25|48|RFM|R|0,0,0|
+Zaheer Zahiri|2002|BOWL|25|46|LM|R|0,0,0|

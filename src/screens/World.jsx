@@ -6,7 +6,9 @@ import { Dot } from '../components/bits.jsx';
 import MScreen, { useTab } from '../components/MScreen.jsx';
 import { useNarrow } from '../lib/util.js';
 import { T, tn } from '../lib/i18n.js';
-import { digest, openNocs, decideNoc, assistantGrants } from '../game/world.js';
+import { digest, openNocs, decideNoc, assistantGrants, nm, today, tournaments } from '../game/world.js';
+import { sbase, lastDay } from '../world/intl.js';
+import { short as shortD } from '../world/dates.js';
 import { LEAGUE_BY, NEP_ABROAD_FACTS } from '../game/world-data.js';
 import '../styles/world.css';
 
@@ -50,6 +52,16 @@ function Abroad({ list }) {
     <li key={`${x.p.id}${x.a.league}`} className={mine ? 'me' : ''} style={{ padding: '8px 0' }}><span className="grow">{x.p.name}{mine && <span className="faint t-small"> · yours</span>}<br /><span className="l2">{L.short} · {x.a.team}{x.a.kind ? ` · ${KIND[x.a.kind].toLowerCase()}` : ''}{x.a.pend ? ' · to come' : x.a.m ? ` · ${x.a.m} games, ${x.a.r} runs, ${x.a.w} wkts` : ''}</span></span>{x.a.champ ? <span className="gld t-small">★</span> : null}</li>); })}</ul>;
 }
 
+// The year's international tournaments from the world calendar (in-game).
+export function IntlHeads() {
+  const { G } = useGame(); if (!G.s.wd) return null; const t = today(G); const { have } = tournaments(G, t - 365, t);
+  const done = have.filter((S) => S.done).sort((a, b) => (b.endF ?? lastDay(b)) - (a.endF ?? lastDay(a))).slice(0, 6);
+  return <div><h2 className="sec">International cricket</h2>
+    {done.length ? <ul className="inbox">{done.map((S) => <li key={S.id}><span className="when">{shortD(S.endF ?? lastDay(S))}</span><div><p className="ttl"><Link to={`/comp/${encodeURIComponent(S.id)}`} style={{ color: 'inherit' }}>{sbase(S).replace("ICC Men's ", '')}</Link></p><p className="mut t-small">{nm(S.champ)} won{S.teams.includes('NEP') ? ' · Nepal took part' : ''} · in-game</p></div></li>)}</ul>
+      : <p className="t-small faint">No international tournaments finished in the last year.</p>}
+    <p className="t-micro faint" style={{ marginTop: 6 }}><Link to="/international?tab=results">All international results ›</Link></p></div>;
+}
+
 export default function World() {
   const { G } = useGame(); const narrow = useNarrow(); const d = digest(G); const [sel, setSel] = useState('');
   const [tab, setTab] = useTab(['champs', 'nepalis', 'next'], 'champs');
@@ -90,7 +102,7 @@ export default function World() {
         <p className="mhead">Nepalis abroad in {d.y}</p><Abroad list={thisYear} />
         <p className="faint t-micro" style={{ marginTop: 10 }}>{NEP_ABROAD_FACTS.join(' ')} Stints after the save starts are simulated.</p>
       </>}
-      {tab === 'next' && <>{coming}<p className="mhead">Signed for {G.year}</p><Abroad list={abroadNow} /></>}
+      {tab === 'next' && <>{coming}<p className="mhead">Signed for {G.year}</p><Abroad list={abroadNow} /><div style={{ marginTop: 16 }}><IntlHeads /></div></>}
     </MScreen>);
 
   return (
@@ -117,6 +129,7 @@ export default function World() {
         </section>
         <aside className="stack" style={{ gap: 24, minWidth: 0 }}>
           <div><h2 className="sec">Headlines from the year</h2>{heads}</div>
+          <IntlHeads />
           <div><h2 className="sec">Nepali champions abroad</h2>{champs.length ? <ul className="mlist">{champs.map((c) => <ChampRow key={c.p.id + c.a.league} x={c} />)}</ul> : <p className="t-small faint">None this year.</p>}</div>
           <div className="panel stack" style={{ gap: 6 }}>
             <h2 className="sec" style={{ margin: 0 }}>Coming up this winter</h2>

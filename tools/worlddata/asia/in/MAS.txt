@@ -1,0 +1,24 @@
+#name Malaysia
+#member associate
+#asOf 2024-09-09
+#source Wikipedia, "Malaysia national cricket team", Current squad (updated 9 September 2024, the latest list available)
+#note Domestic teams are not listed: no first-class or one-day domestic structure was verified for this nation.
+#note Malaysia Gen Keeper is a generated placeholder (fm.gen = 1): the source lists only one wicket-keeper.
+Ahmad Faiz;1988;BAT;56;10;LB;R;-;-
+Zubaidi Zulkifle;2000;BAT;50;10;RM;R;-;-
+Aqeel Wahid;2001;BAT;48;10;OB;L;-;-
+Aslam Khan;2001;BAT;46;10;OB;R;-;-
+Rajkumar Rajendran;1989;BAT;46;10;RM;R;-;-
+Virandeep Singh;1999;AR;60;58;SLA;R;-;-
+Syed Aziz;1998;AR;56;52;RM;L;-;-
+Sharvin Muniandy;1995;AR;50;52;RM;R;-;-
+Muhammad Amir;2001;AR;48;50;SLA;L;-;-
+Muhamad Syahadat;1994;AR;48;48;OB;R;-;-
+Ainool Hafizs;1996;WK;50;0;-;R;-;-
+Pavandeep Singh;1998;BOWL;20;58;SLA;R;-;-
+Vijay Unni;2003;BOWL;15;54;OB;R;-;-
+Khizar Hayat;1989;BOWL;15;52;OB;R;-;-
+Muhammad Wafiq;1996;BOWL;15;52;LFM;L;-;-
+Rizwan Haider;1987;BOWL;15;52;LFM;R;-;-
+Azri Azhar;2006;BOWL;10;48;RM;R;-;-
+Malaysia Gen Keeper;2000;WK;46;0;-;R;g;-

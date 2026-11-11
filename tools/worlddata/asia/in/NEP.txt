@@ -1,0 +1,67 @@
+#name Nepal
+#member associate
+#asOf 2026-10-19
+#source Wikipedia, "Nepal national cricket team", Current Squad (CAN central contracts 2025-26, updated 12 September 2026)
+#source NPL Manager src/game/data.js (NPL 2026 squads) and src/game/intl-data.js (T20I caps per Wikipedia list as of 8 June 2026, ODI caps as of 19 October 2026, CAN 2026 central contracts)
+#note Every Nepali player in src/game/data.js with an international cap or a CAN 2026 contract, spelt exactly as in data.js so the registry aliases them to their NPL selves. Ratings, role, type and hand copy data.js, which takes precedence at runtime.
+#note Domestic team (NEP-*) from the Wikipedia contract table; NPL team (NPL-*) from the 2026 NPL squads in data.js.
+#team NEP-APF|APF Club|APF
+#team NEP-ARMY|Tribhuvan Army Club|ARMY
+#team NEP-POL|Nepal Police Club|POL
+#team NEP-KOS|Koshi Province|KOS
+#team NEP-MAD|Madhesh Province|MAD
+#team NEP-BAG|Bagmati Province|BAG
+#team NEP-GAN|Gandaki Province|GAN
+#team NEP-LUM|Lumbini Province|LUM
+#team NEP-KAR|Karnali Province|KAR
+#team NEP-SUD|Sudurpashchim Province|SUD
+Sandeep Lamichhane;2000;BOWL;30;88;LB;R;-;NEP-BAG NPL-BK
+Basir Ahamad;2003;AR;55;56;SLA;L;-;NEP-ARMY NPL-BK
+Lokesh Bam;2000;WK;64;0;-;R;-;NEP-APF NPL-BK
+Pratish GC;1998;BOWL;30;63;RFM;R;-;NPL-BK
+Narayan Joshi;2000;BAT;56;30;OB;R;-;NPL-BK
+Kushal Malla;2004;AR;79;48;SLA;L;-;NEP-ARMY NPL-CR
+Rijan Dhakal;2002;BAT;60;0;-;R;-;NPL-CR
+Kamal Singh Airee;1996;BOWL;35;64;RFM;R;-;NPL-CR
+Dev Khanal;2004;BAT;63;0;-;R;-;NPL-CR
+Arjun Saud;1999;WK;62;0;-;R;-;NPL-CR
+Bibek Kumar Yadav;2000;BOWL;25;58;LB;R;-;NPL-CR
+Anil Sah;1998;WK;64;0;-;R;-;NEP-MAD NPL-JB
+Lalit Rajbanshi;1999;BOWL;30;78;SLA;L;-;NEP-POL NPL-JB
+Trit Raj Das;2002;BOWL;30;54;SLA;L;-;NPL-JB
+Sompal Kami;1996;BOWL;50;72;RFM;R;-;NEP-ARMY NPL-KY
+Nandan Yadav;2000;BOWL;25;62;RFM;R;-;NEP-APF NPL-KY
+Gulshan Jha;2006;AR;66;62;RFM;R;-;NEP-POL NPL-KY
+Pawan Sarraf;1999;AR;58;52;RM;R;-;NPL-KY
+Deepak Dumre;2001;WK;52;0;-;R;-;NPL-KY
+Yuvraj Khatri;2004;BAT;52;0;-;R;-;NPL-KY
+Surya Tamang;2004;BAT;58;0;-;R;-;NPL-KY
+Karan KC;1991;BOWL;50;68;RFM;R;-;NEP-POL NPL-KG
+Mohammad Aadil Alam;2001;BOWL;30;66;RFM;R;-;NPL-KG
+Shahab Alam;2001;BOWL;30;66;SLA;L;-;NEP-ARMY NPL-KG
+Rashid Khan;1999;BOWL;30;56;LB;R;-;NPL-KG
+Bhim Sharki;2001;BAT;68;30;OB;R;-;NEP-ARMY NPL-KG
+Santosh Yadav;2000;AR;52;50;OB;R;-;NPL-KG
+Rohit Paudel;2002;BAT;76;55;OB;R;-;NEP-APF NPL-LL
+Sundeep Jora;2001;BAT;70;0;-;R;-;NEP-APF NPL-LL
+Sher Malla;2002;BOWL;35;70;LB;R;-;NEP-SUD NPL-LL
+Dilip Nath;2000;WK;56;0;-;R;-;NPL-LL
+Aasif Sheikh;2001;WK;75;0;-;R;-;NEP-APF NPL-LL
+Kishore Mahato;1999;BOWL;30;64;RFM;R;-;NPL-LL
+Kushal Bhurtel;1997;BAT;76;30;LB;R;-;NEP-POL NPL-PA
+Aakash Chand;2000;BAT;56;0;-;R;-;NPL-PA
+Sagar Dhakal;2002;BOWL;30;66;SLA;L;-;NPL-PA
+Bipin Khatri;2001;BOWL;30;62;OB;R;-;NPL-PA
+Kiran Thagunna;2002;BOWL;25;54;RM;R;-;NPL-PA
+Arjun Gharti Chhetri;2001;WK;56;0;-;R;-;NPL-PA
+Dipendra Singh Airee;2000;AR;80;62;OB;R;-;NPL-SR
+Aarif Sheikh;1997;BAT;66;35;RM;R;-;NEP-POL NPL-SR
+Ishan Pandey;1998;AR;56;54;RM;R;-;NEP-BAG NPL-SR
+Abinash Bohara;1997;BOWL;35;70;RFM;R;-;NPL-SR
+Binod Bhandari;1990;WK;66;0;-;R;-;NEP-ARMY NPL-SR
+Hemant Dhami;2000;BOWL;30;60;RM;R;-;NEP-SUD NPL-SR
+Bhuvan Karki;1993;BOWL;30;56;SLA;L;-;-
+Naresh Budhayer;2001;BAT;54;0;-;R;-;-
+Jitendra Mukhiya;1996;BOWL;30;54;RM;R;-;-
+Rajesh Pulami;2000;BAT;52;0;-;R;-;-
+Arjun Kumal;2005;BAT;58;35;LB;R;-;NEP-GAN NPL-PA

@@ -1,0 +1,16 @@
+Anthony Mosca|1991|BAT|60|0||R|0,0,0|
+Justin Mosca|1994|BAT|60|0||L|0,0,0|
+Syed Naqvi|2002|BAT|54|25|RFM|R|0,0,0|
+Zain Ali|2001|BAT|56|25|RM|R|0,0,0|
+Wayne Madsen|1984|AR|66|40|OB|R|0,0,1|
+Grant Stewart|1994|AR|60|62|RFM|R|0,0,0|
+JJ Smuts|1988|AR|64|58|SLA|R|0,0,0|
+Jaspreet Singh|1993|BOWL|30|58|RFM|R|0,0,0|
+Ben Manenti|1997|AR|56|58|OB|R|0,0,0|
+Harry Manenti|2000|AR|58|56|RFM|R|0,0,0|
+Marcus Campopiano|1995|WK|56|0||R|0,0,0|
+Gian-Piero Meade|1996|WK|54|0||R|0,0,0|
+Crishan Kalugamage|1991|BOWL|25|60|LB|R|0,0,0|
+Thomas Draca|2000|BOWL|25|62|RF|R|0,0,0|
+Ali Hasan|2002|BOWL|20|56|LFM|L|0,0,0|
+Joe Burns|1989|BAT|68|0||R|0,0,0|

@@ -1,0 +1,24 @@
+#name Bahrain
+#member associate
+#asOf 2026-08-08
+#source Wikipedia, "Bahrain national cricket team", Current squad (updated 8 August 2026)
+#note Domestic teams are not listed: no first-class or one-day domestic structure was verified for this nation.
+Sohail Ahmed;1994;BAT;52;0;-;R;-;-
+Fiaz Ahmed;1987;BAT;50;0;-;R;-;-
+Ahmer Bin Nasir;1993;BAT;48;0;-;R;-;-
+Muhammad Safdar;1990;BAT;48;0;-;R;-;-
+Shahbaz Badar;1991;WK;48;0;-;R;-;-
+Prashant Kurup;1987;WK;48;0;-;R;-;-
+Yasser Nazeer;1990;WK;46;0;-;R;-;-
+Asif Ali;1995;AR;50;52;SLA;L;-;-
+Imran Anwar;1989;AR;48;50;LM;R;-;-
+Junaid Aziz;1994;AR;48;52;LB;R;-;-
+Shujaat Rasool;1999;AR;46;48;RM;L;-;-
+Amaish Rana;2003;AR;44;48;RFM;R;-;-
+Rizwan Butt;1991;BOWL;15;54;RM;R;-;-
+Abdul Majid;1993;BOWL;15;52;SLA;R;-;-
+Ali Dawood;1992;BOWL;15;52;RM;R;-;-
+Asif Shaikh;1994;BOWL;15;50;SLA;R;-;-
+Imran Khan;1990;BOWL;15;50;RM;R;-;-
+Yousif Wali;1993;BOWL;15;48;SLA;L;-;-
+Muhammad Salman;1995;BOWL;15;48;SLA;R;-;-

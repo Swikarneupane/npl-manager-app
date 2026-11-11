@@ -1,0 +1,15 @@
+Shangeev Thanikaithasan|1998|BAT|50|25|LB|R|0,0,0|
+Hamid Shah|1992|BAT|54|25|OB|R|0,0,0|
+Musa Shaheen|2004|BAT|46|0||R|0,0,0|
+Surya Anand|1998|AR|48|48|RM|R|0,0,0|
+Lucky Ali|2003|AR|46|50|SLA|L|0,0,0|
+Delawar Khan|1997|AR|48|50|LM|R|0,0,0|
+Mustakin Aslam|2008|AR|42|44|RM|R|0,0,0|
+Taranjit Bharaj|1993|WK|50|0||R|0,0,0|
+Sebastian Heath|2006|WK|42|0||R|0,0,0|
+Abdullah Mahmood|2002|BOWL|25|50|OB|R|0,0,0|
+Eshan Karimi|2005|BOWL|25|48|SLA|R|0,0,0|
+Saud Munir|1998|BOWL|30|50|RM|R|0,0,0|
+Shakeel Zeb|2002|BOWL|25|48|RM|R|0,0,0|
+Torvin Halbeck|1999|BAT|44|0||R|0,0,0|gen
+Anders Quillmark|2001|BOWL|25|44|RM|R|0,0,0|gen

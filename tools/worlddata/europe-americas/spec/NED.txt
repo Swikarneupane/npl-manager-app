@@ -1,0 +1,26 @@
+Colin Ackermann|1991|BAT|66|35|OB|R|0,0,0|
+Cedric de Lange|2007|BAT|54|0||L|0,0,0|
+Michael Levitt|2003|BAT|64|0||R|1,0,-1|
+Teja Nidamanuru|1994|BAT|62|0||R|0,0,0|
+Max O'Dowd|1994|BAT|68|0||R|0,1,0|
+Vikramjit Singh|2003|BAT|66|0||L|0,1,0|
+Sikander Zulfiqar|1997|BAT|58|0||R|0,0,0|
+Bas de Leede|1999|AR|68|66|RFM|R|0,1,0|
+Zach Lion-Cachet|2003|AR|56|56|OB|R|0,0,0|
+Roelof van der Merwe|1984|AR|58|66|SLA|R|1,0,-1|
+Tim Pringle|2002|AR|52|60|SLA|R|0,0,0|
+Saqib Zulfiqar|1997|AR|56|56|LB|R|0,0,0|
+Noah Croes|1999|WK|60|0||R|0,0,0|
+Scott Edwards|1996|WK|68|0||R|0,1,0|
+Wesley Barresi|1984|WK|60|0||R|0,0,0|
+Paul van Meekeren|1993|BOWL|27|68|RFM|R|0,0,0|
+Logan van Beek|1990|AR|59|65|RFM|R|0,0,0|
+Vivian Kingma|1994|BOWL|20|64|RFM|R|0,0,0|
+Fred Klaassen|1992|BOWL|20|66|LFM|R|0,0,0|
+Kyle Klein|2001|BOWL|25|60|RFM|R|0,0,0|
+Alex Roy|1999|BOWL|20|58|RFM|R|0,0,0|
+Timm van der Gugten|1991|BOWL|30|66|RFM|R|0,0,0|
+Ben Fletcher|2000|BOWL|20|56|LM|L|0,0,0|
+Shariz Ahmad|2003|BOWL|20|60|LB|L|0,0,0|
+Daniel Doram|1997|BOWL|30|58|SLA|L|0,0,0|
+Aryan Dutt|2003|BOWL|30|64|OB|R|0,0,0|

@@ -7,6 +7,16 @@ import { useNarrow, seasonNo, tname, tshort } from '../lib/util.js';
 import { T, tn } from '../lib/i18n.js';
 import MScreen, { useTab } from '../components/MScreen.jsx';
 import '../styles/living.css';
+import { JobHistory } from './Jobs.jsx';
+
+// Every job in this career (club and national), with how each one ended.
+function JobsHeld({ G }) {
+  if (!G.s.wd) return null;
+  return (<>
+    <div className="sechead" style={{ alignItems: 'baseline' }}><h2 className="sec" style={{ margin: 0 }}>{T(G, 'Jobs held', 'जागिरहरू')}</h2><Link to="/jobs" className="t-small">Jobs and offers ›</Link></div>
+    <JobHistory compact />
+  </>);
+}
 
 function summary(G) {
   const C = G.s.manager.career; let m = 0, w = 0, l = 0; const teams = new Set(C.map((c) => c.team)); teams.add(G.user);
@@ -93,7 +103,7 @@ export default function Career() {
       <div style={{ paddingTop: 12 }}>
         {tab === 'career' && <><Head G={G} /><h2 className="t-h3" style={{ marginBottom: 8 }}>{T(G, 'Trophy cabinet', 'ट्रफी')}</h2><Cabinet G={G} /></>}
         {tab === 'ach' && <Achievements G={G} />}
-        {tab === 'jobs' && <><Jobs G={G} update={update} toast={toast} /><div style={{ marginTop: 20 }}><Challenges G={G} /></div></>}
+        {tab === 'jobs' && <><JobsHeld G={G} /><div style={{ marginTop: 20 }}><Jobs G={G} update={update} toast={toast} /></div><div style={{ marginTop: 20 }}><Challenges G={G} /></div></>}
         {tab === 'legends' && <Legends G={G} update={update} toast={toast} />}
       </div>
     </MScreen>);
@@ -107,6 +117,7 @@ export default function Career() {
           <p className="t-micro faint">Season {seasonNo(G.year)}. Everything after the save started is simulated, in your game.</p>
         </section>
         <aside className="lv-side">
+          <div><JobsHeld G={G} /></div>
           <div><Jobs G={G} update={update} toast={toast} /></div>
           <Legends G={G} update={update} toast={toast} />
           <div><Challenges G={G} /></div>

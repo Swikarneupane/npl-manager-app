@@ -1,0 +1,25 @@
+#name Saudi Arabia
+#member associate
+#asOf 2024-04-14
+#source Wikipedia, "Saudi Arabia national cricket team", Current squad (updated 14 April 2024, the latest list available)
+#note Domestic teams are not listed: no first-class or one-day domestic structure was verified for this nation.
+#note A "Tisara Perera" listed in the source is left out: the entry could not be verified.
+Abdul Waheed;1993;BAT;54;15;LB;R;-;-
+Faisal Khan;1996;BAT;52;15;LB;R;-;-
+Waqar ul Hassan;1992;BAT;50;10;RM;L;-;-
+Saad Khan;1987;BAT;50;10;RM;L;-;-
+Kashif Siddique;1989;BAT;48;0;-;L;-;-
+Zuhair Muhammad;2005;BAT;46;10;OB;R;-;-
+Hisham Shaikh;1996;AR;54;54;LB;R;-;-
+Usman Khalid;1983;AR;50;52;SLA;L;-;-
+Waji ul Hassan;1995;AR;48;50;RM;R;-;-
+Manan Ali;1997;WK;50;0;-;R;-;-
+Haseeb Ghafoor;1984;WK;48;0;-;R;-;-
+Zain ul Abidin;1992;BOWL;15;54;SLA;L;-;-
+Ishtiaq Ahmad;1993;BOWL;15;54;RM;R;-;-
+Usman Najeeb;1995;BOWL;15;52;RM;R;-;-
+Imran Yousuf;1987;BOWL;15;50;LB;R;-;-
+Usman Ali;1987;BOWL;15;50;SLA;L;-;-
+Atif ur Rehman;1982;BOWL;15;50;RM;R;-;-
+Shahzaib;1993;BOWL;15;48;RM;R;-;-
+Ahmad Raza;2004;BOWL;15;48;RM;R;-;-

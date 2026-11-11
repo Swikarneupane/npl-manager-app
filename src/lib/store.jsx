@@ -37,3 +37,9 @@ export function GameProvider({ children }) {
   );
 }
 export const useGame = () => useContext(Ctx);
+// Gives a subtree a different game object: the live screens play a national match against the stand-in
+// from world/match.js (worldGame), while everything outside still sees the real game.
+export function GameScope({ G, children }) {
+  const v = useContext(Ctx); const value = useMemo(() => ({ ...v, G }), [v, G]);
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
+}

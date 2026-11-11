@@ -47,6 +47,11 @@ const World = lazy(() => import('./screens/World.jsx'));
 const International = lazy(() => import('./screens/International.jsx'));
 const WorldCup = lazy(() => import('./screens/WorldCup.jsx'));
 const Rankings = lazy(() => import('./screens/Rankings.jsx'));
+// Phase 3: careers across jobs, the calendar, any competition, the national squad.
+const Calendar = lazy(() => import('./screens/Calendar.jsx'));
+const Comp = lazy(() => import('./screens/Comp.jsx'));
+const NationSquad = lazy(() => import('./screens/NationSquad.jsx'));
+const Jobs = lazy(() => import('./screens/Jobs.jsx'));
 
 class ErrorBoundary extends Component {
   constructor(p) { super(p); this.state = { err: null }; }
@@ -141,6 +146,10 @@ export default function App() {
                   <Route path="/international" element={<International />} />
                   <Route path="/worldcup" element={<WorldCup />} />
                   <Route path="/rankings" element={<Rankings />} />
+                  <Route path="/calendar" element={<Calendar />} />
+                  <Route path="/comp/:seasonId" element={<Comp />} />
+                  <Route path="/nation" element={<NationSquad />} />
+                  <Route path="/jobs" element={<Jobs />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </Suspense>

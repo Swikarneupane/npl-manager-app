@@ -1,0 +1,74 @@
+#name Sri Lanka
+#member full
+#asOf 2026-11-10
+#source Wikipedia, "Sri Lanka national cricket team", Current squad (last updated 10 November 2026), citing Sri Lanka Cricket
+#source Wikipedia player articles for players outside the current squad, checked November 2026
+#source NPL Manager src/game/data.js and os-extra.js (players already in the NPL game, spelt identically so they alias)
+#note Domestic club and LPL team per the Wikipedia current-squad table; players outside it carry only the national code.
+#team SL-SSC|Sinhalese Sports Club|SSC
+#team SL-NCC|Nondescripts Cricket Club|NCC
+#team SL-CCC|Colombo Cricket Club|CCC
+#team SL-COLTS|Colts Cricket Club|COL
+#team SL-MOORS|Moors Sports Club|MSC
+#team SL-TU|Tamil Union Cricket and Athletic Club|TU
+#team SL-BLM|Bloomfield Cricket and Athletic Club|BLM
+#team SL-RAGAMA|Ragama Cricket Club|RAG
+#team SL-ARMY|Sri Lanka Army Sports Club|ARMY
+#team SL-BAD|Badureliya Sports Club|BAD
+#team SL-CHI|Chilaw Marians Cricket Club|CMC
+#team SL-NAVY|Sri Lanka Navy Sports Club|NAVY
+#team SL-AF|Sri Lanka Air Force Sports Club|SLAF
+#team SL-POL|Police Sports Club|POL
+#team SL-PAN|Panadura Sports Club|PAN
+#team SL-GAL|Galle Cricket Club|GCC
+Pathum Nissanka;1998;BAT;81;0;-;R;1/1/0;SL-NCC
+Avishka Fernando;1998;BAT;70;10;RM;R;-;SL-SSC LPL-JAF
+Nuwanidu Fernando;1999;BAT;66;15;OB;R;-;SL-SSC LPL-JAF
+Pavan Rathnayake;2002;BAT;66;10;OB;R;-;SL-CCC LPL-DAM
+Pasindu Sooriyabandara;1999;BAT;64;0;-;R;-3/0/3;SL-MOORS
+Sineth Jayawardene;2004;BAT;62;10;OB;L;-;SL-TU LPL-JAF
+Charith Asalanka;1997;BAT;81;45;OB;L;1/1/-2;SL-SSC LPL-GAL
+Oshada Fernando;1992;BAT;68;0;-;R;-2/0/2;-
+Dinesh Chandimal;1989;WK;74;0;-;R;-3/0/3;SL-COLTS LPL-DAM
+Kusal Mendis;1995;WK;79;0;-;R;-;SL-SSC LPL-COL
+Lahiru Udara;1993;WK;66;0;-;R;-;SL-NCC LPL-KAN
+Nishan Madushka;1999;WK;64;0;-;R;-;SL-CCC LPL-JAF
+Anjala Bandara;2004;WK;60;0;-;L;-;SL-CCC
+Kusal Perera;1990;WK;72;0;-;L;2/0/-3;-
+Niroshan Dickwella;1993;WK;71;0;-;L;-;-
+Bhanuka Rajapaksa;1991;WK;69;0;-;L;2/0/-2;-
+Lahiru Milantha;1994;WK;70;0;-;L;2/0/-2;-
+Sahan Arachchige;1996;AR;64;55;OB;L;-;SL-NCC LPL-GAL
+Dhananjaya de Silva;1991;AR;76;58;OB;R;-2/0/3;SL-CCC
+Wanindu Hasaranga;1997;AR;58;84;LB;R;2/0/-3;SL-CCC LPL-KAN
+Janith Liyanage;1995;AR;66;55;RFM;R;-;SL-BLM LPL-COL
+Kamindu Mendis;1998;AR;78;55;OB;L;-1/0/2;SL-CCC LPL-COL
+Ramesh Mendis;1995;AR;52;68;OB;R;-2/0/2;SL-MOORS LPL-DAM
+Dasun Shanaka;1991;AR;65;65;RM;R;2/0/-3;SL-SSC LPL-GAL
+Milan Rathnayake;1996;AR;52;66;RFM;L;-2/0/2;SL-MOORS LPL-COL
+Sonal Dinusha;2000;AR;52;64;SLA;L;-2/0/2;SL-CCC LPL-COL
+Dunith Wellalage;2003;AR;60;72;SLA;L;-;SL-COLTS LPL-JAF
+Dushan Hemantha;1994;AR;52;64;LB;R;-;SL-BLM LPL-KAN
+Chamindu Wickramasinghe;2002;AR;58;58;RFM;L;-;SL-SSC LPL-JAF
+Angelo Mathews;1987;AR;74;45;RM;R;0/1/0;-
+Lahiru Samarakoon;1997;AR;58;58;RM;R;-;-
+Chamika Karunaratne;1996;AR;58;62;RFM;R;-;-
+Dhananjaya Lakshan;1998;AR;58;58;RM;R;-;-
+Dushmantha Chameera;1992;AR;63;69;RF;R;1/0/-2;SL-NCC LPL-DAM
+Tharindu Rathnayake;1996;BOWL;40;64;OB;L;-;SL-CCC LPL-GAL
+Prabath Jayasuriya;1991;BOWL;30;80;SLA;R;-6/-2/5;SL-SSC
+Maheesh Theekshana;2000;BOWL;28;75;OB;R;1/1/-3;SL-ARMY LPL-DAM
+Jeffrey Vandersay;1990;BOWL;30;70;LB;R;-;SL-BLM LPL-COL
+Keshara Nuwantha;2000;BOWL;20;62;OB;R;-2/0/2;SL-BAD
+Vijayakanth Viyaskanth;2001;BOWL;20;66;LB;R;-;SL-BLM LPL-GAL
+Sachindu Colombage;1998;BOWL;25;62;LB;R;-;SL-BLM LPL-GAL
+Asitha Fernando;1997;BOWL;15;74;RFM;R;-;SL-CCC LPL-KAN
+Binura Fernando;1995;BOWL;20;68;LFM;R;-;SL-RAGAMA LPL-COL
+Vishwa Fernando;1991;BOWL;20;70;LFM;R;-3/0/3;SL-CCC
+Lahiru Kumara;1997;BOWL;15;72;RF;L;-;SL-NCC
+Pramod Madushan;1993;BOWL;20;64;RFM;R;-;SL-SSC LPL-GAL
+Dilshan Madushanka;2000;BOWL;15;74;LFM;R;-;SL-COLTS LPL-JAF
+Eshan Malinga;2001;BOWL;15;70;RFM;L;-;SL-BLM LPL-GAL
+Matheesha Pathirana;2002;BOWL;25;78;RF;R;3/0/-4;SL-NCC
+Kasun Rajitha;1993;BOWL;20;70;RFM;R;-;SL-SSC LPL-GAL
+Nuwan Thushara;1994;BOWL;15;70;RFM;R;2/0/-2;SL-CCC LPL-KAN

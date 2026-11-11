@@ -7,11 +7,34 @@ import { Dot, Seg } from '../components/bits.jsx';
 import { saveLocal } from '../lib/save.js';
 import { downloadSave } from '../lib/cloud.js';
 import { CHALLENGES, applyChallenge } from '../game/living.js';
+import { ASSOCIATES, NATION_NAME, startCareer, strength } from '../world/career.js';
+import { poolOf } from '../world/players.js';
+
+// Which jobs the career starts with. Associates are open from the start; Test nations come by reputation.
+const JOBS = [['club', 'NPL club'], ['nation', 'National team'], ['both', 'Both']];
+const JOB_TEXT = { club: 'Run one of the eight NPL franchises.', nation: 'Manage Nepal or another associate nation. The NPL runs without you; clubs may call later.', both: 'An NPL franchise and a national side at once. Players you call up miss NPL matches that clash.' };
 
 const MODES = [['ball', 'Every ball', 'You call each delivery.'], ['over', 'Every over', 'Pause at the end of each over.'], ['key', 'Key moments', 'Plays on, pauses for wickets, DRS and the death overs.'], ['quick', 'Quick sim', 'Straight to the result.']];
 
 // What each difficulty changes, for the New game and Settings screens.
 export const DIFF_TEXT = { easy: 'Rival owners bid less, rival sides play 2 below their ratings against you, and the board only sacks you below 20.', normal: 'Everything as rated. The board sacks you below 30 at the end-of-season review.', hard: 'Rival owners bid more, rival sides play 2 above their ratings against you, and the board sacks you below 40.' };
+
+// Associates to choose from, strongest first, with the game's estimate of each side's best XI.
+function NationTable({ nations, nation, setNation, vmin, vmax }) {
+  return (
+    <>
+      <h2 className="sec">Choose a national team</h2>
+      <div className="tblwrap" style={{ maxHeight: 520, overflowY: 'auto' }}><table className="tbl"><thead><tr><th>Nation</th><th className="r">Players</th><th style={{ width: 150 }}>ODI strength</th></tr></thead>
+        <tbody>{nations.map((x) => (
+          <tr key={x.c} className={nation === x.c ? 'me' : ''}>
+            <td className="name"><label className="chk" style={{ minHeight: 28 }}><input type="radio" name="nation" checked={nation === x.c} onChange={() => setNation(x.c)} /><span>{NATION_NAME[x.c]}</span></label></td>
+            <td className="r num">{x.n || '—'}</td>
+            <td>{x.v > 0 ? <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}><div className="meter" style={{ flex: '1 1 auto' }}><i style={{ width: `${Math.round(20 + 80 * (x.v - vmin) / (vmax - vmin || 1))}%` }} /></div><span className="num" style={{ width: 22, textAlign: 'right' }}>{Math.round(x.v)}</span></div> : <span className="faint t-small">No players yet</span>}</td>
+          </tr>))}</tbody></table></div>
+      <p className="faint t-small" style={{ marginTop: 10 }}>Associate members of the ICC. Strength is the game's estimate of the best ODI XI; Test nations open later, from a reputation of about 75.</p>
+    </>
+  );
+}
 
 export default function NewGame() {
   const { setG, toast, ui } = useGame();
@@ -23,6 +46,8 @@ export default function NewGame() {
   const [mode, setMode] = useState('key');
   const [code, setCode] = useState('');
   const [challenge, setChallenge] = useState('');
+  const [job, setJob] = useState('club'); const [nation, setNation] = useState('NEP');
+  const club = job !== 'nation';
   const pickChallenge = (k) => { setChallenge(k); const c = CHALLENGES.find((x) => x.k === k); if (c && c.team) setTeam(c.team); };
   const preview = useMemo(() => Game.create('LL', {}), []);
   const strs = useMemo(() => TEAMS.map((t) => preview.strength(t.id)), [preview]);
@@ -30,11 +55,16 @@ export default function NewGame() {
   const h25 = HISTORY[1];
   const t = TEAMS.find((x) => x.id === team); const tt = preview.teams[team];
   const stars = tt.squad.map((id) => preview.P(id)).sort((a, b) => (b.bat + b.bowl) - (a.bat + a.bowl)).slice(0, 4).map((p) => p.name).join(', ');
+  // associates by the game's estimate of their best ODI XI (Nepal first)
+  const nations = useMemo(() => { if (!preview.s.wd) return []; const list = ASSOCIATES.map((c) => ({ c, n: poolOf(preview, c).length, v: strength(preview, c, 'ODI') })); return list.sort((a, b) => (b.c === 'NEP') - (a.c === 'NEP') || b.v - a.v); }, [preview]);
+  const nvMax = Math.max(1, ...nations.map((x) => x.v)); const nvMin = Math.min(...nations.filter((x) => x.v > 0).map((x) => x.v), nvMax);
+  const nat = nations.find((x) => x.c === nation);
 
   const start = () => {
     // pre-season fairness: the AI teams sign their overseas players when you start the season, not before
     const G = Game.create(team, { lang, manager: name || 'Manager', mode, difficulty });
-    if (challenge) applyChallenge(G, challenge);
+    if (challenge && club) applyChallenge(G, challenge);
+    startCareer(G, { club, nation: job === 'club' ? null : nation });
     ui.live = null; saveLocal(G); setG(G); nav('/');
   };
   const loadCode = async () => {
@@ -51,7 +81,9 @@ export default function NewGame() {
         </div>
         <div className="split" style={{ gap: 40 }}>
           <section>
-            <h2 className="sec">Choose a franchise</h2>
+            {job !== 'club' && <NationTable nations={nations} nation={nation} setNation={setNation} vmin={nvMin} vmax={nvMax} />}
+            {club && <>
+            <h2 className="sec" style={job !== 'club' ? { marginTop: 32 } : undefined}>Choose a franchise</h2>
             <div className="tblwrap"><table className="tbl"><thead><tr><th>Franchise</th><th>Last season</th><th>Captain</th><th>Head coach</th><th style={{ width: 150 }}>Squad strength</th></tr></thead>
               <tbody>{TEAMS.map((x, i) => {
                 const pos = h25.table.findIndex((r) => r[0] === x.id) + 1;
@@ -64,21 +96,25 @@ export default function NewGame() {
                   </tr>);
               })}</tbody></table></div>
             <p className="faint t-small" style={{ marginTop: 10 }}>2025 finishes and 2026 captains are from the real league. Squad strength is the game's average rating of the best legal XI.</p>
+            </>}
           </section>
           <section style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+            <div className="field"><span className="lbl">Your job</span><Seg options={JOBS} value={job} onChange={setJob} label="Your job" /><p className="faint t-small">{JOB_TEXT[job]} Test nations open from a reputation of about 75.</p></div>
             <div className="field"><label htmlFor="mgr">Manager name</label><input id="mgr" className="input" value={name} placeholder="Your name" onChange={(e) => setName(e.target.value)} /></div>
             <div className="field"><span className="lbl">Language</span><Seg options={[['en', 'English'], ['np', 'नेपाली'], ['both', 'Both']]} value={lang} onChange={setLang} label="Language" /><p className="faint t-small">Commentary, news and menus.</p></div>
             <div className="field"><span className="lbl">Difficulty</span><Seg options={[['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']]} value={difficulty} onChange={setDifficulty} label="Difficulty" /><p className="faint t-small">{DIFF_TEXT[difficulty]} You can change it later in Settings.</p></div>
             <div className="field"><span className="lbl">Default match control</span>
               <div className="stack" style={{ gap: 8 }}>{MODES.map(([k, l, d]) => (
                 <label key={k} className="chk"><input type="radio" name="mode" checked={mode === k} onChange={() => setMode(k)} /><span><b style={{ fontWeight: 600 }}>{l}</b> <span className="faint t-small">{d}</span></span></label>))}</div></div>
-            <div className="field"><span className="lbl">Challenge</span>
+            {club && <div className="field"><span className="lbl">Challenge</span>
               <div className="stack" style={{ gap: 8 }}>{[['', 'None', 'A normal career.', ''], ...CHALLENGES.map((c) => [c.k, c.n, c.d, c.tag])].map(([k, l, d, tag]) => (
                 <label key={k || 'none'} className="chk"><input type="radio" name="challenge" checked={challenge === k} onChange={() => pickChallenge(k)} /><span><b style={{ fontWeight: 600 }}>{l}</b>{tag && <span className="faint t-small"> · {tag}</span>} <span className="faint t-small">{d}</span></span></label>))}</div>
-              {challenge === 'rescue' && team !== 'JB' && <p className="t-small crim">This challenge is with Janakpur Bolts.</p>}</div>
-            <div className="panel stack" style={{ gap: 8 }}><p className="t-h3" style={{ display: 'flex', alignItems: 'center' }}><Dot id={team} />{t.name}</p>
-              <p className="t-small mut">{t.city}, {t.province} Province. Captain {t.captain}, coach {t.coach}. Key players: {stars}. {tt.squad.length} players, {preview.osCount(team)} overseas signed so far: you need 6 to 8 before the first match.</p></div>
-            <button type="button" className="btn btn-primary btn-lg" onClick={start}>Start Season 3</button>
+              {challenge === 'rescue' && team !== 'JB' && <p className="t-small crim">This challenge is with Janakpur Bolts.</p>}</div>}
+            {job !== 'club' && <div className="panel stack" style={{ gap: 8 }}><p className="t-h3">{NATION_NAME[nation]} · national team</p>
+              <p className="t-small mut">{nat && nat.n ? `${nat.n} eligible players in the game's database.` : 'Players come from the game\'s database and the NPL.'} You pick a squad of 15 for each format, the XI, captain and keeper. The board sets objectives for each competition.</p></div>}
+            {club && <div className="panel stack" style={{ gap: 8 }}><p className="t-h3" style={{ display: 'flex', alignItems: 'center' }}><Dot id={team} />{t.name}</p>
+              <p className="t-small mut">{t.city}, {t.province} Province. Captain {t.captain}, coach {t.coach}. Key players: {stars}. {tt.squad.length} players, {preview.osCount(team)} overseas signed so far: you need 6 to 8 before the first match.</p></div>}
+            <button type="button" className="btn btn-primary btn-lg" onClick={start}>{job === 'club' ? 'Start Season 3' : job === 'nation' ? `Start as ${NATION_NAME[nation]} manager` : `Start Season 3 with ${NATION_NAME[nation]}`}</button>
             <div className="field"><label htmlFor="code">Have a cloud save code?</label><div className="row" style={{ gap: 8 }}><input id="code" className="input" style={{ flex: '1 1 160px', textTransform: 'uppercase' }} value={code} maxLength={8} placeholder="8-character code" onChange={(e) => setCode(e.target.value)} /><button type="button" className="btn" onClick={loadCode} disabled={code.trim().length < 8}>Load career</button></div></div>
           </section>
         </div>

@@ -1,0 +1,15 @@
+Harmanjot Singh|1994|BAT|52|30|LB|R|0,0,0|
+Hassan Khan|2002|BAT|48|0||L|0,0,0|
+Sachin Mandy|1991|BAT|48|0||R|0,0,0|
+Shahid Afridi|1999|AR|46|48|RM|R|0,0,0|
+Fayaz Khan|1997|AR|48|48|RM|R|0,0,0|
+Mussadiq Ahmed|1989|AR|46|52|RF|R|0,0,0|
+Muslim Yar|1999|AR|48|52|SLA|R|0,0,0|
+Kyle Klasse|2002|WK|48|0||R|0,0,0|
+Abdul Shakoor|1999|BOWL|25|48|OB|R|0,0,0|
+Ghulam Ahmadi|1997|BOWL|30|50|OB|R|0,0,0|
+Jatinder Kumar|1992|BOWL|25|48|SLA|L|0,0,0|
+Abdul Bashir|1998|BOWL|25|48|RM|R|0,0,0|
+Adil Khan|2004|BOWL|25|46|RM|R|0,0,0|
+Sajid Liaqat|1985|BOWL|25|46|RM|R|0,0,0|
+Lukas Feldwirt|2000|WK|44|0||R|0,0,0|gen

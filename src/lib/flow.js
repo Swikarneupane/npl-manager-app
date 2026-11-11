@@ -3,7 +3,7 @@ import { sleep, nextUnplayed } from './util.js';
 import { Match } from '../game/engine.js';
 import { quickHooks, prepOf, postMatchPath } from '../game/matchday.js';
 import { afterMatchPath, preMatchPath } from '../game/occasions.js';
-import { afterWinter } from '../game/world.js';
+import { playWinter } from '../game/world.js';
 export function afterFixture(G) {
   if (G.s.phase === 'league' && G.leagueDone()) G.setupPlayoffs();
   else if (G.s.phase === 'playoffs') { const ch = G.advancePlayoffs(); if (ch) G.seasonAwards(ch); }
@@ -36,9 +36,10 @@ export function startSeason(G) {
   return added;
 }
 
-// Start the off-season and play Nepal's winter (international matches are simulated with the real engine).
-// The world off-season (rankings, the pathway, World Cups) runs once Nepal's winter is played.
-export async function startOffseason(G) { G.startOffseason(); await G.runIntlWinter(); afterWinter(G); }
+// Start the off-season and play the international year up to the next NPL pre-season: every world
+// fixture, Nepal's included (src/world/intl.js). Nepal's games become caps, call-ups and news in
+// world.js; with a national job the clock stops at the user's first fixture instead.
+export async function startOffseason(G) { G.startOffseason(); await playWinter(G); }
 
 export function savedMatchFor(G, f) { const L = G.s.liveMatch; return L && f && L.n === f.n && L.year === G.year && !f.res ? L : null; }
 // Quick-sim the user's next match, continuing a saved part-played match if there is one.

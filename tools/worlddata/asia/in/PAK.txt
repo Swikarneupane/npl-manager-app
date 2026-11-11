@@ -1,0 +1,87 @@
+#name Pakistan
+#member full
+#asOf 2026-11-01
+#source Wikipedia, "Pakistan national cricket team", Current squad (updated 17 November 2025), citing PCB central contracts
+#source Wikipedia, "2026 Men's T20 World Cup squads" (Pakistan squad announced 25 January 2026)
+#source Times of Oman / IANS, "Shan, Shafique, spin pair of Noman-Sajid dropped from Pakistan squad for Sri Lanka series" (Test squad, late October 2026)
+#source Wikipedia player articles (infobox: birth date, batting, bowling, teams), checked November 2026
+#note PSL teams (PSL-*) are as of the 2025 PSL, as given by the Wikipedia squad tables; Pakistan's 2026 PSL draft was not verified.
+#team PAK-KHW|Karachi Whites|KHW
+#team PAK-KHB|Karachi Blues|KHB
+#team PAK-LHW|Lahore Whites|LHW
+#team PAK-LHB|Lahore Blues|LHB
+#team PAK-ISB|Islamabad|ISB
+#team PAK-RWP|Rawalpindi|RWP
+#team PAK-PES|Peshawar|PES
+#team PAK-ABT|Abbottabad|ABT
+#team PAK-FATA|FATA|FATA
+#team PAK-FSD|Faisalabad|FSD
+#team PAK-MUL|Multan|MUL
+#team PAK-SKT|Sialkot|SKT
+#team PAK-BWP|Bahawalpur|BWP
+#team PAK-HYD|Hyderabad|HYD
+#team PAK-QTA|Quetta|QTA
+#team PAK-AJK|Azad Jammu and Kashmir|AJK
+#team PAK-LRK|Larkana|LRK
+#team PAK-DMJ|Dera Murad Jamali|DMJ
+Saim Ayub;2002;BAT;76;35;OB;L;3/1/-2;PAK-KHW PSL-PZ
+Babar Azam;1994;BAT;86;0;-;R;-2/3/2;PAK-LHB PSL-PZ
+Sahibzada Farhan;1996;BAT;74;0;-;R;3/0/-2;PAK-PES
+Imam-ul-Haq;1995;BAT;74;0;-;L;-3/2/1;PAK-MUL
+Mohammad Huraira;2002;BAT;68;0;-;R;-3/0/3;PAK-FSD
+Irfan Khan;2002;BAT;66;30;RFM;R;2/0/-1;PAK-FSD PSL-KK
+Shan Masood;1989;BAT;73;10;RFM;L;-4/0/3;PAK-KHW PSL-KK
+Hasan Nawaz;2002;BAT;70;0;-;R;3/0/-2;-
+Abdul Samad;1998;BAT;67;0;-;R;3/0/-2;-
+Saud Shakeel;1995;BAT;78;15;SLA;L;-3/1/3;PAK-KHW PSL-QG
+Abdullah Shafique;1999;BAT;75;10;OB;R;-3/0/3;PSL-LQ
+Tayyab Tahir;1993;BAT;66;15;LB;R;-;PAK-LHW PSL-MS
+Omair Bin Yousuf;1998;BAT;66;0;-;R;1/0/0;PAK-KHW PSL-KK
+Fakhar Zaman;1990;BAT;76;15;SLA;L;2/2/-4;PAK-ABT PSL-LQ
+Khawaja Nafay;2002;BAT;66;15;OB;R;3/0/-2;PSL-QG
+Sameer Minhas;2006;BAT;66;10;LB;R;0/0/1;PSL-IU
+Abdullah Fazal;2003;BAT;66;0;-;L;-2/0/3;PAK-KHB
+Azan Awais;2004;BAT;66;0;-;L;-3/0/3;PAK-SKT
+Mohammad Taha;2000;BAT;65;15;SLA;L;-2/0/3;-
+Shamyl Hussain;2004;BAT;64;0;-;L;-;-
+Iftikhar Ahmed;1990;BAT;70;45;OB;R;2/0/-2;-
+Kamran Ghulam;1995;BAT;72;25;SLA;R;-2/0/3;PAK-PES PSL-MS
+Salman Ali Agha;1993;AR;74;60;OB;R;1/1/0;PSL-IU
+Asif Afridi;1986;AR;45;68;SLA;R;-3/0/3;-
+Faheem Ashraf;1994;AR;64;66;RM;L;1/0/0;-
+Aamir Jamal;1996;AR;58;68;RFM;R;0/0/1;PAK-LHW PSL-KK
+Jahandad Khan;2003;AR;52;64;LFM;L;-;PAK-RWP PSL-LQ
+Shadab Khan;1998;AR;66;74;LB;R;3/0/-3;PAK-RWP PSL-IU
+Mohammad Nawaz;1994;AR;65;65;SLA;L;1/0/-1;PAK-RWP PSL-IU
+Hussain Talat;1996;AR;64;55;RFM;L;1/0/0;-
+Khushdil Shah;1995;AR;66;50;SLA;L;2/0/-2;-
+Arafat Minhas;2005;AR;58;64;SLA;L;-;-
+Mohammad Rizwan;1992;WK;80;0;-;R;0/3/0;PAK-PES PSL-MS
+Usman Khan;1995;WK;70;0;-;R;3/0/-2;PAK-KHW PSL-MS
+Haseebullah Khan;2003;WK;66;0;-;L;-;PAK-MUL PSL-QG
+Mohammad Haris;2001;WK;67;0;-;R;3/0/-2;PSL-PZ
+Rohail Nazir;2001;WK;64;0;-;R;-1/0/2;-
+Ghazi Ghori;2003;WK;62;0;-;R;-2/0/3;-
+Saad Baig;2006;WK;62;0;-;L;-;-
+Abrar Ahmed;1998;BOWL;20;79;LB;R;-;PAK-KHW PSL-QG
+Faisal Akram;2003;BOWL;20;66;LWS;L;-;PAK-MUL PSL-MS
+Noman Ali;1986;BOWL;40;77;SLA;L;-6/-2/5;PAK-KHW
+Sajid Khan;1993;BOWL;40;74;OB;R;-4/0/4;PAK-PES
+Sufiyan Muqeem;1999;BOWL;15;70;LWS;L;2/0/-2;PAK-LHW PSL-PZ
+Usman Tariq;1995;BOWL;15;70;OB;R;3/0/-3;PSL-QG
+Usama Mir;1995;BOWL;32;71;LB;R;1/0/-1;-
+Mohammad Abbas;1990;BOWL;25;76;RFM;R;-6/-2/5;-
+Abbas Afridi;2001;BOWL;30;68;RFM;R;2/0/-2;PAK-PES PSL-KK
+Shaheen Shah Afridi;2000;BOWL;30;84;LF;L;-;PAK-FATA PSL-LQ
+Hasan Ali;1994;BOWL;40;72;RFM;R;-;PSL-KK
+Mohammad Ali;1992;BOWL;20;68;RFM;R;-2/0/2;PAK-FSD PSL-PZ
+Mir Hamza;1992;BOWL;20;68;LM;L;-3/0/3;PAK-KHW PSL-KK
+Mohammad Hasnain;2000;BOWL;15;70;RF;R;-;PAK-HYD PSL-MS
+Akif Javed;2000;BOWL;15;64;LFM;R;-;-
+Salman Mirza;1994;BOWL;15;68;LF;R;1/0/0;-
+Haris Rauf;1993;BOWL;15;79;RF;R;2/0/-3;PAK-ISB PSL-LQ
+Naseem Shah;2003;BOWL;25;80;RF;R;-;PSL-IU
+Khurram Shahzad;1999;BOWL;25;72;RFM;R;-2/0/2;PAK-FSD PSL-QG
+Mohammad Wasim;2001;BOWL;35;68;RFM;R;-;PAK-FATA PSL-QG
+Shahnawaz Dahani;1998;BOWL;15;66;RFM;R;-;-
+Ahmed Daniyal;1997;BOWL;20;64;RFM;R;-;PAK-LHW

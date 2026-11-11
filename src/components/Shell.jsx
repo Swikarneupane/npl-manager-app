@@ -9,19 +9,24 @@ import { unreadCount } from './news.jsx';
 import { fmtL } from '../game/engine.js';
 import { seasonNo, tr, userNextFixture, nextUnplayed, useNarrow } from '../lib/util.js';
 import { tn, tnShort } from '../lib/i18n.js';
-import { DEPTH_GROUPS, MATCH_ROUTES, LEAGUE_ROUTES } from '../lib/nav.js';
+import { DEPTH_GROUPS, MATCH_ROUTES, LEAGUE_ROUTES, NATION_ROUTES, CAL_ROUTES } from '../lib/nav.js';
 import { savedMatchFor } from '../lib/flow.js';
+import { hasClub, userNation, nationJob, nationName } from '../world/career.js';
+import { savedWorld } from '../world/match.js';
+import { label as dayLabel, short } from '../world/dates.js';
 
 const PHASES = { preseason: 'Pre-season', league: 'League', playoffs: 'Playoffs', seasonEnd: 'Season over', offseason: 'Off-season', retention: 'Retention', auction: 'Auction' };
 const OFF = ['offseason', 'retention', 'auction'];
 // Desktop detail pages without a back link of their own.
-const DESK_BACK = ['/contract/', '/story/', '/press', '/worldcup', '/rankings'];
+const DESK_BACK = ['/contract/', '/story/', '/press', '/worldcup', '/rankings', '/comp/'];
 
 // A match is live while it is being played, or part-played and saved.
-export function isLive(G, ui) { return !!((ui.live && ui.live.started && !ui.live.done) || savedMatchFor(G, userNextFixture(G))); }
+export function isLive(G, ui) { return !!((ui.live && ui.live.started && !ui.live.done) || savedMatchFor(G, userNextFixture(G)) || (G.s.wd && savedWorld(G))); }
+const clubless = (G) => !!G.s.wd && !hasClub(G);
 
 function phaseExtra(G, ui) {
-  if (ui.live && !ui.live.done && ui.live.started) return ` · Match ${ui.live.f.n} live`;
+  if (ui.live && !ui.live.done && ui.live.started) return ui.live.world ? ' · National match live' : ` · Match ${ui.live.f.n} live`;
+  if (clubless(G)) return '';
   if (G.s.phase === 'league') return ` · ${G.s.fixtures.filter((f) => f.res).length} of 28 played`;
   return '';
 }
@@ -37,6 +42,16 @@ function BottomBar({ more, openMore, closeMore, moreBtn }) {
       {dot && <span className="live" aria-hidden="true" />}{tnShort(G, label)}
     </NavLink>
   );
+  if (clubless(G)) {
+    const onMoreN = more || !(loc.pathname === '/' || at([...NATION_ROUTES, '/match', ...CAL_ROUTES]));
+    return (
+      <nav className="bnav" aria-label="Main">
+        {item('/', 'Home', { end: true })}{item('/nation', 'Squad')}{item('/match', 'Match', { dot: live ? 'live' : null })}{item('/calendar', 'Calendar', { on: at(CAL_ROUTES) })}
+        <a href="#more" ref={moreBtn} className={onMoreN ? 'on' : ''} role="button" aria-haspopup="dialog" aria-expanded={more} onClick={(e) => { e.preventDefault(); if (more) closeMore(); else openMore(); }}>
+          {tnShort(G, 'More')}{unreadCount(G) > 0 && <span className="badge" aria-label={`${unreadCount(G)} unread`}>{unreadCount(G) > 99 ? '99+' : unreadCount(G)}</span>}
+        </a>
+      </nav>);
+  }
   const onMore = more || !(loc.pathname === '/' || at(['/squad', '/player', '/auction', '/retention', '/offseason', '/signings', ...MATCH_ROUTES, ...LEAGUE_ROUTES]));
   return (
     <nav className="bnav" aria-label="Main">
@@ -79,9 +94,11 @@ export default function Shell({ children }) {
     <NavLink to={to} end={end} className={({ isActive }) => (isActive ? 'on' : '')}>{tr(G, label)}{small ? <small> {small}</small> : null}</NavLink>
   );
   const overlays = <>{more && <MoreSheet onClose={closeMore} />}{ui.decide && <DecisionSheet />}{modal}</>;
+  const noClub = clubless(G); const nat = G.s.wd ? userNation(G) : null; const nj = nat ? nationJob(G) : null;
+  const ntop = noClub ? <MTop dflt title={<>{nat ? nationName(G, nat) : 'Between jobs'}</>} sub={G.s.wd ? short(G.s.wd.day) : ''} right={nj ? <>Board <b>{nj.board}</b><br />Rep <b>{Math.round(G.s.manager.rep)}</b></> : <>Rep <b>{Math.round(G.s.manager.rep)}</b></>} /> : null;
   if (narrow) return (
     <>
-      <MTop dflt />
+      {ntop || <MTop dflt />}
       <main className="main m-main" id="main" ref={main}>{children}</main>
       <BottomBar more={more} openMore={openMore} closeMore={closeMore} moreBtn={moreBtn} />
       {overlays}
@@ -91,15 +108,23 @@ export default function Shell({ children }) {
     <>
       <header className="top">
         <span className="brand">NPL Manager</span>
-        <span className="tm"><Dot id={G.user} />{t.name}</span>
+        {noClub ? <span className="tm">{nat ? `${nationName(G, nat)} · national team` : 'Between jobs'}</span> : <span className="tm"><Dot id={G.user} />{t.name}{nat ? <span className="faint" style={{ fontWeight: 400 }}>&nbsp;· {nationName(G, nat)}</span> : null}</span>}
+        {G.s.wd && <span className="kv wide"><span>Today</span><span className="num">{dayLabel(G.s.wd.day)}</span></span>}
         <span className="kv wide"><span>Season</span><span>{seasonNo(G.year)} · {G.year}</span></span>
-        <span className="phase wide"><b>{PHASES[ph] || ph}</b>{phaseExtra(G, ui)}</span>
+        <span className="phase wide">{noClub ? 'NPL · ' : ''}<b>{PHASES[ph] || ph}</b>{phaseExtra(G, ui)}</span>
         <span className="spacer" />
-        <span className="kv wide"><span>Domestic purse</span><span className="num">{fmtL(t.purse)}</span></span>
-        <span className="kv wide"><span>Overseas purse</span><span className="num">{fmtL(t.osPurse)}</span></span>
+        {noClub ? <>{nj && <span className="kv wide"><span>Board</span><span className="num">{nj.board}</span></span>}<span className="kv wide"><span>Reputation</span><span className="num">{Math.round(G.s.manager.rep)}</span></span></>
+          : <><span className="kv wide"><span>Domestic purse</span><span className="num">{fmtL(t.purse)}</span></span>
+        <span className="kv wide"><span>Overseas purse</span><span className="num">{fmtL(t.osPurse)}</span></span></>}
       </header>
       <div className="shell">
-        <nav className="nav" aria-label="Main">
+        {noClub ? <nav className="nav" aria-label="Main">
+          {L('/', 'Home', null, true)}{nat && L('/nation', 'National team')}{L('/match', 'Match', live ? 'Live' : '')}{L('/calendar', 'Calendar')}{L('/news', 'News', unread ? String(unread) : null)}{L('/jobs', 'Jobs', G.s.wd.offers.length ? String(G.s.wd.offers.length) : null)}
+          <hr />{L('/season', 'NPL')}{L('/career', 'Career')}
+          {DEPTH_GROUPS.filter(([g]) => g === 'World cricket').map(([g, links]) => <div key={g} className="navgrp"><hr />{links.map(([to, label]) => <NavLink key={to} to={to} className={({ isActive }) => (isActive ? 'on' : '')}>{tn(G, label)}</NavLink>)}</div>)}
+          <hr />
+          {L('/world', 'World')}{L('/nepal', 'Nepal')}{L('/history', 'History')}{L('/settings', 'Settings')}
+        </nav> : <nav className="nav" aria-label="Main">
           {L('/', 'Home', null, true)}{L('/squad', 'Squad')}{L('/match', 'Match', matchSmall)}{L('/season', 'Season')}{L('/news', 'News', unread ? String(unread) : null)}{L('/nepal', 'Nepal')}
           <hr />
           {auc.to ? L(auc.to, 'Auction', auc.sub) : <span className="off" aria-disabled="true">{tr(G, 'Auction')} <small>Off-season</small></span>}
@@ -107,7 +132,7 @@ export default function Shell({ children }) {
           {DEPTH_GROUPS.map(([g, links]) => <div key={g} className="navgrp"><hr />{links.filter(([to]) => to !== '/news').map(([to, label]) => <NavLink key={to} to={to} className={({ isActive }) => (isActive ? 'on' : '')}>{tn(G, label)}</NavLink>)}</div>)}
           <hr />
           {L('/world', 'World')}{L('/history', 'History')}{L('/club', 'Club')}{L('/settings', 'Settings')}
-        </nav>
+        </nav>}
         <main className="main" id="main">{DESK_BACK.some((r) => loc.pathname.startsWith(r)) && <button type="button" className="linkbtn t-small desk-back" onClick={back}>‹ Back</button>}{children}</main>
       </div>
       {overlays}

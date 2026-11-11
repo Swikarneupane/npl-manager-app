@@ -1,0 +1,16 @@
+Christian Munoz-Mills|1991|BAT|52|25|OB|R|0,0,0|
+Daniel Doyle-Calle|1998|BAT|48|0||R|0,0,0|
+Mohammad Ihsan|1996|BAT|50|0||R|0,0,0|
+Hamza Dar|1995|BAT|52|25|RM|L|0,0,0|
+Mohammad Yasin|1989|BAT|48|0||L|0,0,0|
+Yasir Ali|1991|AR|48|50|OB|R|0,0,0|
+Shafat Ali Syed|1996|AR|46|48|LM|L|0,0,0|
+Alec Davidson-Soler|2004|WK|46|0||R|0,0,0|
+Lorne Burns|1993|BOWL|30|52|LB|R|0,0,0|
+Charlie Rumistrzewicz|2005|BOWL|25|46|SLA|R|0,0,0|
+Sebastian Hughes-Piñan|2006|BOWL|25|44|SLA|L|0,0,0|
+Atif Mehmood|1987|BOWL|30|50|LFM|R|0,0,0|
+Mohammad Kamran|1987|BOWL|25|48|LFM|R|0,0,0|
+Raja Adeel|1987|BOWL|30|50|RF|R|0,0,0|
+Mohammad Atif|2000|BOWL|25|46|LM|R|0,0,0|
+Mateo Cordillas|2001|WK|42|0||R|0,0,0|gen

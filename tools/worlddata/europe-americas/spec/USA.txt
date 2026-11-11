@@ -1,0 +1,27 @@
+Shayan Jahangir|1994|BAT|64|0||R|1,0,-1|
+Sanjay Krishnamurthi|2003|BAT|62|25|SLA|R|0,0,0|
+Saiteja Mukkamalla|2004|BAT|64|0||R|0,0,0|
+Utkarsh Srivastava|2007|BAT|54|0||R|0,0,0|
+Steven Taylor|1993|AR|64|50|OB|L|0,0,0|
+Milind Kumar|1991|AR|64|50|OB|R|0,0,0|
+Shubham Ranjane|1994|AR|60|54|RM|R|0,0,0|
+Shehan Jayasuriya|1991|AR|62|52|OB|L|0,0,0|
+Harmeet Singh|1992|BOWL|45|72|SLA|L|0,0,0|
+Monank Patel|1993|WK|64|0||R|0,1,0|
+Andries Gous|1993|WK|70|0||R|1,0,-1|
+Nosthush Kenjige|1991|AR|58|58|SLA|R|0,0,0|
+Yasir Mohammad|2002|BOWL|25|56|LB|L|0,0,0|
+Mohammad Mohsin|1996|BOWL|25|58|LB|L|0,0,0|
+Jessy Singh|1993|AR|50|58|RM|R|0,0,0|
+Ali Khan|1990|BOWL|30|70|RFM|R|1,0,-1|
+Shadley van Schalkwyk|1988|BOWL|30|62|RM|L|0,0,0|
+Saurabh Netravalkar|1991|BOWL|30|70|LFM|L|0,0,0|
+Stephen Wiig|1993|BOWL|25|56|LM|R|0,0,0|
+Ali Sheikh|2002|BOWL|20|56|RFM|L|0,0,0|
+Rushil Ugarkar|2003|BOWL|20|56|RFM|R|0,0,0|
+Juanoy Drysdale|1992|BOWL|25|60|RFM|R|0,0,0|
+Abhishek Paradkar|2000|BOWL|25|54|LM|L|0,0,0|
+Ayan Desai|2003|BOWL|25|54|LM|L|0,0,0|
+Ehsan Adil|1993|BOWL|25|62|RFM|R|0,0,0|
+Aaron Jones|1994|BAT|70|0||R|1,0,-1|
+Unmukt Chand|1993|BAT|64|0||R|1,0,-1|
