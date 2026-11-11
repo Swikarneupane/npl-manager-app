@@ -6,24 +6,31 @@
 #source Times of Oman / IANS, "Shan, Shafique, spin pair of Noman-Sajid dropped from Pakistan squad for Sri Lanka series" (Test squad, late October 2026)
 #source Wikipedia player articles (infobox: birth date, batting, bowling, teams), checked November 2026
 #note PSL teams (PSL-*) are as of the 2025 PSL, as given by the Wikipedia squad tables; Pakistan's 2026 PSL draft was not verified.
-#team PAK-KHW|Karachi Whites|KHW
-#team PAK-KHB|Karachi Blues|KHB
-#team PAK-LHW|Lahore Whites|LHW
-#team PAK-LHB|Lahore Blues|LHB
-#team PAK-ISB|Islamabad|ISB
-#team PAK-RWP|Rawalpindi|RWP
-#team PAK-PES|Peshawar|PES
-#team PAK-ABT|Abbottabad|ABT
-#team PAK-FATA|FATA|FATA
-#team PAK-FSD|Faisalabad|FSD
-#team PAK-MUL|Multan|MUL
-#team PAK-SKT|Sialkot|SKT
-#team PAK-BWP|Bahawalpur|BWP
-#team PAK-HYD|Hyderabad|HYD
-#team PAK-QTA|Quetta|QTA
-#team PAK-AJK|Azad Jammu and Kashmir|AJK
-#team PAK-LRK|Larkana|LRK
-#team PAK-DMJ|Dera Murad Jamali|DMJ
+#team PAK-KHW|Karachi Whites|KHW|2
+#team PAK-KHB|Karachi Blues|KHB|1
+#team PAK-LHW|Lahore Whites|LHW|1
+#team PAK-LHB|Lahore Blues|LHB|2
+#team PAK-ISB|Islamabad|ISB|1
+#team PAK-RWP|Rawalpindi|RWP|2
+#team PAK-PES|Peshawar Blues|PES|1
+#team PAK-ABT|Abbottabad|ABT|2
+#team PAK-FATA|FATA|FATA|1
+#team PAK-FSD|Faisalabad|FSD|1
+#team PAK-MUL|Multan|MUL|1
+#team PAK-SKT|Sialkot Blues|SKT|1
+#team PAK-BWP|Bahawalpur|BWP|2
+#team PAK-HYD|Hyderabad|HYD|2
+#team PAK-QTA|Quetta|QTA|2
+#team PAK-AJK|Azad Jammu and Kashmir|AJK|2
+#team PAK-LRK|Larkana|LRK|2
+#team PAK-DMJ|Dera Murad Jamali|DMJ|2
+#source Wisden, "Quaid-e-Azam Trophy 2026: all you need to know" (Gold and Silver tiers, groups, schedule; November 2026)
+#source Wisden, "Quaid-e-Azam Trophy 2025-26 points table" (points system); Wikipedia, "2025–26 Quaid-e-Azam Trophy"
+#note Domestic team level: 1 = Quaid-e-Azam Trophy Gold 2026-27, 2 = Silver. PAK-PES and PAK-SKT keep their ids as Peshawar Blues and Sialkot Blues; Peshawar and Sialkot field two sides from 2026-27.
+#team PAK-PEW|Peshawar Whites|PEW|2
+#team PAK-SKW|Sialkot Whites|SKW|2
+#comp PAK-QEA
+#comp PAK-QEA-SILVER
 Saim Ayub;2002;BAT;76;35;OB;L;3/1/-2;PAK-KHW PSL-PZ
 Babar Azam;1994;BAT;86;0;-;R;-2/3/2;PAK-LHB PSL-PZ
 Sahibzada Farhan;1996;BAT;74;0;-;R;3/0/-2;PAK-PES

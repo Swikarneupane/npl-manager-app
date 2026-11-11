@@ -2,8 +2,14 @@
 #member associate
 #asOf 2026-02-21
 #source Wikipedia, "Oman national cricket team", Current squad (updated 21 February 2026)
-#note Domestic teams are not listed: no first-class or one-day domestic structure was verified for this nation.
 #source NPL Manager src/game/os-extra.js (Aqib Ilyas, Zeeshan Maqsood spelt identically so they alias; not in the February 2026 squads)
+#source Oman Cricket / Oman Observer / Times of Oman, "Renaissance Cricket crowned champions in OC 2-Day Tournament" (inaugural edition, four Premier Division sides, March 2025)
+#note Oman's domestic multi-day competition is the OC 2-Day Tournament among the top Premier Division clubs. Squads were not verified, so the four sides are generated.
+#team OMA-REN|Renaissance Cricket|REN|1
+#team OMA-MCT|Muscat CT|MCT|1
+#team OMA-MAJ|Majees CT|MAJ|1
+#team OMA-IAS|IAS CT|IAS|1
+#comp OMA-2DAY
 Jatinder Singh;1989;BAT;62;10;OB;R;-;-
 Aqib Ilyas;1992;BAT;64;0;-;R;-;-
 Zeeshan Maqsood;1987;BAT;63;0;-;L;-;-

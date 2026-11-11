@@ -14,7 +14,7 @@ import { simUntilUser, savedMatchFor, afterMatchRoute } from '../lib/flow.js';
 import { PhaseRail, CompPanel, Dugout, AlsoLive, KeyModal, KeySheet, KeyActions } from '../components/MatchdayLive.jsx';
 import { autosave } from '../lib/save.js';
 import { xiStatus } from './Home.jsx';
-import { Actions, BatPlan, BowlPlan, nextOver } from '../components/MatchPlan.jsx';
+import { Actions, BatPlan, BowlPlan, nextOver, spellText, Declare } from '../components/MatchPlan.jsx';
 import { openDecisions } from '../components/DecisionSheet.jsx';
 import { nextEvent, hasClub, applyCallUps, seasonName, nationName, continueWorld } from '../world/career.js';
 import { worldGame, savedWorld } from '../world/match.js';
@@ -27,10 +27,82 @@ const matchLabel = (lm) => (lm.world ? `${seasonName(lm.world.S)} · ${short(lm.
 const cardLink = (lm) => (lm.world ? `/comp/${lm.world.S.id}?tab=fixtures&fx=${encodeURIComponent(lm.f.id)}` : `/scorecard/${lm.f.n}`);
 
 const MODES = [['ball', 'Every ball'], ['over', 'Every over'], ['key', 'Key moments'], ['quick', 'Quick sim']];
+const FMT_NAME = { T20: 'T20I', ODI: 'ODI', Test: 'Test', FC4: 'four-day match', FC3: 'three-day match', FC2: 'two-day match' };
+const fmtLine = (m) => (m.md ? `${m.md.days} days, ${m.md.perDay} overs a day` : m.overs === 50 ? '50 overs a side' : '20 overs a side');
+
+// ===== Multi-day scoreboard bits =====
+// "NEP 312 & 145/3" for each side; the day, session and overs bowled today; lead, target and the rate needed.
+const innsLine = (G, m, t) => { const xs = m.inns.filter((x) => x.bat === t); return xs.length ? xs.map((x) => (x.wkts >= 10 ? `${x.runs}` : `${x.runs}/${x.wkts}${x.dec ? 'd' : ''}`)).join(' & ') : 'Yet to bat'; };
+function mdState(m) {
+  const M = m.md, i = m.inns[m.inns.length - 1]; const b = Math.max(0, m.dayB()); const cap = m.dayCap();
+  const left = m.leftBalls(); const lead = i ? m.leadOf(i) : 0; const need = i && i.target ? Math.max(0, i.target - i.runs) : null;
+  return { day: M.day, days: M.days, sess: m.sessionName(), today: `${Math.floor(Math.min(b, cap) / 6)}`, cap: cap / 6, left: Math.floor(left / 6), lead, need, req: need != null && left ? (need / (left / 6)).toFixed(2) : null, last: M.day >= M.days };
+}
+// win / draw / loss for the side batting, from the engine's model (the result once it is over)
+function mdProbs(lm) { const m = lm.m; const i = lm.inn; const wp = m.winProb();
+  if (lm.done && m.result) { const r = m.result; return { w: r.winner === i.bat ? 1 : 0, d: r.draw || r.tie ? 1 : 0, l: r.winner && r.winner !== i.bat ? 1 : 0 }; }
+  return { w: wp.p, d: wp.d, l: wp.l }; }
+function ThreeWay({ lm, small }) {
+  const { G } = useGame(); const i = lm.inn; const p = mdProbs(lm); const a = i.bat, b = i.bowl;
+  const pc = (x) => Math.round(x * 100); const pw = pc(p.w), pl = pc(p.l), pd = 100 - pw - pl; const fs = small ? 14 : 18;
+  return (
+    <div className="md-three">
+      <span className="bf" style={{ fontSize: fs }}>{tshort(G, a)} {pw}%</span>
+      <div className="wp" role="img" aria-label={`${tshort(G, a)} win ${pw} percent, draw ${pd} percent, ${tshort(G, b)} win ${pl} percent`}><i style={{ width: `${pw}%`, background: tc(G, a) }} /><i className="draw" style={{ width: `${pd}%` }} /><i style={{ width: `${pl}%`, background: tc(G, b) }} /></div>
+      <span className="bf" style={{ fontSize: fs, color: 'var(--board-ink-2)' }}>{pl}% {tshort(G, b)}</span>
+      <span className="mid-l">Draw {pd}%</span>
+    </div>);
+}
+function MDBoard({ lm }) {
+  const { G } = useGame(); const m = lm.m, i = lm.inn; const st = mdState(m);
+  const Cell = ({ l, children }) => <div className="cell"><span className="blbl">{l}</span><span className="bf">{children}</span></div>;
+  const n = m.inns.length;
+  return (
+    <>
+      <div className="brd-top">
+        <div className="stack" style={{ gap: 6 }}>
+          <span className="blbl" style={{ display: 'flex', alignItems: 'center' }}><Dot id={i.bat} /><span className="wide">{tname(G, i.bat)}</span><span className="narrow">{tshort(G, i.bat)}</span>&nbsp;· {['', '1st', '2nd', '3rd', '4th'][n]} innings{m.md.fo && n === 3 ? ' (follow-on)' : ''}</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 14 }}><span className="bf big">{i.runs}/{i.wkts}{i.dec ? 'd' : ''}</span><span className="bf mid" style={{ color: 'var(--board-ink-2)' }}>{m.ovStr(i)} ov</span></div>
+        </div>
+        <span className="vr wide" />
+        <div className="md-cells">
+          <Cell l="Day">{st.day} of {st.days}</Cell>
+          <Cell l="Session">{lm.done ? 'Close' : st.sess}</Cell>
+          <Cell l="Overs today">{st.today} / {st.cap}</Cell>
+          {i.target ? <Cell l="Target">{i.target}</Cell> : <Cell l={n === 1 ? 'Run rate' : st.lead >= 0 ? 'Lead' : 'Trail by'}>{n === 1 ? (i.balls ? (i.runs / (i.balls / 6)).toFixed(2) : '0.00') : Math.abs(st.lead)}</Cell>}
+          {i.target ? <Cell l={`Need · ${st.left} ov left`}>{st.need}{st.req ? <span style={{ color: 'var(--board-ink-2)', fontSize: 15 }}> · {st.req}</span> : null}</Cell> : <Cell l="Overs left">{st.left}</Cell>}
+        </div>
+      </div>
+      <div className="md-strip">{[m.home, m.away].map((t) => <span key={t}><b>{tshort(G, t)}</b> {innsLine(G, m, t)}</span>)}{i.target && st.last && !lm.done ? <span>Last day: {st.need} needed at {st.req} an over</span> : null}</div>
+      <ThreeWay lm={lm} />
+      {lm.done && m.result && <p className="bf" style={{ fontSize: 22, marginTop: 12 }}>{m.result.text}</p>}
+    </>
+  );
+}
+function MDMBoard({ lm, head }) {
+  const { G } = useGame(); const m = lm.m, i = lm.inn; const st = mdState(m);
+  const C = ({ l, children }) => <div className="stack"><span className="blbl">{l}</span><span className="bf" style={{ fontSize: 17 }}>{children}</span></div>;
+  return (
+    <section className="board" style={{ borderRadius: 0, borderWidth: '0 0 1px', padding: '12px 16px', flex: 'none' }} aria-label="Scoreboard">
+      {head}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}><span className="bf" style={{ fontSize: 44, lineHeight: 0.95 }}>{i.runs}/{i.wkts}{i.dec ? 'd' : ''}</span><span className="bf" style={{ fontSize: 17, color: 'var(--board-ink-2)' }}>{m.ovStr(i)} ov</span></div>
+        <div className="stack" style={{ textAlign: 'right' }}>{i.target ? <><span className="blbl">Need · {st.left} ov</span><span className="bf" style={{ fontSize: 22, lineHeight: 1.1 }}>{st.need}</span></> : m.inns.length > 1 ? <><span className="blbl">{st.lead >= 0 ? 'Lead' : 'Trail by'}</span><span className="bf" style={{ fontSize: 22, lineHeight: 1.1 }}>{Math.abs(st.lead)}</span></> : <><span className="blbl">Overs left</span><span className="bf" style={{ fontSize: 22, lineHeight: 1.1 }}>{st.left}</span></>}</div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 8, marginTop: 8 }}>
+        <C l="Day">{st.day} · {lm.done ? 'close' : st.sess.toLowerCase()}</C><C l="Overs today">{st.today}/{st.cap}</C>{i.target ? <C l="Req rate">{st.req || '–'}</C> : <C l="Run rate">{i.balls ? (i.runs / (i.balls / 6)).toFixed(2) : '0.00'}</C>}
+      </div>
+      <div className="md-strip">{[m.home, m.away].map((t) => <span key={t}><b>{tshort(G, t)}</b> {innsLine(G, m, t)}</span>)}</div>
+      <ThreeWay lm={lm} small />
+      {lm.done && m.result && <p className="bf" style={{ fontSize: 18, marginTop: 8 }}>{m.result.text}</p>}
+    </section>
+  );
+}
 
 function Board({ lm }) {
   const { G } = useGame(); const m = lm.m, i = lm.inn;
   if (!i) return <><div className="bf mid">{tname(G, lm.m.home)} v {tname(G, lm.m.away)}</div><p className="blbl" style={{ marginTop: 8 }}>{lm.started ? 'Toss coming up…' : 'Match not started'}</p></>;
+  if (m.md) return <MDBoard lm={lm} />;
   const other = m.inns.length > 1 ? m.inns[0] : null;
   const rr = i.balls ? (i.runs / (i.balls / 6)).toFixed(2) : '0.00';
   const wp = m.winProb();
@@ -81,7 +153,7 @@ function Players({ lm, bowlerOnly }) {
   return (
     <>
       {!bowlerOnly && <>{bat('On strike', i.striker)}{bat('Non-striker', i.non)}</>}
-      {i.cur && <div className="panel" style={{ padding: '14px 16px' }}><p className="faint t-micro">Bowling</p><p style={{ fontWeight: 600, marginTop: 2 }}>{G.P(i.cur).name}</p><p style={{ marginTop: 4 }}><span className="board-f" style={{ fontSize: 30, fontWeight: 600 }}>{Math.floor(s.balls / 6)}.{s.balls % 6}–{s.r}–{s.w}</span></p><p className="faint t-micro num">Econ {s.balls ? (s.r / (s.balls / 6)).toFixed(2) : '–'} · {Math.floor(left / 6)}{left % 6 ? `.${left % 6}` : ''} left</p></div>}
+      {i.cur && <div className="panel" style={{ padding: '14px 16px' }}><p className="faint t-micro">Bowling</p><p style={{ fontWeight: 600, marginTop: 2 }}>{G.P(i.cur).name}</p><p style={{ marginTop: 4 }}><span className="board-f" style={{ fontSize: 30, fontWeight: 600 }}>{Math.floor(s.balls / 6)}.{s.balls % 6}–{s.r}–{s.w}</span></p><p className="faint t-micro num">Econ {s.balls ? (s.r / (s.balls / 6)).toFixed(2) : '–'} · {lm.m.md ? spellText(lm.m, i, i.cur) : `${Math.floor(left / 6)}${left % 6 ? `.${left % 6}` : ''} left`}</p></div>}
     </>
   );
 }
@@ -112,6 +184,7 @@ function Feed({ lm }) {
       const ne = lang === 'both' && e.ne ? <span className="ne">{nn(G, e.ne)}</span> : null;
       const txt = lang === 'np' ? nn(G, e.t) : e.t;
       if (e.c === 'over' && e.ov) { const o = e.ov; return <li key={key} className={`ev-over${nw}`}><b>End of over {o.n}</b><span>{o.runs} run{o.runs === 1 ? '' : 's'}</span><span>{o.score}</span>{o.bats.map((b) => <span key={b}>{b}</span>)}<span>{o.need}</span><span>{o.bowler}</span></li>; }
+      if (e.c === 'brk') return <li key={key} className={`ev-brk${nw}`}><b>{e.brk === 'day' ? `Day ${e.day}` : e.brk === 'lunch' ? 'Lunch' : e.brk === 'tea' ? 'Tea' : 'Stumps'}</b><span>{txt.replace(/^(Lunch|Tea|Stumps) on day \d+: |^Day \d+ of \d+\.\s*/, '') || (e.brk === 'day' ? 'Play starts.' : '')}</span></li>;
       if (e.c === 'head' || e.c === 'result') return <li key={key} className={`ev-over${nw}`}><b className={e.c === 'result' ? 'crim' : ''}>{txt}</b></li>;
       if (e.c && e.c.includes('rain')) return <li key={key} className={`ev-rain${nw}`}>{txt}</li>;
       if (/^comp/.test(e.c || '')) return <li key={key} className={`ev${nw}`}><span className="ov" /><span className="tx mut"><i>{txt}</i>{ne}</span></li>;
@@ -146,7 +219,7 @@ function StartDone({ lm }) {
   return (
     <section className="panel plan">
       <div className="acts-row"><button className="btn btn-primary btn-lg" onClick={() => lm.start()}>{lm.resumed ? 'Resume match' : 'Start match'}</button></div>
-      {lm.resumed ? <p className="faint t-small">Picking up where you left off.</p> : lm.world ? <p className="faint t-small">{lm.f.fmt === 'ODI' ? '50 overs a side' : '20 overs a side'}. Your XI, captain and keeper come from the national squad. <Link to={`/nation?fmt=${lm.f.fmt}`}>Change</Link></p> : <p className="faint t-small">Your XI: {xiStatus(G)}. <Link to="/squad">Change</Link></p>}
+      {lm.resumed ? <p className="faint t-small">Picking up where you left off.</p> : lm.world ? <p className="faint t-small">{fmtLine(lm.m)}. Your XI, captain and keeper come from the national squad. <Link to={`/nation?fmt=${lm.f.fmt}`}>Change</Link></p> : <p className="faint t-small">Your XI: {xiStatus(G)}. <Link to="/squad">Change</Link></p>}
       <div className="field"><span className="lbl">Control mode</span><Seg options={MODES} value={lm.mode} onChange={(v) => lm.setMode(v)} label="Control mode" /></div>
       <div className="field"><span className="lbl">Playback speed</span><Seg options={[['0.5', '0.5×'], ['1', '1×'], ['2', '2×'], ['4', '4×']]} value={String(G.s.settings.speed)} onChange={(v) => update(() => { G.s.settings.speed = +v; })} label="Playback speed" /></div>
     </section>
@@ -170,8 +243,16 @@ function PendingModal({ lm, sheet }) {
   const Modal = sheet ? BottomSheet : ModalBox;
   if (p.type === 'toss') return (
     <Modal><p className="faint t-small">Toss · {tname(G, lm.m.home)} v {tname(G, lm.m.away)}</p><h2 className="t-h2" style={{ marginTop: 6 }}>You won the toss.</h2>
-      <p className="mut" style={{ marginTop: 8 }}>{lm.m.dew ? 'Dew is expected later tonight, which helps the side batting second.' : `Conditions look even. The pitch ${lm.m.pitch > 1.03 ? 'favours batters' : lm.m.pitch < 0.97 ? 'has something for bowlers' : 'looks true'}.`}</p>
+      <p className="mut" style={{ marginTop: 8 }}>{lm.m.md ? `${fmtLine(lm.m)}. The pitch ${lm.m.pitch > 1.03 ? 'looks flat: runs early, and it should turn late' : lm.m.pitch < 0.97 ? 'is green and should help the seamers early' : 'looks a good one, with turn to come later on'}.${lm.m.md.lost.some((x) => x) ? ' Rain is forecast.' : ''}` : lm.m.dew ? 'Dew is expected later tonight, which helps the side batting second.' : `Conditions look even. The pitch ${lm.m.pitch > 1.03 ? 'favours batters' : lm.m.pitch < 0.97 ? 'has something for bowlers' : 'looks true'}.`}</p>
       <div className="acts"><button className="btn btn-primary btn-lg" onClick={() => lm.resolvePending('bat')}>Bat first</button><button className="btn btn-lg" onClick={() => lm.resolvePending('field')}>Bowl first</button></div></Modal>);
+  if (p.type === 'follow') {
+    const m = lm.m; const x = p.info; const [i1, i2] = m.inns;
+    return (
+      <Modal><p className="faint t-small">End of the second innings · day {m.md.day}, {m.sessionName().toLowerCase()}</p><h2 className="t-h2" style={{ marginTop: 6 }}>Enforce the follow-on?</h2>
+        <p className="mut" style={{ marginTop: 8 }}>{tname(G, i1.bat)} {i1.runs}, {tname(G, i2.bat)} {i2.runs}: a lead of <b style={{ color: 'var(--ink)' }}>{x.lead}</b> with about {Math.floor(x.left / 6)} overs left. {x.rec ? 'The captain would make them bat again.' : 'The captain would bat again: there may not be time to bowl them out twice.'}</p>
+        <p className="faint t-small" style={{ marginTop: 6 }}>Enforcing saves time but your bowlers go straight back out; batting again sets a target and rests them.</p>
+        <div className="acts"><button className={`btn btn-lg${x.rec ? ' btn-primary' : ''}`} onClick={() => lm.resolvePending(true)}>Enforce the follow-on</button><button className={`btn btn-lg${x.rec ? '' : ' btn-primary'}`} onClick={() => lm.resolvePending(false)}>Bat again</button></div></Modal>);
+  }
   if (p.type === 'drs') {
     const i = p.info; const mineBat = i.side === 'bat'; const revLeft = mineBat ? lm.inn.reviews : ((lm.m.bowlRev || {})[lm.inn.bat] ?? 2);
     const hint = i.hint === 'doubt' ? (mineBat ? `${i.bat}: “Looked high.”` : 'Keeper: “Not sure, it might be sliding down.”') : (mineBat ? `${i.bat}: “I think that was hitting.”` : 'Bowler: “That’s plumb!”');
@@ -196,6 +277,7 @@ function MBoard({ lm, gold }) {
   const { G } = useGame(); const m = lm.m, i = lm.inn; const f = lm.f;
   const head = <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><span className="blbl" style={{ display: 'flex', alignItems: 'center' }}>{i && <Dot id={i.bat} />}{tshort(G, m.home)} v {tshort(G, m.away)}{i ? (i.target ? ` · chasing ${i.target}` : ' · batting') : ''}</span><span className="blbl">{lm.world ? short(f.d) : matchLabel(lm)}</span></div>;
   if (!i) return <section className="board" style={{ borderRadius: 0, borderWidth: '0 0 1px', padding: '12px 16px', flex: 'none' }} aria-label="Scoreboard">{head}<p className="bf" style={{ fontSize: 28, marginTop: 6 }}>{lm.started ? 'Toss coming up' : 'Match not started'}</p></section>;
+  if (m.md) return <MDMBoard lm={lm} head={head} />;
   const rr = i.balls ? (i.runs / (i.balls / 6)).toFixed(2) : '0.00'; const wp = m.winProb();
   let p = wp.p; if (lm.done && m.result) p = m.result.winner === i.bat ? 1 : m.result.winner ? 0 : 0.5;
   const pa = Math.round(p * 100); const need = i.target ? Math.max(0, i.target - i.runs) : 0; const bl = m.maxBalls - i.balls;
@@ -228,7 +310,7 @@ function MLive({ lm, toFeed }) {
     return <li key={id}><span className="grow"><b style={{ fontWeight: 600 }}>{p.name}{strike ? '*' : ''}</b> <span className="faint t-small">{s.f ? `4s ${s.f}` : ''}{s.f && s.s ? ' · ' : ''}{s.s ? `6s ${s.s}` : ''}</span></span><span className="board-f" style={{ fontSize: 20, fontWeight: 600 }}>{s.r} <span className="faint" style={{ fontWeight: 500 }}>({s.b})</span></span></li>; };
   const bw = i.cur ? i.bw[i.cur] || { balls: 0, r: 0, w: 0 } : null;
   const legal = i.overSeq.filter((x) => x !== 'wd' && x !== 'nb').length; const complete = i.overSeq.length && i.balls % 6 === 0;
-  const recent = m.log.filter((e) => e.ball || e.c === 'over' || e.c === 'mile' || /^comp/.test(e.c || '')).slice(-4).reverse();
+  const recent = m.log.filter((e) => e.ball || e.c === 'over' || e.c === 'mile' || e.c === 'brk' || (m.md && e.c === 'head') || /^comp/.test(e.c || '')).slice(-4).reverse();
   return (
     <>
       <ul className="mlist">{bat(i.striker, true)}{bat(i.non, false)}
@@ -254,6 +336,7 @@ function FeedList({ lm, items }) {
   return (
     <ol className="feed" aria-live="polite">{items.map((e, k) => {
       const txt = lang === 'np' ? nn(G, e.t) : e.t; const ne = lang === 'both' && e.ne ? <span className="ne">{nn(G, e.ne)}</span> : null;
+      if (e.c === 'brk' || e.c === 'head') return <li key={k} className="ev-brk"><b>{txt}</b></li>;
       if (e.c === 'over' && e.ov) return <li key={k} className="ev-over"><b>Over {e.ov.n}</b><span>{e.ov.runs} run{e.ov.runs === 1 ? '' : 's'}</span><span>{e.ov.need}</span></li>;
       if (/^comp/.test(e.c || '')) return <li key={k} className="ev" style={{ gridTemplateColumns: '38px minmax(0,1fr)', gap: '4px 10px' }}><span className="ov" /><span className="tx mut"><i>{txt}</i></span></li>;
       if (e.c === 'mile') return <li key={k} className="ev ev-mile" style={{ gridTemplateColumns: '38px minmax(0,1fr)', gap: '4px 10px' }}><span className="ov" /><span className="tx">{txt}{ne}</span></li>;
@@ -279,6 +362,7 @@ function MCard({ lm }) {
     </>
   );
 }
+const MD_NOTES = { '-1': 'Leave and defend: survive, about 1.5 an over.', 0: 'Play the ball on merit, about 3 an over.', 1: 'Push on: about 4.5 an over, more risk.', 2: 'Slog for quick runs before a declaration.', auto: 'The captain matches the situation: steady, push on, chase or block.' };
 const NOTES = { '-1': 'Protect wickets, about 6 an over.', 0: 'Rotate strike, punish bad balls.', 1: 'Look for boundaries.', 2: 'Swing at everything. High wicket risk.', auto: 'Matched to the situation and the required rate.' };
 function MTactics({ lm }) {
   const { G, update } = useGame(); const i = lm.inn;
@@ -287,19 +371,20 @@ function MTactics({ lm }) {
   const rem = i ? i.order.filter((id) => !i.bs[id].out && !i.bs[id].in && !i.bs[id].batted) : [];
   if (lm.done) return <div className="stack" style={{ gap: 8, paddingTop: 14 }}><p className="b6">{lm.m.result ? `${lm.m.result.text}.` : 'Match over.'}</p><p className="faint t-small">Tactics are set again in the next build-up.</p></div>;
   const nb = lm.nextBat && rem.includes(lm.nextBat) ? lm.nextBat : rem[0];
-  const need = i && i.target ? (i.target - i.runs) / (Math.max(1, lm.m.maxBalls - i.balls) / 6) : null;
+  const md = !!lm.m.md; const need = i && i.target ? (i.target - i.runs) / (Math.max(1, md ? lm.m.leftBalls() : lm.m.maxBalls - i.balls) / 6) : null;
   return (
     <div className="stack" style={{ gap: 18, paddingTop: 14 }}>
       {batting && <div className="field"><span className="lbl" id="agg">Batting aggression</span>
         <div className="seg" role="group" aria-labelledby="agg" style={{ display: 'grid', gridTemplateColumns: 'repeat(5,minmax(0,1fr))' }}>{AGGR.map(([v, l]) => <button key={v} type="button" className={cur === v ? 'on' : ''} style={{ padding: '0 2px', minHeight: 40, fontSize: 13 }} onClick={() => { i.aggr = v; lm.refresh(); }}>{l}</button>)}</div>
-        <p className="faint t-small">{NOTES[cur]}{cur === '1' && need ? ` Needed: ${need.toFixed(2)} an over.` : ''}</p></div>}
+        <p className="faint t-small">{md ? MD_NOTES[cur] : NOTES[cur]}{(cur === '1' || md) && need ? ` Needed: ${need.toFixed(2)} an over.` : ''}</p></div>}
+      {batting && md && <Declare lm={lm} />}
       {batting && rem.length > 0 && <div className="field"><label htmlFor="nb">Next batter in</label>
         <select id="nb" className="input" style={{ width: '100%', height: 44 }} value={nb} onChange={(e) => { lm.nextBat = e.target.value === rem[0] ? null : e.target.value; lm.refresh(); }}>{rem.map((id) => { const p = G.P(id); return <option key={id} value={id}>{p.name} · {p.role} · {p.bat}</option>; })}</select></div>}
       {i && !batting && <BowlPlan lm={lm} />}
       {!i && <p className="faint t-small">Tactics open once the match starts.</p>}
-      {i && lm.started && !lm.done && <Dugout lm={lm} />}
+      {i && lm.started && !lm.done && !md && <Dugout lm={lm} />}
       {lm.started && !lm.done && <div className="field"><span className="lbl">Simulate</span>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}><button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => lm.sim('innings')}>Sim innings</button><button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => lm.sim('match')}>Sim match</button></div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>{md && <><button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => lm.sim('session')}>To {lm.m.nextBreak() === 'end' ? 'close' : lm.m.nextBreak()}</button><button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => lm.sim('stumps')}>To stumps</button></>}<button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => lm.sim('innings')}>Sim innings</button><button type="button" className="btn" style={{ minHeight: 44 }} onClick={() => lm.sim('match')}>Sim match</button></div>
         <p className="faint t-small">Your plan, the captain's bowling and the recommended key-moment calls play out to the end.</p></div>}
       <hr className="hr" style={{ margin: 0 }} />
       <div className="field"><span className="lbl" id="cm">Pause the game</span>
@@ -319,7 +404,8 @@ function MActions({ lm, toTac }) {
   return (
     <>
       {lm.wait ? <button type="button" className="btn btn-primary" style={{ flex: '1 1 auto' }} onClick={() => lm.resume()}>{lm.wait.label}</button> : <button type="button" className="btn" style={{ flex: '1 1 auto' }} onClick={() => { lm.pauseReq = true; }}>Pause</button>}
-      <button type="button" className="btn" onClick={() => lm.sim('over')}>End of over</button>
+      {lm.m.md ? <button type="button" className="btn" onClick={() => lm.sim('session')}>{{ lunch: 'To lunch', tea: 'To tea', stumps: 'To stumps', end: 'To close' }[lm.m.nextBreak()]}</button>
+        : <button type="button" className="btn" onClick={() => lm.sim('over')}>End of over</button>}
       <button type="button" className="btn" onClick={toTac} aria-label={`Tactics: ${aggrShort(lm)}`}>{aggrShort(lm)}</button>
     </>
   );
@@ -373,7 +459,7 @@ function MatchDesk({ lm }) {
   const { G } = useGame();
   const m = lm.m; const toss = m.toss ? `${tname(G, m.toss.win)} won the toss and chose to ${m.toss.dec}` : 'Toss to come';
   const live = lm.started && !lm.done && !lm.error;
-  const where = lm.world ? `${seasonName(lm.world.S)} · ${short(lm.f.d)} · ${lm.f.fmt === 'ODI' ? 'ODI' : 'T20I'}` : `${stageName(lm.f)} · TU International Cricket Ground, Kirtipur · ${lm.f.night ? 'Under lights' : 'Day match'}`;
+  const where = lm.world ? `${seasonName(lm.world.S)} · ${short(lm.f.d)} · ${FMT_NAME[lm.f.fmt] || lm.f.fmt}${m.md ? ` · ${fmtLine(m)}` : ''}` : `${stageName(lm.f)} · TU International Cricket Ground, Kirtipur · ${lm.f.night ? 'Under lights' : 'Day match'}`;
   return (
     <div style={{ maxWidth: 1220 }} className="stack matchpg">
       <div className="mhd narrow"><div className="stack"><p className="t-h3">{tshort(G, lm.m.home)} v {tshort(G, lm.m.away)}</p><p className="t-micro faint">{matchLabel(lm)}{lm.world ? '' : ` · Kirtipur · ${lm.f.night ? 'under lights' : 'day match'}`}</p></div>{live && <span className="ptag c">● LIVE</span>}</div>
@@ -384,7 +470,7 @@ function MatchDesk({ lm }) {
       <div className="overrow"><Over lm={lm} /></div>
       <div className="split msplit" style={{ marginTop: 20, gap: 36 }}>
         <section><div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '1px solid var(--rule-strong)', paddingBottom: 8 }}><h2 className="t-h3">Commentary</h2>{lm.started && <Link to={cardLink(lm)} className="t-small">Scorecard</Link>}</div><Feed lm={lm} /></section>
-        <aside className="stack wide" style={{ gap: 12, alignContent: 'start' }}><CompPanel lm={lm} />{live && <Dugout lm={lm} />}<AlsoLive lm={lm} /><Players lm={lm} bowlerOnly /></aside>
+        <aside className="stack wide" style={{ gap: 12, alignContent: 'start' }}>{m.md && m.inns.length > 0 && <div className="panel"><h2 className="sec" style={{ margin: 0 }}>Innings</h2><MCard lm={lm} /></div>}<CompPanel lm={lm} />{live && !m.md && <Dugout lm={lm} />}<AlsoLive lm={lm} /><Players lm={lm} bowlerOnly /></aside>
       </div>
       {live && <div className="mact"><Actions lm={lm} /></div>}
       <PendingModal lm={lm} /><KeyModal lm={lm} />

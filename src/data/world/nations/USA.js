@@ -1,10 +1,10 @@
 // USA: national and domestic players. Ratings are the game's estimates.
 // record: [id, name, nat, born, role, bat, bowl, type, hand, fm, teams]  (see docs/world/ARCHITECTURE.md)
 // Real players carry only name, nationality, approximate birth year, role, batting hand, bowling type and teams.
-// Wikipedia "Current roster" (players for USA in the last 24 months; updated 13 Oct 2026) and the 2026 T20 World Cup squad. Aaron Jones and Unmukt Chand are US-based players already in the NPL data. MLC franchises are not listed here: no shared franchise ids exist yet.
+// Wikipedia "Current roster" (players for USA in the last 24 months; updated 13 Oct 2026) and the 2026 T20 World Cup squad. Aaron Jones and Unmukt Chand are US-based players already in the NPL data. MLC franchises are not listed here: no shared franchise ids exist yet. Domestic teams: the eight sides of the 2024 Men's 50-Over National Championship (USA Cricket); registrations not verified, so their rosters are generated.
 export default {
   code: 'USA', name: 'USA', member: 'associate', asOf: '2026-10-13',
-  sources: ['https://en.wikipedia.org/wiki/United_States_national_cricket_team#Current_roster', 'https://en.wikipedia.org/wiki/2026_Men%27s_T20_World_Cup_squads'],
+  sources: ['https://en.wikipedia.org/wiki/United_States_national_cricket_team#Current_roster', 'https://en.wikipedia.org/wiki/2026_Men%27s_T20_World_Cup_squads', 'https://usacricket.org/featured-news/mid-atlantic-crowned-champions-as-2024-mens-national-championship-concludes/'],
   players: [
     ['usa-shayan-jahangir', 'Shayan Jahangir', 'USA', 1994, 'BAT', 64, 0, '', 'R', { t20: 1, odi: 0, fc: -1 }, ['USA']],
     ['usa-sanjay-krishnamurthi', 'Sanjay Krishnamurthi', 'USA', 2003, 'BAT', 62, 25, 'SLA', 'R', { t20: 0, odi: 0, fc: 0 }, ['USA']],
@@ -34,6 +34,15 @@ export default {
     ['usa-aaron-jones', 'Aaron Jones', 'USA', 1994, 'BAT', 70, 0, '', 'R', { t20: 1, odi: 0, fc: -1 }, ['USA']],
     ['usa-unmukt-chand', 'Unmukt Chand', 'USA', 1993, 'BAT', 64, 0, '', 'R', { t20: 1, odi: 0, fc: -1 }, ['USA']],
   ],
-  teams: [],
+  teams: [
+    { id: 'USA-MA', name: 'Mid-Atlantic', short: 'MA', kind: 'domestic', level: 1 },
+    { id: 'USA-SW', name: 'South-West', short: 'SW', kind: 'domestic', level: 1 },
+    { id: 'USA-S', name: 'South', short: 'S', kind: 'domestic', level: 1 },
+    { id: 'USA-W', name: 'West', short: 'W', kind: 'domestic', level: 1 },
+    { id: 'USA-E', name: 'East', short: 'E', kind: 'domestic', level: 1 },
+    { id: 'USA-MW', name: 'Mid-West', short: 'MW', kind: 'domestic', level: 1 },
+    { id: 'USA-RED', name: 'Red', short: 'RED', kind: 'domestic', level: 1 },
+    { id: 'USA-BLU', name: 'Blue', short: 'BLU', kind: 'domestic', level: 1 },
+  ],
   comps: [],
 };

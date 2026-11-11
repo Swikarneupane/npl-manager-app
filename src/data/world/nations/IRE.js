@@ -1,7 +1,7 @@
 // Ireland: national and domestic players. Ratings are the game's estimates.
 // record: [id, name, nat, born, role, bat, bowl, type, hand, fm, teams]  (see docs/world/ARCHITECTURE.md)
 // Real players carry only name, nationality, approximate birth year, role, batting hand, bowling type and teams.
-// Players for Ireland since 4 Oct 2025 plus Cricket Ireland contracts of March 2026 (Wikipedia, updated 1 Nov 2026), the 2026 T20 World Cup squad, and recent internationals checked against their Wikipedia infobox. Munster Reds play the white-ball interprovincials only.
+// Players for Ireland since 4 Oct 2025 plus Cricket Ireland contracts of March 2026 (Wikipedia, updated 1 Nov 2026), the 2026 T20 World Cup squad, and recent internationals checked against their Wikipedia infobox. Munster Reds play the white-ball interprovincials only, and sat out the 2026 Inter-Provincial Cup (three teams).
 export default {
   code: 'IRE', name: 'Ireland', member: 'full', asOf: '2026-11-01',
   sources: ['https://en.wikipedia.org/wiki/Ireland_cricket_team#Current_squad', 'https://cricketireland.ie/news/central-contracts-awarded/', 'https://en.wikipedia.org/wiki/2026_Men%27s_T20_World_Cup_squads', 'Wikipedia player articles (infobox), read 11 Nov 2026'],
@@ -44,10 +44,10 @@ export default {
     ['ire-peter-chase', 'Peter Chase', 'IRE', 1993, 'BOWL', 20, 60, 'RFM', 'R', { t20: 0, odi: 0, fc: 0 }, ['IRE']],
   ],
   teams: [
-    { id: 'IRE-LEI', name: 'Leinster Lightning', short: 'LEI', kind: 'domestic' },
-    { id: 'IRE-NK', name: 'Northern Knights', short: 'NK', kind: 'domestic' },
-    { id: 'IRE-NWW', name: 'North West Warriors', short: 'NWW', kind: 'domestic' },
-    { id: 'IRE-MUN', name: 'Munster Reds', short: 'MUN', kind: 'domestic' },
+    { id: 'IRE-LEI', name: 'Leinster Lightning', short: 'LEI', kind: 'domestic', level: 1 },
+    { id: 'IRE-NK', name: 'Northern Knights', short: 'NK', kind: 'domestic', level: 1 },
+    { id: 'IRE-NWW', name: 'North West Warriors', short: 'NWW', kind: 'domestic', level: 1 },
+    { id: 'IRE-MUN', name: 'Munster Reds', short: 'MUN', kind: 'domestic', level: 2 },
   ],
   comps: [],
 };

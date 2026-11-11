@@ -2,8 +2,16 @@
 #member associate
 #asOf 2026-01-31
 #source Wikipedia, "United Arab Emirates national cricket team", Current squad (headed as of 4 September 2025, with match entries into 2026)
-#note Domestic teams are not listed: no first-class or one-day domestic structure was verified for this nation.
 #source NPL Manager src/game/os-extra.js (Muhammad Waseem, Aayan Afzal Khan spelt identically so they alias)
+#source Emirates Cricket Board, "Emirates D50 Tournament to begin from Wednesday" (six teams, round robin, play-off and final); The National, Team Abu Dhabi win the 2025 D50 final (April 2025)
+#note The UAE has no domestic multi-day competition; its main domestic one-day event is the Emirates D50. Squads were not verified, so the six sides are generated.
+#team UAE-ABU|Abu Dhabi|ABU|1
+#team UAE-AJM|Ajman|AJM|1
+#team UAE-DXB|Dubai|DXB|1
+#team UAE-EMB|Emirates Blues|EMB|1
+#team UAE-FUJ|Fujairah|FUJ|1
+#team UAE-SHJ|Sharjah|SHJ|1
+#comp UAE-D50
 Muhammad Waseem;1994;BAT;70;15;RM;R;3/0/0;-
 Alishan Sharafu;2003;BAT;64;15;RM;R;-;-
 Harpreet Singh Bhatia;1991;BAT;60;10;RM;L;-;-

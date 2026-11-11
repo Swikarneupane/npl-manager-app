@@ -74,6 +74,7 @@ function Leaders({ S }) {
 function Others({ cur, onPick }) {
   const { G } = useGame(); const L = cupsOf(G);
   return <div><h2 className="sec">World Cups in your save</h2><ul className="mlist">{L.map((S) => <li key={S.id} style={{ padding: '8px 0', ...(S === cur ? { boxShadow: 'inset 3px 0 0 var(--crimson-solid)', paddingLeft: 10 } : {}) }}><span className="grow t-small"><button type="button" className="linkbtn" onClick={() => onPick(S.id)}>{sbase(S).replace("ICC Men's ", '')}</button><br /><span className="l2">{S.done ? `${nm(S.champ)} won` : 'In-game'}</span></span><span className="t-small mut">{nepIn(S) ? `Nepal: ${cupStage(S, 'NEP')}` : 'Nepal not there'}</span></li>)}
+    <li style={{ padding: '8px 0' }}><span className="grow t-small"><Link to="/international?tab=tests">World Test Championship</Link><br /><span className="l2">The table, the series and the final</span></span><span className="t-small mut">Tests</span></li>
     {(G.s.world.wcHist || []).map((h) => <li key={h.name} style={{ padding: '8px 0' }}><span className="grow t-small">{h.name}<br /><span className="l2">{h.champ} won · an older save's light simulation</span></span><span className="t-small mut">Nepal: {h.nepal}</span></li>)}</ul></div>;
 }
 // Before the first World Cup of the save: the real 2026 tournament and the road to the next ones.

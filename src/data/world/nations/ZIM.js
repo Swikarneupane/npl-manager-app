@@ -55,11 +55,11 @@ export default {
     ['zim-roy-kaia', 'Roy Kaia', 'ZIM', 1991, 'AR', 58, 55, 'OB', 'R', { t20: 0, odi: 0, fc: 1 }, ['ZIM']],
   ],
   teams: [
-    { id: 'ZIM-ME', name: 'Mashonaland Eagles', short: 'ME', kind: 'domestic' },
-    { id: 'ZIM-MOU', name: 'Mountaineers', short: 'MOU', kind: 'domestic' },
-    { id: 'ZIM-MT', name: 'Matabeleland Tuskers', short: 'MT', kind: 'domestic' },
-    { id: 'ZIM-MWR', name: 'Mid West Rhinos', short: 'MWR', kind: 'domestic' },
-    { id: 'ZIM-SR', name: 'Southern Rocks', short: 'SR', kind: 'domestic' },
+    { id: 'ZIM-ME', name: 'Mashonaland Eagles', short: 'ME', kind: 'domestic', level: 1 },
+    { id: 'ZIM-MOU', name: 'Mountaineers', short: 'MOU', kind: 'domestic', level: 1 },
+    { id: 'ZIM-MT', name: 'Matabeleland Tuskers', short: 'MT', kind: 'domestic', level: 1 },
+    { id: 'ZIM-MWR', name: 'Mid West Rhinos', short: 'MWR', kind: 'domestic', level: 1 },
+    { id: 'ZIM-SR', name: 'Southern Rocks', short: 'SR', kind: 'domestic', level: 1 },
   ],
   comps: [],
 };

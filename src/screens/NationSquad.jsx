@@ -1,4 +1,4 @@
-// The national squad: 15 per format from every eligible player (poolOf), with each player's club, recent
+// The national squad: 15 per format (Tests too for a full member) from every eligible player (poolOf), with each player's club, recent
 // stats from every competition and fitness; then the XI, captain and keeper. Saved in s.wd.squads and
 // s.wd.xi; with the assistant on, or before you pick, the assistant's squad (autoSquad) is used.
 import { useState } from 'react';
@@ -14,7 +14,7 @@ import { value } from '../world/squads.js';
 import * as CR from '../world/career.js';
 import '../styles/career.css';
 
-const FMT_L = { ODI: 'ODI', T20: 'T20I' };
+const FMT_L = { Test: 'Test', ODI: 'ODI', T20: 'T20I' };
 const fitTag = (p) => (p.inj ? <span className="cr-pill c">Injured</span> : p.fit < 75 ? <span className="crim t-small">{Math.round(p.fit)}%</span> : <span className="t-small mut">{Math.round(p.fit ?? 100)}%</span>);
 const rs = (st) => `${st.m}m · ${st.r} r${st.w ? ` · ${st.w} w` : ''}`;
 
@@ -40,7 +40,7 @@ function Desk({ code, fmt, setFmt }) {
   return (
     <div className="wrap" style={{ maxWidth: 1240 }}>
       <div className="cr-head"><div><h1 className="t-h1"><NDot id={code} big />{CR.nationName(G, code)} squad</h1><p className="mut t-small">{pool.length} eligible players · ratings are the game's estimates</p></div>
-        <Seg options={CR.FMTS} value={fmt} onChange={setFmt} label="Format" /></div>
+        <Seg options={CR.fmtsFor(code)} value={fmt} onChange={setFmt} label="Format" /></div>
       <div className="cr-tool"><Status s={s} fmt={fmt} /><span className="spacer" style={{ flex: '1 1 auto' }} />{!ro && sel.picked && <button type="button" className="btn btn-sm" onClick={s.auto}>Let the assistant pick</button>}</div>
       {ro && <p className="t-small mut" style={{ marginBottom: 10 }}>The assistant picks the squad and XI while “Let the assistant decide” is on in <Link to="/settings">Settings</Link>.</p>}
       {!ro && !sel.picked && <p className="t-small mut" style={{ marginBottom: 10 }}>This is the assistant's squad. Tick players in or out to pick your own.</p>}
@@ -80,7 +80,7 @@ function Phone({ code, fmt, setFmt }) {
   const s = useSquad(code, fmt); const { G, sel } = s; const [tab, setTab] = useTab(['xi', 'squad', 'pool'], 'xi');
   const pool = poolOf(G, code).slice().sort((a, b) => value(b, fmt) - value(a, fmt));
   return (
-    <MScreen top={{ title: <><NDot id={code} />{CR.nationName(G, code)}</>, sub: `${FMT_L[fmt]} squad` }} pin={<><Seg options={CR.FMTS} value={fmt} onChange={setFmt} label="Format" style={{ width: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr' }} /><Status s={s} fmt={fmt} /></>}
+    <MScreen top={{ title: <><NDot id={code} />{CR.nationName(G, code)}</>, sub: `${FMT_L[fmt]} squad` }} pin={<><Seg options={CR.fmtsFor(code)} value={fmt} onChange={setFmt} label="Format" style={{ width: '100%', display: 'grid', gridTemplateColumns: `repeat(${CR.fmtsFor(code).length}, 1fr)` }} /><Status s={s} fmt={fmt} /></>}
       tabs={[['xi', 'XI', sel.xiPicked.length === 11 ? null : sel.xiPicked.length], ['squad', 'Squad', s.keys.length === 15 ? null : s.keys.length], ['pool', 'All players']]} tab={tab} onTab={setTab} label="National squad"
       actions={!sel.asst && sel.picked ? <button type="button" className="btn" style={{ flex: '1 1 auto' }} onClick={s.auto}>Let the assistant pick</button> : null}>
       {sel.asst && <p className="t-small mut" style={{ paddingTop: 10 }}>The assistant picks while “Let the assistant decide” is on in <Link to="/settings">Settings</Link>.</p>}
@@ -93,8 +93,10 @@ function Phone({ code, fmt, setFmt }) {
 }
 
 export default function NationSquad() {
-  const { G } = useGame(); const narrow = useNarrow(); const [fmt, setFmt] = useTab(['ODI', 'T20'], 'ODI', 'fmt');
+  const { G } = useGame(); const narrow = useNarrow(); const [fmt0, setFmt] = useTab(['Test', 'ODI', 'T20'], 'ODI', 'fmt');
   const code = G.s.wd ? CR.userNation(G) : null;
+  // an associate plays no Tests: a Test link falls back to the ODI squad
+  const fmt = code && !CR.fmtsFor(code).some(([f]) => f === fmt0) ? 'ODI' : fmt0;
   if (!code) return (
     <div className="wrap" style={{ maxWidth: 720 }}><h1 className="t-h1">No national team</h1><p className="mut" style={{ marginTop: 8 }}>You do not manage a national side. Boards look at your reputation: associates from about 50, Test nations from about 75.</p>
       <div className="row" style={{ marginTop: 16 }}><Link to="/jobs" className="btn btn-primary">Jobs and offers</Link></div></div>);

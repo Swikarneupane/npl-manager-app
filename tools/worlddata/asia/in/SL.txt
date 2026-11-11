@@ -5,22 +5,31 @@
 #source Wikipedia player articles for players outside the current squad, checked November 2026
 #source NPL Manager src/game/data.js and os-extra.js (players already in the NPL game, spelt identically so they alias)
 #note Domestic club and LPL team per the Wikipedia current-squad table; players outside it carry only the national code.
-#team SL-SSC|Sinhalese Sports Club|SSC
-#team SL-NCC|Nondescripts Cricket Club|NCC
-#team SL-CCC|Colombo Cricket Club|CCC
-#team SL-COLTS|Colts Cricket Club|COL
-#team SL-MOORS|Moors Sports Club|MSC
-#team SL-TU|Tamil Union Cricket and Athletic Club|TU
-#team SL-BLM|Bloomfield Cricket and Athletic Club|BLM
-#team SL-RAGAMA|Ragama Cricket Club|RAG
-#team SL-ARMY|Sri Lanka Army Sports Club|ARMY
-#team SL-BAD|Badureliya Sports Club|BAD
-#team SL-CHI|Chilaw Marians Cricket Club|CMC
-#team SL-NAVY|Sri Lanka Navy Sports Club|NAVY
-#team SL-AF|Sri Lanka Air Force Sports Club|SLAF
-#team SL-POL|Police Sports Club|POL
-#team SL-PAN|Panadura Sports Club|PAN
-#team SL-GAL|Galle Cricket Club|GCC
+#team SL-SSC|Sinhalese Sports Club|SSC|1
+#team SL-NCC|Nondescripts Cricket Club|NCC|1
+#team SL-CCC|Colombo Cricket Club|CCC|1
+#team SL-COLTS|Colts Cricket Club|COL|1
+#team SL-MOORS|Moors Sports Club|MSC|1
+#team SL-TU|Tamil Union Cricket and Athletic Club|TU|1
+#team SL-BLM|Bloomfield Cricket and Athletic Club|BLM|1
+#team SL-RAGAMA|Ragama Cricket Club|RAG|2
+#team SL-ARMY|Sri Lanka Army Sports Club|ARMY|2
+#team SL-BAD|Badureliya Sports Club|BAD|1
+#team SL-CHI|Chilaw Marians Cricket Club|CMC|2
+#team SL-NAVY|Sri Lanka Navy Sports Club|NAVY|2
+#team SL-AF|Sri Lanka Air Force Sports Club|SLAF|2
+#team SL-POL|Police Sports Club|POL|1
+#team SL-PAN|Panadura Sports Club|PAN|1
+#team SL-GAL|Galle Cricket Club|GCC|2
+#source Sri Lanka Sports / Daily FT / Sunday Times (Colts win the 2025/26 Major League 3-day tournament: two groups of seven, Super Eight; Chilaw Marians relegated, SSC promoted), March-April 2026
+#source The Papare, 2026 SLC Major Clubs limited-overs fixtures (the 14 Tier A clubs and their groups), May 2026
+#source CricInfo archive, Sri Lanka domestic points system (12 for an outright win, 8 for a first-innings lead)
+#note Domestic team level: 1 = Major Clubs Tier A 2026-27, 2 = Tier B.
+#team SL-BRC|Burgher Recreation Club|BRC|1
+#team SL-NUG|Nugegoda Sports and Welfare Club|NSWC|1
+#team SL-ACE|Ace Capital Cricket Club|ACE|1
+#team SL-KYCC|Kurunegala Youth Cricket Club|KYCC|1
+#comp SL-MCT
 Pathum Nissanka;1998;BAT;81;0;-;R;1/1/0;SL-NCC
 Avishka Fernando;1998;BAT;70;10;RM;R;-;SL-SSC LPL-JAF
 Nuwanidu Fernando;1999;BAT;66;15;OB;R;-;SL-SSC LPL-JAF

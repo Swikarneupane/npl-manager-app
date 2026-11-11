@@ -21,13 +21,14 @@ export function skill(p, kind, fmt) {
 
 function bowlers(xi, fmt) {
   const pool = xi.filter((p) => p.bowl >= 35).sort((a, b) => skill(b, 'bowl', fmt) - skill(a, 'bowl', fmt));
-  const use = pool.slice(0, fmt === 'ODI' ? 6 : 6); while (use.length < 5) use.push(xi.find((p) => !use.includes(p)));
+  // a short side (fewer than five bowling options) uses whoever it has
+  const use = pool.slice(0, 6); while (use.length < 5) { const p = xi.find((x) => x && !use.includes(x)); if (!p) break; use.push(p); }
   return use;
 }
 
 function innings(rnd, bat, bowl, fmt, target, maxBalls) {
   const F = FMT[fmt]; const atk = bowlers(bowl.xi, fmt);
-  const atkSkill = atk.slice(0, 5).reduce((a, p) => a + skill(p, 'bowl', fmt), 0) / 5 + (bowl.day || 0);
+  const atkSkill = (atk.length ? atk.slice(0, 5).reduce((a, p) => a + skill(p, 'bowl', fmt), 0) / Math.min(5, atk.length) : 30) + (bowl.day || 0);
   let r = 0, w = 0, b = 0, won = false; const card = []; const order = bat.order;
   const extras = Math.round((fmt === 'ODI' ? 8 : 5) + rnd() * 6);
   for (let i = 0; i < order.length && w < 10 && b < maxBalls && !(target && r >= target); i++) {

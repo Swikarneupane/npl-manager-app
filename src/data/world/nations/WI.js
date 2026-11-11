@@ -70,12 +70,12 @@ export default {
     ['wi-andre-fletcher', 'Andre Fletcher', 'WI', 1987, 'WK', 66, 0, '', 'R', { t20: 3, odi: 0, fc: -6 }, ['WI']],
   ],
   teams: [
-    { id: 'WI-BAR', name: 'Barbados Pride', short: 'BAR', kind: 'domestic' },
-    { id: 'WI-GUY', name: 'Guyana Harpy Eagles', short: 'GUY', kind: 'domestic' },
-    { id: 'WI-JAM', name: 'Jamaica Scorpions', short: 'JAM', kind: 'domestic' },
-    { id: 'WI-LEE', name: 'Leeward Islands Hurricanes', short: 'LEE', kind: 'domestic' },
-    { id: 'WI-TT', name: 'Trinidad and Tobago Red Force', short: 'TT', kind: 'domestic' },
-    { id: 'WI-WIN', name: 'Windward Islands Volcanoes', short: 'WIN', kind: 'domestic' },
+    { id: 'WI-BAR', name: 'Barbados Pride', short: 'BAR', kind: 'domestic', level: 1 },
+    { id: 'WI-GUY', name: 'Guyana Harpy Eagles', short: 'GUY', kind: 'domestic', level: 1 },
+    { id: 'WI-JAM', name: 'Jamaica Scorpions', short: 'JAM', kind: 'domestic', level: 1 },
+    { id: 'WI-LEE', name: 'Leeward Islands Hurricanes', short: 'LEE', kind: 'domestic', level: 1 },
+    { id: 'WI-TT', name: 'Trinidad and Tobago Red Force', short: 'TT', kind: 'domestic', level: 1 },
+    { id: 'WI-WIN', name: 'Windward Islands Volcanoes', short: 'WIN', kind: 'domestic', level: 1 },
   ],
   comps: [],
 };

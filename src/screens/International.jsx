@@ -7,13 +7,13 @@ import MScreen, { useTab } from '../components/MScreen.jsx';
 import { useNarrow } from '../lib/util.js';
 import { T, tn } from '../lib/i18n.js';
 import { nm, decideClash, pathState, t20State, nextNepal, tournaments, today, worldTick } from '../game/world.js';
-import { info, placing, stageTables, sbase, monthOf, lastDay, cupStage } from '../world/intl.js';
+import { info, placing, stageTables, sbase, monthOf, lastDay, cupStage, wtcTable, wtcName, wtcFinal, wtcCurrent, wtcCycles, wtcSeries, seriesScore, st as intlState } from '../world/intl.js';
 import { teamRank } from '../world/rankings.js';
 import { squadFor, tableOf } from '../world/state.js';
-import { short, label as dayLabel } from '../world/dates.js';
+import { short, label as dayLabel, yearOf } from '../world/dates.js';
 import { standings } from '../world/comp.js';
 import { T20WC_2026, T20WC_2024 } from '../game/world-data.js';
-import { REAL } from '../data/world/calendar.js';
+import { REAL, WTC } from '../data/world/calendar.js';
 import '../styles/world.css';
 
 export const ord = (n) => { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); };
@@ -32,6 +32,50 @@ export function Standings({ rows, title, sub, cut, status, real, compact }) {
     </div>);
 }
 const groupsOf = (S, k) => { const T0 = stageTables(S, k); const labels = (info(S).labels[k] || []); return Object.keys(T0).map((g, i) => ({ key: g, label: labels[i] || (g === 'super' ? info(S).stages[1] || 'Super stage' : g === 'all' || g === 'series' ? '' : `Group ${g}`), rows: standings(T0[g]) })); };
+// ----- the World Test Championship -----
+const pctS = (x) => x.toFixed(2);
+// 'Nov 21 2025 – Jan 8 2026', or 'Jun 17 – Jun 29 2025' inside one year
+const spanY = (a, b) => (yearOf(a) === yearOf(b) ? `${span(a, b)} ${yearOf(b)}` : `${short(a)} ${yearOf(a)} – ${short(b)} ${yearOf(b)}`);
+// The WTC table for cycle C. The top two go to the final.
+export function WTCTable({ C, compact: compact0 }) {
+  const { G } = useGame(); const narrow = useNarrow(); const compact = compact0 || narrow; /* phones drop the series and deduction columns */ const rows = wtcTable(G, C); const F = wtcFinal(G, C); const me = G.s.wd && (G.s.wd.jobs || []).find((j) => j.kind === 'nation');
+  const seedDay = (intlState(G).wtc[C] || {}).seed;
+  return (
+    <div style={{ minWidth: 0 }}>
+      <div className="wd-th"><h3 className="t-h3">{wtcName(C)}</h3><span className="faint t-small">{C === 2025 ? 'real to the save’s start, then in-game' : 'in-game'}</span></div>
+      <div className="tblwrap"><table className={`tbl compact${compact ? ' plain' : ''}`} style={{ marginTop: 6 }}>
+        <thead><tr><th style={{ paddingLeft: compact ? 0 : undefined }}>#</th><th>Team</th><th className="r">M</th><th className="r">W</th><th className="r">L</th><th className="r" title="Drawn">D</th>{!compact && <th className="r" title="Series played">Ser</th>}{!compact && <th className="r" title="Points deducted for slow over rates">Ded</th>}<th className="r">Pts</th><th className="r" title="Percentage of points won">PCT</th></tr></thead>
+        <tbody>{rows.map((r, i) => <tr key={r.code} className={`${me && me.team === r.code ? 'me' : ''}${i === 1 ? ' cut' : ''}`}><td style={{ paddingLeft: compact ? 0 : undefined }}>{r.pos}</td><td className="name">{r.name}</td><td className="r">{r.m}</td><td className="r">{r.w}</td><td className="r">{r.l}</td><td className="r">{r.d + r.t}</td>{!compact && <td className="r faint">{r.ser}</td>}{!compact && <td className="r faint">{r.ded ? `−${r.ded}` : ''}</td>}<td className="r">{r.pts}</td><td className="r b6">{r.m ? pctS(r.pct) : '–'}</td></tr>)}</tbody>
+      </table></div>
+      <p className="faint t-micro" style={{ marginTop: 6 }}>{WTC.points.win} points a win, {WTC.points.draw} a draw, {WTC.points.tie} a tie; ranked by the percentage of points won. The top two meet in the final{F.fin ? '' : `: ${F.venue}, ${span(F.start, F.end)} ${F.y}${F.real ? ' (real fixture)' : ''}`}.
+        {C === 2025 && seedDay != null ? ` Results before ${dayLabel(seedDay)} are real (source: Wikipedia, 2025–2027 ICC World Test Championship, and the ICC); everything since is simulated in your save.` : ''}</p>
+    </div>);
+}
+function WTCFinalLine({ C }) {
+  const { G } = useGame(); const F = wtcFinal(G, C);
+  if (F.fin) return <p className="t-small"><span className="gld b6">{F.fin.joint ? `${nm(F.fin.champ)} and ${nm(F.fin.runner)} share the title` : `${nm(F.fin.champ)} won the final`}</span><span className="mut">{F.fin.joint ? ' · the final was drawn' : ` · beat ${nm(F.fin.runner)}`} · {F.venue} · in-game</span>{F.S && <> · <CompLink S={F.S}>Card</CompLink></>}</p>;
+  if (F.S) return <p className="t-small"><b>Final:</b> {nm(F.S.teams[0])} v {nm(F.S.teams[1])} · {F.venue} · from {dayLabel(F.start)} · <CompLink S={F.S}>Fixture</CompLink></p>;
+  return <p className="t-small mut"><b>Final:</b> {F.venue} · {span(F.start, F.end)} {F.y}{F.real ? ' · real fixture' : ' · in-game dates'} · the top two qualify</p>;
+}
+function TestsTab() {
+  const { G } = useGame(); const cur = wtcCurrent(G); const cycles = [...new Set([...wtcCycles(G), cur])].sort((a, b) => a - b); const [C, setC] = useState(cur);
+  const list = wtcSeries(G, C); const t = today(G);
+  const other = Object.values(G.s.wd.seasons).filter((S) => info(S).test && S.wtc == null && info(S).kind === 'bilat' && Math.abs((S.endF ?? lastDay(S)) - t) < 240).sort((a, b) => a.start - b.start);
+  return (
+    <div className="split wd-split">
+      <section className="stack" style={{ gap: 18, minWidth: 0 }}>
+        {cycles.length > 1 && <div className="seg" role="group" aria-label="Cycle">{cycles.map((c) => <button key={c} type="button" className={c === C ? 'on' : ''} onClick={() => setC(c)}>{c}–{String(c + 2).slice(2)}</button>)}</div>}
+        <WTCTable C={C} />
+        <WTCFinalLine C={C} />
+      </section>
+      <aside className="stack" style={{ gap: 22, minWidth: 0 }}>
+        <div><h2 className="sec">The cycle's series</h2>
+          <ul className="mlist">{list.map(({ it, S, line, real }) => <li key={it.id} style={{ padding: '7px 0' }}><span className="grow t-small">{S ? <CompLink S={S}>{it.name.split(' · ').slice(0, 2).join(' · ')}</CompLink> : it.name.split(' · ').slice(0, 2).join(' · ')}<br /><span className="l2">{spanY(it.start, it.end)}{it.rf === 2 ? ' · dates in-game' : ''}</span></span><span className={`t-small ${real ? 'mut' : S && !S.done ? 'blu' : 'mut'}`} style={{ textAlign: 'right' }}>{line}<br /><span className="faint t-micro">{real ? 'real result' : (S && S.fx.some((f) => f.res)) || (!S && line !== 'To come' && line !== 'Not played') ? 'in-game' : ''}</span></span></li>)}</ul></div>
+        {other.length > 0 && <div><h2 className="sec">Other Tests</h2><ul className="mlist">{other.map((S) => <li key={S.id} style={{ padding: '7px 0' }}><span className="grow t-small"><CompLink S={S}>{(S.name || '').split(' · ').slice(0, 2).join(' · ')}</CompLink><br /><span className="l2">{spanY(S.start, S.endF ?? lastDay(S))} · outside the WTC</span></span><span className="t-small mut">{seriesScore(G, S).text}</span></li>)}</ul></div>}
+        <p className="faint t-micro">Afghanistan, Ireland and Zimbabwe play Tests outside the WTC. Real series, dates and venues follow the published schedule; later cycles are the game's own. <Link to="/rankings?fmt=test">Test rankings ›</Link></p>
+      </aside>
+    </div>);
+}
 const CompLink = ({ S, children }) => <Link to={`/comp/${encodeURIComponent(S.id)}`} style={{ color: 'inherit' }}>{children || sbase(S)}</Link>;
 
 // The 50-over pathway, top to bottom, with Nepal's place in it.
@@ -146,7 +190,8 @@ function ResultsTab() {
   const { G } = useGame(); const [onlyNep, setOnly] = useState(false); const t = today(G);
   const rows = []; for (const S of Object.values(G.s.wd ? G.s.wd.seasons : {})) { if (S.real) continue; const done = S.fx.filter((f) => f.res); if (!done.length) continue; const last = Math.max(...done.map((f) => f.d)); if (t - last > 120) continue; if (onlyNep && !S.teams.includes('NEP')) continue;
     const k = info(S).kind; let line;
-    if (k === 'bilat') { const [a, b] = S.teams; const tb = S.tables.series || {}; const wa = (tb[a] || {}).w || 0, wb = (tb[b] || {}).w || 0; line = S.done ? (wa === wb ? `Series drawn ${wa}–${wb}` : `${nm(wa > wb ? a : b)} win ${Math.max(wa, wb)}–${Math.min(wa, wb)}`) : `${nm(a)} ${wa} – ${wb} ${nm(b)} so far`; }
+    if (k === 'bilat' && info(S).test) line = seriesScore(G, S).text;
+    else if (k === 'bilat') { const [a, b] = S.teams; const tb = S.tables.series || {}; const wa = (tb[a] || {}).w || 0, wb = (tb[b] || {}).w || 0; line = S.done ? (wa === wb ? `Series drawn ${wa}–${wb}` : `${nm(wa > wb ? a : b)} win ${Math.max(wa, wb)}–${Math.min(wa, wb)}`) : `${nm(a)} ${wa} – ${wb} ${nm(b)} so far`; }
     else line = S.done ? `${nm(S.champ)} won${S.runner ? `, beating ${nm(S.runner)}` : ''}` : `${done.length} of ${S.fx.length} played`;
     rows.push({ S, last, line }); }
   rows.sort((a, b) => b.last - a.last);
@@ -162,11 +207,11 @@ function ResultsTab() {
 export default function International() {
   const { G, update } = useGame(); const narrow = useNarrow();
   useEffect(() => { worldTick(G); autosave(G); update(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const [tab, setTab] = useTab(['nepal', 'comps', 'results'], 'nepal');
+  const [tab, setTab] = useTab(['nepal', 'tests', 'comps', 'results'], 'nepal');
   if (!G.s.wd) return <div className="wd"><p className="t-small faint">The cricket world is not set up in this save yet.</p></div>;
   const ps = pathState(G); const odi = teamRank(G, 'ODI'), t20 = teamRank(G, 'T20');
   const tierS = ['l2', 'cl'].map((k) => ps.step[k]).find((S) => S && S.teams.includes('NEP')); const tierPos = tierS ? (() => { const g = Object.keys(tierS.tables).find((k) => tierS.tables[k].NEP); const rows = g ? tableOf(tierS, g) : []; const i = rows.findIndex((r) => r.id === 'NEP'); return i >= 0 && rows.some((r) => r.p) ? ord(i + 1) : '—'; })() : '—';
-  const tabs = [['nepal', tn(G, 'Nepal')], ['comps', T(G, 'Competitions', 'प्रतियोगिता')], ['results', T(G, 'Results', 'नतिजा')]];
+  const tabs = [['nepal', tn(G, 'Nepal')], ['tests', T(G, 'Tests · WTC', 'टेस्ट · WTC')], ['comps', T(G, 'Competitions', 'प्रतियोगिता')], ['results', T(G, 'Results', 'नतिजा')]];
   const hero = (
     <section className="board wd-hero" aria-label="Nepal">
       <div className="wd-hero-in">
@@ -182,7 +227,7 @@ export default function International() {
         </div>
       </div>
     </section>);
-  const body = tab === 'nepal' ? <NepalTab /> : tab === 'comps' ? <CompsTab /> : <ResultsTab />;
+  const body = tab === 'nepal' ? <NepalTab /> : tab === 'tests' ? <TestsTab /> : tab === 'comps' ? <CompsTab /> : <ResultsTab />;
   if (narrow) return (
     <MScreen top={{ title: <><Dot id={G.user} />{tn(G, 'International')}</>, sub: 'in-game', right: <>ODI {odi ? odi.pos : '—'}<br />T20I {t20 ? t20.pos : '—'}</> }} pinRaw={<div className="wd-mhero">{hero}</div>}
       tabs={tabs} tab={tab} onTab={setTab} label="International sections">

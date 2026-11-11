@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useGame } from '../lib/store.jsx';
 import { Meter, Seg } from './bits.jsx';
-import { isPace, phaseOf } from '../game/engine.js';
+import { isPace, phaseOf, spellLim } from '../game/engine.js';
+import '../styles/multiday.css';
 import { formDisp } from '../lib/util.js';
 
 // Batting intents and the engine aggression they map to. Auto keeps autoAggr.
@@ -18,6 +19,8 @@ const MODES = [['ball', 'Every ball'], ['over', 'Every over'], ['key', 'Key mome
 // Buckets calibrated on sampled match states: Block is mostly Low, Normal Medium, Hit out High.
 export const wktLevel = (p) => (p < 0.04 ? 'Low' : p < 0.06 ? 'Medium' : 'High');
 export const bndLevel = (p) => (p < 0.12 ? 'Low' : p < 0.17 ? 'Medium' : 'High');
+// the red ball: wickets are rarer a ball, so the buckets sit lower
+export const wktLevelMD = (p) => (p < 0.009 ? 'Low' : p < 0.016 ? 'Medium' : 'High');
 export const expOver = (P) => (P.one + 2 * P.two + 3 * P.three + 4 * P.four + 6 * P.six) * 6;
 const figs = (s) => `${Math.floor(s.balls / 6)}${s.balls % 6 ? `.${s.balls % 6}` : ''}–${s.r}–${s.w}`;
 const nearestIntent = (a) => INTENTS.reduce((b, x) => (Math.abs(x[0] - a) < Math.abs(b[0] - a) ? x : b))[0];
@@ -44,7 +47,7 @@ export function BatPlan({ lm, children }) {
   const P = m.preview(i); const rem = i.order.filter((id) => !i.bs[id].out && !i.bs[id].in && !i.bs[id].batted);
   const nb = lm.nextBat && rem.includes(lm.nextBat) ? lm.nextBat : rem[0];
   const set = (v) => { i.aggr = v; lm.refresh(); };
-  const ev = P ? expOver(P) : null; const wl = P ? wktLevel(P.wkt) : null;
+  const md = !!m.md; const ev = P ? expOver(P) : null; const wl = P ? (md ? wktLevelMD : wktLevel)(P.wkt) : null;
   return (
     <section className="panel plan" aria-label="Batting plan">
       <div className="plan-h"><div><p className="t-h3">Your batting plan</p><p className="t-micro faint">Takes effect from the next ball</p></div><span className="ptag b">You're batting</span></div>
@@ -53,11 +56,12 @@ export function BatPlan({ lm, children }) {
         {INTENTS.map(([v, l]) => <button key={v} type="button" role="radio" aria-checked={!auto && cur === v} className={`intent${!auto && cur === v ? ' on' : ''}${auto && cur === v ? ' auto' : ''}`} onClick={() => set(String(v))}><span>{l}</span><RiskDots v={v} /></button>)}
       </div>
       <div className="readouts">
-        <div><p className="t-micro faint">Expected scoring</p><p className="board-f ro-v">{ev != null ? ev.toFixed(1) : '—'} <span className="t-small mut ro-u">an over</span></p><div style={{ marginTop: 4 }}><Meter pct={ev != null ? (ev / 12) * 100 : 0} blue /></div></div>
-        <div><p className="t-micro faint">Wicket risk</p><p className={`board-f ro-v${wl === 'High' ? ' crim' : ''}`}>{wl || '—'}</p><div style={{ marginTop: 4 }} className={wl === 'High' ? 'meter-c' : ''}><Meter pct={P ? (P.wkt / 0.1) * 100 : 0} blue /></div></div>
+        <div><p className="t-micro faint">Expected scoring</p><p className="board-f ro-v">{ev != null ? ev.toFixed(1) : '—'} <span className="t-small mut ro-u">an over</span></p><div style={{ marginTop: 4 }}><Meter pct={ev != null ? (ev / (md ? 6 : 12)) * 100 : 0} blue /></div></div>
+        <div><p className="t-micro faint">Wicket risk</p><p className={`board-f ro-v${wl === 'High' ? ' crim' : ''}`}>{wl || '—'}</p><div style={{ marginTop: 4 }} className={wl === 'High' ? 'meter-c' : ''}><Meter pct={P ? (P.wkt / (md ? 0.03 : 0.1)) * 100 : 0} blue /></div></div>
       </div>
       </div><div className="plan-b">
-      <Switch on={auto} onChange={(v) => set(v ? 'auto' : String(cur))} label="Auto intent" sub={i.target ? 'Follows the required rate for you' : 'Raises the tempo in the powerplay and at the death'} />
+      <Switch on={auto} onChange={(v) => set(v ? 'auto' : String(cur))} label="Auto intent" sub={md ? (i.target ? 'Chases or blocks by the rate the time left asks for' : 'Steady, quicker before a declaration, blocking to save the match') : i.target ? 'Follows the required rate for you' : 'Raises the tempo in the powerplay and at the death'} />
+      {md && <Declare lm={lm} />}
       <div className="pboxes narrow"><Batter G={G} i={i} id={i.striker} lbl="On strike" /><Batter G={G} i={i} id={i.non} lbl="Non-striker" /></div>
       {rem.length > 0 && <div><p className="t-micro faint" style={{ marginBottom: 6 }}>Next batter in</p>
         <div className="chips nbchips narrow" role="radiogroup" aria-label="Next batter in">{rem.slice(0, 3).concat(rem.slice(3).includes(nb) ? [nb] : []).map((id) => { const p = G.P(id); return <button key={id} type="button" role="radio" aria-checked={id === nb} className={`chip${id === nb ? ' on' : ''}`} onClick={() => { lm.nextBat = id === rem[0] ? null : id; lm.refresh(); }}>{p.name} · {formDisp(p)}</button>; })}</div>
@@ -97,37 +101,39 @@ export function BowlPlan({ lm, children }) {
   const front = pool.filter((p) => i.bw[p.id] || p.bowl >= 50 || p.id === pick);
   const list = all ? pool : front; const extra = pool.length - front.length;
   const choose = (id) => { if (pend) lm.pending.pick = id; else lm.nextBowler = lm.nextBowler === id ? null : id; lm.refresh(); };
-  const auto = i.field === 'auto'; const fcur = auto ? m.fieldFor(i, phaseOf(i.balls)) : i.field;
+  const md = !!m.md; const auto = i.field === 'auto'; const fcur = auto ? m.fieldFor(i, phaseOf(i.balls)) : i.field;
   const P = m.preview(i, pend && pick ? { bowler: pick } : {});
   const st = i.striker && i.bs[i.striker] ? G.P(i.striker) : null; const ns = i.non && i.bs[i.non] ? G.P(i.non) : null;
   const rev = (m.bowlRev || {})[i.bat] ?? 2;
   return (
     <section className="panel plan" aria-label="Bowling plan">
-      <div className="plan-h"><div><p className="t-h3">Over {n} · your bowling plan</p><p className="t-micro faint">{pend ? 'Pick a bowler and a field, then bowl' : 'Pick who bowls the next over. Field changes apply from the next ball.'}</p></div><span className="ptag b">You're bowling</span></div>
+      <div className="plan-h"><div><p className="t-h3">Over {n} · your bowling plan</p><p className="t-micro faint">{pend ? (md ? 'The captain wants a change. Pick a bowler and a field, then bowl' : 'Pick a bowler and a field, then bowl') : md ? 'Spells, not quotas: a bowler tires the longer he stays on. Field changes apply from the next ball.' : 'Pick who bowls the next over. Field changes apply from the next ball.'}</p></div><span className="ptag b">You're bowling</span></div>
       <div><p className="t-micro faint" style={{ marginBottom: 6 }}>Bowler{pend ? '' : ` for over ${n}`}</p>
         <div className="bowlers" role="radiogroup" aria-label="Bowler">
           {list.map((p) => {
             const s = i.bw[p.id] || { balls: 0, r: 0, w: 0 }; const left = Math.floor((24 - s.balls) / 6);
-            const done = s.balls + 6 > 24, last = p.id === lastId, inj = s.injured, now = !pend && p.id === i.cur && (i.balls % 6 !== 0 || i.overStart === i.balls);
+            const done = !md && s.balls + 6 > 24, last = p.id === lastId, inj = s.injured, now = !pend && p.id === i.cur && (i.balls % 6 !== 0 || i.overStart === i.balls);
             const dis = done || last || inj; const on = !dis && pick === p.id;
             return (
               <button key={p.id} type="button" role="radio" aria-checked={on} disabled={dis} className={`bcard${on ? ' on' : ''}`} onClick={() => choose(p.id)}>
                 <span className="t-small b6 ell">{p.name}</span><span className="board-f bc-f">{figs(s)}</span>
-                <span className="t-micro faint">{p.type} · {p.bowl}</span><span className={`t-micro bc-l ${on ? 'crim' : 'mut'}`}>{inj ? 'Injured' : done ? 'Done' : `${left} left`}</span>
-                {(isPace(p.type) && p.bowl >= 68 && !done) || (last && !done) || now ? <span className="bc-tags">{isPace(p.type) && p.bowl >= 68 && !done && <span className="ptag g">Death specialist</span>}{now ? <span className="ptag b">Bowling now</span> : last && !done && <span className="ptag c">Bowled last over</span>}</span> : null}
+                <span className="t-micro faint">{p.type} · {p.bowl}</span><span className={`t-micro bc-l ${on ? 'crim' : 'mut'}`}>{inj ? 'Injured' : md ? spellText(m, i, p.id) : done ? 'Done' : `${left} left`}</span>
+                {(!md && isPace(p.type) && p.bowl >= 68 && !done) || (last && !done) || now ? <span className="bc-tags">{!md && isPace(p.type) && p.bowl >= 68 && !done && <span className="ptag g">Death specialist</span>}{now ? <span className="ptag b">Bowling now</span> : last && !done && <span className="ptag c">Bowled last over</span>}</span> : null}
               </button>);
           })}
         </div>{extra > 0 && <button type="button" className="linkbtn t-small" onClick={() => setAll(!all)}>{all ? 'Show front-line bowlers only' : `Show ${extra} more`}</button>}</div>
       <div><p className="t-micro faint" style={{ marginBottom: 6 }}>Field</p>
         <div className="fields" role="radiogroup" aria-label="Field">
-          {FIELDS.map(([k, l, sub, dots]) => { const on = !auto && fcur === k; return (
+          {FIELDS.filter((x) => !md || x[0] !== 'death').map(([k, l, sub, dots]) => { const on = !auto && fcur === k; return (
             <button key={k} type="button" role="radio" aria-checked={on} className={`ftile${on ? ' on' : ''}${auto && fcur === k ? ' auto' : ''}`} onClick={() => { i.field = k; lm.refresh(); }}>
               <FieldSvg dots={dots} on={on} /><span><span className={`t-small b6${on ? ' crim' : ''}`} style={{ display: 'block' }}>{l}</span><span className="t-micro faint">{sub}</span></span></button>); })}
         </div></div>
-      <Switch on={auto} onChange={(v) => { i.field = v ? 'auto' : fcur; lm.refresh(); }} label="Auto field" sub="The captain sets it for the phase" />
+      <Switch on={auto} onChange={(v) => { i.field = v ? 'auto' : fcur; lm.refresh(); }} label="Auto field" sub={md ? 'The captain attacks a new batter and the new ball, and saves runs in a chase' : 'The captain sets it for the phase'} />
+      {md && <SpellPlan lm={lm} id={pick || i.cur} />}
+      {md && <NewBall lm={lm} />}
       <div className="riskrow">
         <div><p className="t-micro faint">Boundary risk</p><p className="t-small b6">{P ? bndLevel(P.four + P.six) : '—'}</p></div>
-        <div><p className="t-micro faint">Wicket chance</p><p className="t-small b6">{P ? wktLevel(P.wkt) : '—'}</p></div>
+        <div><p className="t-micro faint">Wicket chance</p><p className="t-small b6">{P ? (md ? wktLevelMD : wktLevel)(P.wkt) : '—'}</p></div>
         <div><p className="t-micro faint">Reviews left</p><p className="t-small b6">{rev}</p></div>
       </div>
       {st && <p className="t-micro faint">On strike: {st.name} {i.bs[st.id].r} ({i.bs[st.id].b}), {st.hand === 'L' ? 'left' : 'right'}-handed.{ns ? ` ${ns.name} ${i.bs[ns.id].r} (${i.bs[ns.id].b}) at the other end.` : ''}</p>}
@@ -150,6 +156,24 @@ export function Actions({ lm, strip }) {
       <div className="field"><span className="lbl">Control mode</span><Seg options={MODES} value={lm.mode} onChange={(v) => lm.setMode(v)} label="Control mode" /></div>
       <div className="field"><span className="lbl">Playback speed</span><Seg options={[['0.5', '0.5×'], ['1', '1×'], ['2', '2×'], ['4', '4×']]} value={String(G.s.settings.speed)} onChange={(v) => update(() => { G.s.settings.speed = +v; })} label="Playback speed" /></div>
     </div>);
+  if (lm.md) {
+    const nb = lm.m.nextBreak(); const to = { lunch: 'To lunch', tea: 'To tea', stumps: 'To stumps', end: 'To close' }[nb];
+    const decl = i && i.bat === G.user && lm.m.inns.length < 4 && !i.decReq;
+    if (strip) return (
+      <div className="stack" style={{ gap: 12 }}>
+        <div className="acts-row strip">{main}{!(lm.wait && lm.wait.label === 'Next over') && <button type="button" className="btn" onClick={() => lm.sim('over')}>Next over</button>}<button type="button" className="btn" onClick={() => lm.sim('session')}>{to}</button>
+          {nb !== 'stumps' && nb !== 'end' && <button type="button" className="btn btn-ghost" onClick={() => lm.sim('stumps')}>To stumps</button>}
+          <button type="button" className="btn btn-ghost" onClick={() => lm.sim('match')}>Sim match</button>
+          {decl && <button type="button" className="btn btn-ghost crim" onClick={() => lm.declare()}>Declare</button>}
+          <button type="button" className="btn btn-ghost" aria-expanded={more} onClick={() => setMore(!more)}>{more ? 'Hide settings' : 'Settings'}</button></div>
+        {more && settings}
+      </div>);
+    return (
+      <div className="stack" style={{ gap: 10 }}>
+        {more && <div className="mact-more stack" style={{ gap: 12 }}><div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>{nb !== 'stumps' && nb !== 'end' && <button type="button" className="btn" onClick={() => { setMore(false); lm.sim('stumps'); }}>To stumps</button>}<button type="button" className="btn" onClick={() => { setMore(false); lm.sim('innings'); }}>Sim innings</button><button type="button" className="btn" onClick={() => { setMore(false); lm.sim('match'); }}>Sim match</button>{decl && <button type="button" className="btn crim" onClick={() => { setMore(false); lm.declare(); }}>Declare</button>}</div>{settings}</div>}
+        <div className="acts-row bar">{main}{!(lm.wait && lm.wait.label === 'Next over') && <button type="button" className="btn" onClick={() => lm.sim('over')}>Next over</button>}<button type="button" className="btn" onClick={() => lm.sim('session')}>{to}</button><button type="button" className="btn dots" aria-label="More simulation options" aria-expanded={more} onClick={() => setMore(!more)}><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></svg></button></div>
+      </div>);
+  }
   if (strip) return (
     <div className="stack" style={{ gap: 12 }}>
       <div className="acts-row strip">{main}<button type="button" className="btn" onClick={() => lm.sim('over')}>Sim over</button><button type="button" className="btn btn-ghost" onClick={() => lm.sim('innings')}>Sim innings</button><button type="button" className="btn btn-ghost" onClick={() => lm.sim('match')}>Sim match</button>
@@ -164,3 +188,45 @@ export function Actions({ lm, strip }) {
   );
 }
 
+
+// ===== Multi-day =====
+// A bowler's spell and how tired he is: "Spell 4 ov · Tiring", or "Rested" off the attack.
+export function spellText(m, i, id) {
+  const s = i.bw[id]; const ov = Math.floor(i.balls / 6); const on = s && s.lo != null && s.sk === m.sessKey() && ov - s.lo <= 2;
+  if (!on) return s && s.balls ? `Rested · ${m.fatigueLabel(i, id)}` : 'Fresh';
+  return `Spell ${s.sp} ov · ${m.fatigueLabel(i, id)}`;
+}
+// The user's plan for a bowler's spell: how many overs the captain gives him before a change.
+const SPELLS = [['0', 'Rest him'], ['4', '4'], ['6', '6'], ['8', '8'], ['12', '12'], ['auto', 'Natural']];
+function SpellPlan({ lm, id }) {
+  const { G } = useGame(); const m = lm.m; if (!id) return null; const p = G.P(id); const v = m.md.plan[id] != null ? String(m.md.plan[id]) : 'auto';
+  const set = (k) => { if (k === 'auto') delete m.md.plan[id]; else m.md.plan[id] = +k; lm.refresh(); };
+  return (
+    <div className="field"><span className="lbl">Spell plan · {p.name}</span>
+      <Seg options={SPELLS} value={v} onChange={set} label={`Spell length for ${p.name}`} />
+      <p className="t-micro faint">{v === 'auto' ? `The captain keeps him on until he tires (about ${spellLim(p)} overs for ${isPace(p.type) ? 'a seamer' : 'a spinner'}).` : v === '0' ? 'The captain leaves him out of the attack.' : `The captain takes him off after ${v} overs in a spell.`}</p></div>);
+}
+// The new ball: due after 80 overs. The captain takes it straight away unless told to keep the old one.
+function NewBall({ lm }) {
+  const m = lm.m, i = lm.inn; const age = m.ballAge(i); const due = age >= 80;
+  return (
+    <div className="md-nb">
+      <div><p className="t-micro faint">Ball</p><p className="t-small b6">{Math.floor(age)} overs old{i.nbN ? ` · new ball ${i.nbN === 1 ? 'taken' : `taken ${i.nbN} times`}` : ''}</p>
+        <p className="t-micro faint">{due ? (i.nbReq ? 'The new ball comes at the start of the next over.' : i.nbPol === 'hold' ? 'Keeping the old ball for the spinners.' : 'Due: the captain takes it at the start of the next over.') : `New ball available after 80 overs (in ${Math.ceil(80 - age)}).`}</p></div>
+      {due && <div className="row" style={{ gap: 6 }}><button type="button" className="btn btn-sm" disabled={i.nbReq} onClick={() => { i.nbReq = true; lm.refresh(); }}>Take the new ball</button>
+        <button type="button" className={`btn btn-sm${i.nbPol === 'hold' ? ' on' : ''}`} aria-pressed={i.nbPol === 'hold'} onClick={() => { i.nbPol = i.nbPol === 'hold' ? 'auto' : 'hold'; i.nbReq = false; lm.refresh(); }}>{i.nbPol === 'hold' ? 'Holding old ball' : 'Keep the old ball'}</button></div>}
+    </div>);
+}
+// Declarations for the user's batting side: now, or leave it to the captain.
+export function Declare({ lm }) {
+  const m = lm.m, i = lm.inn; const n = m.inns.length; if (n >= 4) return null;
+  const want = m.declareWant(i); const lead = m.leadOf(i); const left = Math.floor(m.leftBalls() / 6);
+  return (
+    <div className="md-decl">
+      <div className="grow"><p className="t-micro faint">Declaration</p>
+        <p className="t-small">{n === 1 ? `First innings, ${left} overs left in the match.` : `${lead >= 0 ? `${lead} ahead` : `${-lead} behind`}, ${left} overs left in the match.`}{want != null && m.md.autoDec ? ` The captain declares at about ${want}.` : ''}</p>
+        {i.decReq && <p className="t-micro crim">Declaring before the next ball.</p>}</div>
+      <button type="button" className="btn btn-sm crim" disabled={i.decReq} onClick={() => lm.declare()}>Declare now</button>
+      <Switch on={m.md.autoDec} onChange={(v) => { m.md.autoDec = v; lm.refresh(); }} label="Captain declares" sub="Off: the innings goes on until you declare" />
+    </div>);
+}

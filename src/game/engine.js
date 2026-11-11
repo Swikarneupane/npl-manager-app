@@ -1,7 +1,8 @@
 import {dlsG,dlsRes,winProbability,projectedTotal,venuePar} from './winprob.js';
 import {czInit,batComp,fieldComp,falseShot,wideFactor,dropFactor,czBall,czOver} from './composure.js';
+import {FC,weatherLoss} from '../world/fastfc.js';
 // ===== Utilities =====
-const R=Math.random;
+const R=()=>Math.random(); // read at call time, so a test can seed Math.random
 const ri=(a,b)=>a+Math.floor(R()*(b-a+1));
 const rf=(a,b)=>a+R()*(b-a);
 const pick=a=>a[Math.floor(R()*a.length)];
@@ -143,8 +144,10 @@ function ballProbs(b,w,aggr,ctx){
 function choose(P){ let r=R(),acc=0; for(const k in P){acc+=P[k]; if(r<acc) return k;} return 'dot'; }
 
 class Match{
-  static FIELDS=['home','away','opt','overs','maxBalls','night','pitch','dew','lang','log','result','inns','weather','lineups','toss','bowlRev','catches','hattricks','cz','edge','km','dug'];
+  static FIELDS=['home','away','opt','overs','maxBalls','night','pitch','dew','lang','log','result','inns','weather','lineups','toss','bowlRev','catches','hattricks','cz','edge','km','dug','md'];
   constructor(G,home,away,opt){
+    // Tests and first-class formats (opt.fmt in FC) play the multi-day engine below
+    if(new.target===Match && opt && FC[opt.fmt]) return new MultiDay(G,home,away,opt);
     this.G=G; this.home=home; this.away=away; this.opt=opt||{};
     this.overs=opt.overs||20; this.maxBalls=this.overs*6;
     this.night = opt.night!=null? opt.night : R()<0.5;
@@ -231,12 +234,16 @@ class Match{
   // o.aggr / o.field / o.bowler override what the innings would use. Uses no randomness.
   preview(inn,o={}){
     const bat=this.P(inn.striker), bowl=this.P(o.bowler||inn.cur); if(!bat||!bowl||!inn.bs[inn.striker]) return null;
-    const ph=phaseOf(inn.balls); const {b,w}=this.strengths(inn,bat,bowl,ph);
-    return ballProbs(b,w,o.aggr!=null?o.aggr:this.aggrFor(inn),{phase:ph,set:inn.bs[inn.striker].b,field:o.field||this.fieldFor(inn,ph),pitch:this.pitch,freeHit:inn.freeHit,comp:o.comp!=null?o.comp:batComp(this,inn,inn.striker)});
+    const ph=this.phaseAt(inn); const {b,w}=this.strengths(inn,bat,bowl,ph);
+    return this.probs(b,w,o.aggr!=null?o.aggr:this.aggrFor(inn),{phase:ph,set:inn.bs[inn.striker].b,field:o.field||this.fieldFor(inn,ph),pitch:this.pitch,freeHit:inn.freeHit,comp:o.comp!=null?o.comp:batComp(this,inn,inn.striker)});
   }
   // ---- save / resume ----
   serialize(){ const o={}; for(const k of Match.FIELDS) if(this[k]!==undefined) o[k]=this[k]; return JSON.parse(JSON.stringify(o)); }
-  static restore(G,data){ const m=Object.create(Match.prototype); Object.assign(m,JSON.parse(JSON.stringify(data))); m.G=G; m.hooks={}; m._ne=null; m._cur=null; return m; }
+  // the ball's phase and outcome model: limited-overs phases here, the red ball in MultiDay
+  phaseAt(inn){ return phaseOf(inn.balls); }
+  probs(b,w,aggr,ctx){ return ballProbs(b,w,aggr,ctx); }
+  overNeed(inn){ return inn.target?`Need ${inn.target-inn.runs} from ${this.maxBalls-inn.balls}`:`Run rate ${(inn.runs/(inn.balls/6)).toFixed(2)}`; }
+  static restore(G,data){ const m=Object.create((data.md?MultiDay:Match).prototype); Object.assign(m,JSON.parse(JSON.stringify(data))); m.G=G; m.hooks={}; m._ne=null; m._cur=null; return m; }
   // run() is resumable: it skips the toss and any innings already completed, and continues a part-played innings.
   async run(hooks){
     this.hooks=hooks||{};
@@ -296,19 +303,19 @@ class Match{
     czOver(this,inn);
     const s=inn.bw[inn.cur]; const fig=`${Math.floor(s.balls/6)}-${s.r}-${s.w}`;
     const bats=[inn.striker,inn.non].filter(id=>inn.bs[id]&&!inn.bs[id].out).map(id=>`${this.P(id).name.split(' ').slice(-1)[0]} ${inn.bs[id].r} (${inn.bs[id].b})`);
-    const need=isSecond?`Need ${inn.target-inn.runs} from ${this.maxBalls-inn.balls}`:`Run rate ${(inn.runs/(inn.balls/6)).toFixed(2)}`;
+    const need=this.overNeed(inn);
     this.say(this.tr('over',{o:inn.balls/6,score:this.score(inn),bowler:this.P(inn.cur).name,fig}),'over',{ov:{n:inn.balls/6,runs:inn.overRuns,score:`${this.G.teams[inn.bat].name.split(' ')[0]} ${inn.runs}/${inn.wkts}`,bats,need,bowler:`${this.P(inn.cur).name} ${fig}`}});
-    if(inn.balls===36) this.say(this.tr('pp',{score:this.score(inn)}),'over');
+    if(inn.balls===36&&!this.md) this.say(this.tr('pp',{score:this.score(inn)}),'over');
     inn.last=inn.cur; [inn.striker,inn.non]=[inn.non,inn.striker];
     if(this.hooks.overEnd) await this.hooks.overEnd(inn,this);
   }
   async ball(inn){
     const T=this.G.teams; const bat=this.P(inn.striker), bowl=this.P(inn.cur); const bs=inn.bs[inn.striker], bw=inn.bw[inn.cur];
     this._cur={bw:bowl.name,bt:bat.name};
-    const ph=phaseOf(inn.balls);
-    // extras
+    const ph=this.phaseAt(inn);
+    // extras (the red ball: wides are called far less strictly)
     const acc=bowl.bowl;
-    const cf=fieldComp(this,inn.bowl); const wideP=(0.045-acc*0.00028)*wideFactor(cf), nbP=0.008-acc*0.00004;
+    const cf=fieldComp(this,inn.bowl); const wideP=(0.045-acc*0.00028)*wideFactor(cf)*(this.md?0.3:1), nbP=(0.008-acc*0.00004)*(this.md?0.8:1);
     const ex=R();
     const user=this.G.user;
     const aggr=this.aggrFor(inn), field=this.fieldFor(inn,ph);
@@ -317,10 +324,10 @@ class Match{
     let noBall=false; if(ex<wideP+nbP){ noBall=true; }
     const {b,w,mu}=this.strengths(inn,bat,bowl,ph);
     if(mu>=0){ const e=this.opt.mu[mu]; if(!e.on){ e.on=1; this.say(`Plan: ${e.title}. The matchup edge is on.`,'comp plan'); } }
-    const P=ballProbs(b,w,aggr,{phase:ph,set:bs.b,field,pitch:this.pitch,freeHit:inn.freeHit,comp:batComp(this,inn,inn.striker)});
+    const P=this.probs(b,w,aggr,{phase:ph,set:bs.b,field,pitch:this.pitch,freeHit:inn.freeHit,comp:batComp(this,inn,inn.striker)});
     let out=choose(P);
     const wasFree=inn.freeHit; inn.freeHit=false;
-    if(noBall){ inn.runs++; inn.extras++; bw.r++; bw.nb++; inn.overRuns++; this.say(this.tr('nb',vars),'extra',{ball:true,o:this.ballLbl(inn,false),ev:'nb'}); inn.overSeq.push('nb'); inn.freeHit=true; if(out==='wkt') out='dot'; }
+    if(noBall){ inn.runs++; inn.extras++; bw.r++; bw.nb++; inn.overRuns++; this.say(this.md?`No-ball from ${bowl.name}, an extra run.`:this.tr('nb',vars),'extra',{ball:true,o:this.ballLbl(inn,false),ev:'nb'}); inn.overSeq.push('nb'); inn.freeHit=!this.md; if(out==='wkt') out='dot'; }
     else { inn.balls++; bw.balls++; bs.b++; }
     if(noBall) bs.b++;
     let runs=0, ev=out;
@@ -507,4 +514,318 @@ class Match{
   winProb(o){ const i=this.inns[this.inns.length-1]; if(!i) return {bat:this.home,p:0.5,proj:venuePar(this.G.s,this.G.year)};
     const st=this.winState(i,o); return {bat:i.bat,p:winProbability(st),proj:i.target?null:projectedTotal(st),par:st.par}; }
 }
-export {R,ri,rf,pick,clamp,shuffle,isSpin,isPace,TYPE_LABEL,fmtL,ovr,calcValue,mkPlayer,Match,dlsRes,cm,setPID,getPID,ballProbs,autoAggr,phaseOf};
+// ===== Multi-day cricket: Tests and first-class =====
+// Up to four innings with no over limit, inside a time limit: overs a day (fastfc.js FC), three sessions
+// a day with lunch and tea, stumps, and overs lost to the weather. The red ball scores at about 3.3 an
+// over; a new ball is due every 80 overs; the pitch wears, so spin grows from day 3; bowlers tire with the
+// length of a spell and the overs bowled that day rather than a quota. Declarations, the follow-on, draws,
+// ties, and wins by an innings, by runs or by wickets. Three reviews an innings.
+// m.md: { fmt, days, perDay, follow, day, sess (0 morning, 1 afternoon, 2 evening), d0 (match balls when
+//         the day began), ib (balls of play lost to innings breaks), lost [overs lost each day], over (time
+//         is up), autoDec (the user's captain declares), fo (follow-on enforced), plan {id: spell length}, res }
+const RED={dot:.70,one:.163,two:.044,three:.008,four:.071,six:.0035,wkt:.0072};
+function redProbs(b,w,aggr,ctx){
+  const d=(b-w)/100; const P={...RED};
+  P.four*=Math.max(.2,1+1.6*d); P.six*=Math.max(.1,1+2*d); P.wkt*=d<0?Math.exp(-1.9*d):Math.max(.3,1-2.2*d); // a tail-ender does not last long P.dot*=Math.max(.5,1-.45*d); P.one*=1+.25*d; P.two*=1+.2*d;
+  if(aggr>=0){ const a=aggr; P.four*=1+.45*a; P.six*=1+1.3*a; P.one*=1+.28*a; P.two*=1+.2*a; P.wkt*=1+.38*a; P.dot*=1-.1*a; }
+  else { const a=-aggr; P.four*=1-.5*a; P.six*=1-.8*a; P.one*=1-.3*a; P.two*=1-.3*a; P.wkt*=1-.42*a; P.dot*=1+.08*a; }
+  if(ctx.set<10){P.wkt*=1.3; P.four*=.85;} else if(ctx.set<25) P.wkt*=1.1; else if(ctx.set>90){P.wkt*=.82; P.four*=1.1;}
+  const f=ctx.field;
+  if(f==='attack'){P.wkt*=1.14; P.four*=1.15; P.one*=.9;}
+  else if(f==='defend'){P.four*=.78; P.six*=.8; P.wkt*=.86; P.one*=1.12;}
+  P.four*=ctx.pitch; P.six*=ctx.pitch; P.wkt/=Math.sqrt(ctx.pitch);
+  // composure counts for less over a long innings than in a T20 chase
+  if(ctx.comp!=null){ const k=1+(falseShot(ctx.comp)-1)*0.5; P.wkt*=k; if(k>1) P.dot*=1+(k-1)/4; else if(ctx.comp>75) P.four*=1.04; }
+  const s=Object.values(P).reduce((x,y)=>x+y,0); for(const k in P)P[k]/=s;
+  return P;
+}
+const fmOf=p=>(p&&p.fm&&p.fm.fc)||0;
+const nth=n=>['first','second','third','fourth'][n-1]||`${n}th`;
+// A bowler's natural spell (overs) before he tires, and the tiredness (in skill points) after sp overs of
+// this spell and dov overs today.
+const spellLim=p=>isSpin(p.type)?11:6;
+function fatigueAt(p,sp,dov){ const sl=spellLim(p), dl=isSpin(p.type)?30:18; return Math.max(0,sp-sl)*(isSpin(p.type)?0.7:1.6)+Math.max(0,dov-dl)*0.4; }
+const fatigueLabel=f=>f<1?'Fresh':f<4?'Tiring':'Tired';
+const SESSIONS=['Morning','Afternoon','Evening'];
+
+class MultiDay extends Match{
+  constructor(G,home,away,opt){
+    super(G,home,away,{...opt,noRain:true,night:false,dew:false});
+    const F=FC[opt.fmt]; this.overs=F.days*F.perDay; this.maxBalls=this.overs*6;
+    // time lost to the weather, exactly as in the fast sim (fastfc.js weatherLoss)
+    const share=opt.weather!=null?opt.weather:weatherLoss(opt.fmt,R);
+    const lost=Array(F.days).fill(0); let ov=Math.round(F.days*F.perDay*share);
+    for(let g=0;ov>0&&g<200;g++){ const d=ri(0,F.days-1); const c=Math.min(ov,F.perDay-lost[d],ri(6,F.perDay)); if(c>0){ lost[d]+=c; ov-=c; } }
+    this.md={fmt:opt.fmt,days:F.days,perDay:F.perDay,follow:F.follow,day:1,sess:0,d0:0,ib:0,lost,over:false,autoDec:true,fo:false,plan:{},res:null};
+  }
+  phaseAt(){ return 'red'; }
+  probs(b,w,aggr,ctx){ return redProbs(b,w,aggr,ctx); }
+  // ---- the clock ----
+  totBalls(){ return this.inns.reduce((a,i)=>a+i.balls,0); }
+  dayCap(d=this.md.day){ return Math.max(0,(this.md.perDay-(this.md.lost[d-1]||0))*6); }
+  dayB(){ return this.totBalls()+this.md.ib-this.md.d0; }
+  sessEnd(k){ return Math.round(this.dayCap()*(k+1)/18)*6; }
+  // legal balls left in the match
+  leftBalls(){ const M=this.md; if(M.over) return 0; let L=Math.max(0,this.dayCap()-this.dayB()); for(let d=M.day+1;d<=M.days;d++) L+=this.dayCap(d); return L; }
+  sessionName(){ return SESSIONS[this.md.sess]; }
+  nextBreak(){ const M=this.md; return M.sess===0?'lunch':M.sess===1?'tea':M.day>=M.days?'end':'stumps'; }
+  wear(){ const M=this.md; return M.days>1?(M.day-1)/(M.days-1):0; }
+  ballAge(inn){ return (inn.balls-(inn.nbAt||0))/6; }
+  total(t){ return this.inns.filter(i=>i.bat===t).reduce((a,i)=>a+i.runs,0); }
+  leadOf(inn){ return this.total(inn.bat)-this.total(inn.bowl); }
+  sessKey(){ return this.md.day*3+this.md.sess; }
+  // ---- conditions: the worn pitch, the age of the ball, tiredness ----
+  bowlCond(inn,p){ const wr=this.wear(), age=this.ballAge(inn);
+    if(isSpin(p.type)) return -2+7*wr+(age<15?-2:age>45?1.5:0);
+    return 1-2*wr+(age<12?5*(1-age/12):age>60?1:0); }
+  spellNext(s,ov){ if(!s||s.lo==null||s.sk!==this.sessKey()) return 1; const gap=ov-s.lo; if(gap===2) return (s.sp||0)+1; if(gap<8) return Math.max(0,Math.round((s.sp||0)*(1-gap/8)))+1; return 1; }
+  fatigue(inn,id){ const s=inn.bw[id], p=this.P(id); if(!s||!p) return 0; return fatigueAt(p,s.sp||0,s.dd===this.md.day?s.dov||0:0); }
+  fatigueLabel(inn,id){ return fatigueLabel(this.fatigue(inn,id)); }
+  strengths(inn,bat,bowl,ph){
+    const r=super.strengths(inn,bat,bowl,ph);
+    if(isPace(bowl.type)) r.w-=3; // no powerplay or death overs
+    r.b+=fmOf(bat)-3*this.wear()-(inn.target?4:0); // the fourth innings on a worn pitch, as in the fast sim r.w+=fmOf(bowl)+this.bowlCond(inn,bowl)-this.fatigue(inn,bowl.id);
+    return r;
+  }
+  // ---- the captains ----
+  bowlerOptions(inn){ const lu=this.lineups[inn.bowl]; return lu.xi.filter(id=>{const s=inn.bw[id]; return id!==inn.last && !(s&&s.injured);}); }
+  // The best fresh bowler for the conditions; a bowler on a spell stays on until he tires (or reaches the
+  // spell length in the user's plan: 0 keeps him out of the attack).
+  aiBowler(inn){
+    const opts=this.bowlerOptions(inn); const ov=Math.floor(inn.balls/6); const M=this.md;
+    const plan=inn.bowl===this.G.user?(M.plan||{}):{};
+    const cap=opts.filter(id=>this.P(id).bowl>=40); const pool=cap.length>=3?cap:opts;
+    let best=null,bs=-1e9;
+    for(const id of pool){ const p=this.P(id), s=inn.bw[id]; const sp=this.spellNext(s,ov); const dov=(s&&s.dd===M.day?s.dov||0:0)+1;
+      const lim=plan[id]!=null?plan[id]:spellLim(p);
+      let sc=p.bowl+fmOf(p)+(p.form||0)*0.8+this.bowlCond(inn,p)*1.5-fatigueAt(p,sp,dov)*2.5;
+      if(lim===0) sc-=60; else if(sp>lim) sc-=10*(sp-lim);
+      if(sp>1) sc+=4; if(p.bowl<50) sc-=6;
+      sc+=rf(-2,2); if(sc>bs){bs=sc;best=id;} }
+    return best||opts[0]||this.lineups[inn.bowl].xi[0];
+  }
+  assign(inn,bid){ const M=this.md; inn.cur=bid; if(!inn.bw[bid]) inn.bw[bid]={balls:0,r:0,w:0,dots:0,wd:0,nb:0};
+    const s=inn.bw[bid]; const ov=Math.floor(inn.balls/6); s.sp=this.spellNext(s,ov); s.lo=ov; s.sk=this.sessKey();
+    if(s.dd!==M.day){ s.dd=M.day; s.dov=0; } s.dov++; }
+  // batting: steady by default; pushing on before a declaration; the chase on the last day by the rate
+  // it needs; blocking when only a draw is left
+  aggrFor(inn){ if(inn.bat===this.G.user && inn.aggr!=='auto') return +inn.aggr; const t=this.G.teams&&this.G.teams[inn.bat]; return clamp(this.autoAggr(inn)+((t&&t.aggrBias)||0)*0.5,-1,2); }
+  autoAggr(inn){
+    const L=this.leftBalls(), n=this.inns.indexOf(inn)+1;
+    if(inn.target){ const need=inn.target-inn.runs; if(need<=0) return 0; const rrr=need/Math.max(1,L/6), k=10-inn.wkts;
+      if(rrr>4.6||(k<=4&&rrr>3)) return -1; if(rrr<2.6) return 0; if(rrr<3.4) return 0.3; return k>=7?0.6:-1; }
+    const dw=(inn.bat!==this.G.user||this.md.autoDec)?this.declareWant(inn):null; if(dw!=null && dw-inn.runs<120 && n>1) return 1;
+    if(this.leadOf(inn)<0 && L<=this.md.perDay*6 && n>=3) return -1;
+    return 0;
+  }
+  fieldFor(inn){ if(inn.bowl===this.G.user && inn.field!=='auto') return inn.field;
+    const s=inn.bs[inn.striker]; const a=this.aggrFor(inn);
+    if(inn.target){ const need=inn.target-inn.runs; return need/Math.max(1,this.leftBalls()/6)>3.8&&a>0?'defend':'attack'; }
+    if(this.ballAge(inn)<15||(s&&s.b<12)||a<0) return 'attack';
+    return a>=1?'defend':'balanced'; }
+  // The runs at which the batting side declares this innings (null: it bats on).
+  declareWant(inn){
+    const n=this.inns.indexOf(inn)+1; if(n>=4) return null; const M=this.md; const L=this.leftBalls();
+    const k=clamp(M.days*M.perDay/450,0.45,1); const prev=this.total(inn.bat)-inn.runs, opp=this.total(inn.bowl); const dw=inn.dw!=null?inn.dw:0.5;
+    if(n===1){ const want=(520+120*dw)*k; return Math.round(L<this.maxBalls*0.62?Math.min(want,330*k):want); }
+    if(n===2) return Math.round(opp+(180+120*dw)*k);
+    if(M.fo&&opp>prev+inn.runs+60) return null; // following on: bat for the draw first
+    return Math.round(opp-prev+clamp(L/6*3.3,180*k,450)); // a target at about 3.3 an over: a fair chase, or a draw
+  }
+  aiDeclares(inn){ const want=this.declareWant(inn); return want!=null && inn.wkts<9 && inn.runs>=want; }
+  // The follow-on: enforced when there is time to bowl twice (AI captains sometimes bat again anyway).
+  followRec(){ return this.leftBalls()>this.maxBalls*0.33; }
+  // ---- the match ----
+  dayStart(){ const M=this.md; const lost=M.lost[M.day-1]||0;
+    let t=`Day ${M.day} of ${M.days}.`;
+    if(lost>=M.perDay) t+=' Rain: no play is possible today.'; else if(lost>0) t+=` Rain and bad light: ${lost} overs lost today.`;
+    if(M.days>=4&&M.day===3) t+=' The pitch is starting to wear and the spinners will enjoy it.'; else if(M.day>=3&&M.day===M.days) t+=' The last day: there is rough outside off stump and the ball is turning.';
+    this.say(t,'brk',{brk:'day',day:M.day}); }
+  stateLine(){ const i=this.inns[this.inns.length-1]; if(!i) return ''; const T=this.G.teams; const l=this.leadOf(i);
+    return `${T[i.bat].name} ${i.runs}/${i.wkts}${i.target?`, needing ${i.target-i.runs} more`:this.inns.length>1?`, ${l>0?`${l} ahead`:l<0?`${-l} behind`:'level'}`:''}`; }
+  // Breaks at the start of an over: lunch, tea, stumps (and the end of the match). True when time is up.
+  async clock(){
+    const M=this.md;
+    for(let g=0;g<20;g++){
+      const cap=this.dayCap(), b=this.dayB();
+      if(b>=cap){
+        if(M.day>=M.days){ M.over=true; return true; }
+        this.say(`Stumps on day ${M.day}: ${this.stateLine()}.`,'brk',{brk:'stumps',day:M.day});
+        M.day++; M.sess=0; M.d0=this.totBalls()+M.ib; this.dayStart();
+        if(this.hooks.brk) await this.hooks.brk('stumps',this);
+        continue;
+      }
+      if(M.sess<2 && b>=this.sessEnd(M.sess)){ const k=M.sess; M.sess++;
+        if(this.sessEnd(k)<=0) continue; // a short, rain-hit day plays straight through
+        this.say(`${k?'Tea':'Lunch'} on day ${M.day}: ${this.stateLine()}.`,'brk',{brk:k?'tea':'lunch',day:M.day});
+        if(this.hooks.brk) await this.hooks.brk(k?'tea':'lunch',this);
+        continue; }
+      return false;
+    }
+    return false;
+  }
+  newBall(inn){
+    if(this.ballAge(inn)<80) return; const u=inn.bowl===this.G.user;
+    let take;
+    if(u) take=inn.nbReq||inn.nbPol!=='hold';
+    else { const lu=this.lineups[inn.bowl]; const best=t=>Math.max(0,...lu.xi.map(id=>this.P(id)).filter(p=>t(p.type)).map(p=>p.bowl)); take=this.wear()<0.7||best(isPace)>=best(isSpin)||this.ballAge(inn)>=95; }
+    if(!take) return;
+    inn.nbReq=false; inn.nbAt=inn.balls; inn.nbN=(inn.nbN||0)+1;
+    this.say(`${this.G.teams[inn.bowl].name} take the new ball after ${Math.floor(inn.balls/6)} overs.`,'info nb');
+  }
+  startInnings(bat,bowl,target){ const T=this.G.teams, M=this.md; const inn=this.newInnings(bat,bowl,target); const n=this.inns.length+1;
+    inn.reviews=3; inn.nbAt=0; inn.dw=R(); inn.n=n; inn.nbPol='auto'; (this.bowlRev||(this.bowlRev={}))[bat]=3; this.inns.push(inn);
+    const k=this.inns.filter(i=>i.bat===bat).length;
+    this.say(`${T[bat].name}, ${nth(k)} innings${M.fo&&n===3?' (following on)':''}`,'head');
+    if(target) this.say(`${T[bat].name} need ${target} to win, with about ${Math.floor(this.leftBalls()/6)} overs left in the match.`,'head');
+    this.walkOut(inn); return inn; }
+  closeInnings(inn){ if(inn.closed) return; inn.closed=true; const T=this.G.teams, M=this.md;
+    if(inn.dec) this.say(`${T[inn.bat].name} declare at ${inn.runs}/${inn.wkts}${this.inns.length>1?`, ${this.leadOf(inn)>=0?`${this.leadOf(inn)} ahead`:`${-this.leadOf(inn)} behind`}`:''}.`,'head');
+    else if(inn.wkts>=10) this.say(`${T[inn.bat].name} are all out for ${inn.runs}.`,'head');
+    if(!M.over) M.ib+=12; }
+  async run(hooks){
+    this.hooks=hooks||{}; const G=this.G,h=this.home,a=this.away,T=G.teams;
+    if(!this.toss){
+      const tossWin=R()<0.5?h:a; let batFirst;
+      if(this.hooks.toss&&tossWin===G.user) batFirst=(await this.hooks.toss(this))==='bat'?tossWin:(tossWin===h?a:h);
+      else batFirst=R()<(this.pitch<0.97?0.55:0.8)?tossWin:(tossWin===h?a:h);
+      this.toss={win:tossWin,dec:batFirst===tossWin?'bat':'field'};
+      this.say(`${T[tossWin].name} won the toss and chose to ${this.toss.dec==='bat'?'bat':'bowl'} first.`,'info');
+      this.dayStart();
+    }
+    for(let g=0;g<8;g++){
+      if(!this.inns.length){ const bf=this.toss.dec==='bat'?this.toss.win:(this.toss.win===h?a:h); this.startInnings(bf,bf===h?a:h,null); }
+      const inn=this.inns[this.inns.length-1];
+      if(!inn.closed){ await this.playInnings(inn); this.closeInnings(inn); }
+      if(this.decide()) break;
+      await this.nextInnings();
+    }
+    this.result=null; this.finish(); return this.result;
+  }
+  async playInnings(inn){
+    const M=this.md;
+    await this.endOverIfNeeded(inn);
+    while(inn.wkts<10 && !(inn.target&&inn.runs>=inn.target)){
+      if(inn.decReq){ inn.dec=true; break; }
+      if(inn.balls%6===0 && inn.overStart!==inn.balls){
+        if(await this.clock()) break;
+        if(inn.decReq){ inn.dec=true; break; }
+        if((inn.bat!==this.G.user||M.autoDec) && this.aiDeclares(inn)){ inn.dec=true; break; }
+        this.newBall(inn);
+        inn.overStart=inn.balls; inn.overRuns=0; inn.overW=0; inn.overSeq=[];
+        let bid=null;
+        if(this.hooks.chooseBowler && inn.bowl===this.G.user) bid=await this.hooks.chooseBowler(inn,this);
+        if(!bid || !this.bowlerOptions(inn).includes(bid)) bid=this.aiBowler(inn);
+        this.assign(inn,bid);
+        if(this.hooks.beforeOver) await this.hooks.beforeOver(inn,this);
+      }
+      await this.ball(inn);
+      await this.endOverIfNeeded(inn);
+    }
+  }
+  overNeed(inn){ const M=this.md; const today=`day ${M.day}, ${Math.floor(this.dayB()/6)} overs today`;
+    if(inn.target) return `Need ${inn.target-inn.runs}, ${Math.floor(this.leftBalls()/6)} overs left · ${today}`;
+    if(this.inns.length<2) return `Run rate ${(inn.runs/(inn.balls/6)).toFixed(2)} · ${today}`;
+    const l=this.leadOf(inn); return `${l>0?`Lead by ${l}`:l<0?`Trail by ${-l}`:'Scores level'} · ${today}`; }
+  // red-ball composure: dots are the normal state of things, so only a long run of them (six at a time) tells
+  compose(inn,ev,info){
+    if(ev==='dot'){ const cz=czInit(this); const rd=(cz.rd||(cz.rd={})); const id=inn.striker; rd[id]=(rd[id]||0)+1; if(rd[id]%6) ev='still'; }
+    else if(ev!=='wd'&&ev!=='nb'&&ev!=='drop'){ const cz=czInit(this); if(cz.rd) cz.rd[(info&&info.bat)||inn.striker]=0; }
+    super.compose(inn,ev,info); }
+  // a Test commentary log stays at a size a save can carry
+  // (the innings, day and session lines are kept; the oldest ball-by-ball lines go)
+  say(txt,cls,extra){ const e=super.say(txt,cls,extra);
+    if(this.log.length>900){ const keep=x=>x.c==='head'||x.c==='brk'||x.c==='result'; let cut=this.log.length-600; this.log=this.log.filter((x,k)=>k>=this.log.length-600||keep(x)||!(cut-->0)); }
+    return e; }
+  decide(){
+    const n=this.inns.length, inn=this.inns[n-1], M=this.md;
+    if(inn.target && inn.runs>=inn.target){ M.res={w:inn.bat,k:'wkts'}; return true; }
+    if(n===4 && inn.wkts>=10){ M.res=inn.runs===inn.target-1?{tie:1}:{w:inn.bowl,k:'runs'}; return true; }
+    if(n===3 && (inn.wkts>=10||inn.dec) && this.total(inn.bat)<this.total(inn.bowl)){ M.res={w:inn.bowl,k:'inns'}; return true; }
+    if(M.over){ M.res={draw:1}; return true; }
+    return false;
+  }
+  async nextInnings(){
+    const n=this.inns.length, T=this.G.teams, M=this.md; const [i1,i2,i3]=this.inns;
+    if(n===1){ this.startInnings(i1.bowl,i1.bat,null); return; }
+    if(n===2){ const lead=i1.runs-i2.runs; let fo=false;
+      if(lead>=M.follow){
+        if(i1.bat===this.G.user&&this.hooks.followOn) fo=!!(await this.hooks.followOn(this,{lead,left:this.leftBalls(),rec:this.followRec()}));
+        else fo=this.followRec()&&R()<0.8;
+        this.say(fo?`${T[i1.bat].name} enforce the follow-on: ${T[i2.bat].name} are ${lead} behind.`:`${T[i1.bat].name} bat again, ${lead} ahead, rather than enforce the follow-on.`,'head');
+      }
+      M.fo=fo; if(fo) this.startInnings(i2.bat,i1.bat,null); else this.startInnings(i1.bat,i2.bat,null); return; }
+    if(n===3){ this.startInnings(i3.bowl,i3.bat,this.total(i3.bat)-this.total(i3.bowl)+1); }
+  }
+  finish(){
+    const r=this.md.res||{draw:1}; const T=this.G.teams; const last=this.inns[this.inns.length-1];
+    if(r.draw) this.result={draw:true,winner:null,loser:null,margin:'',text:'Match drawn'};
+    else if(r.tie) this.result={tie:true,winner:null,loser:null,margin:'',text:'Match tied'};
+    else { const w=r.w, l=w===this.home?this.away:this.home; let margin;
+      if(r.k==='wkts') margin=`${10-last.wkts} wicket${10-last.wkts===1?'':'s'}`;
+      else if(r.k==='inns'){ const d=this.total(w)-this.total(l); margin=`an innings and ${d} run${d===1?'':'s'}`; }
+      else { const d=last.target-1-last.runs; margin=`${d} run${d===1?'':'s'}`; }
+      this.result={winner:w,loser:l,margin,text:`${T[w].name} won by ${margin}`}; }
+    this.result.mom=this.pickMoM();
+    this.say(this.result.text+'.','result');
+    if(this.result.mom) this.say(`Player of the match: ${this.P(this.result.mom).name}`,'info');
+  }
+  // Win, draw and loss chances for the side batting now (see mdWin).
+  winProb(){ const i=this.inns[this.inns.length-1]; if(!i) return {bat:this.home,p:0.4,d:0.2,l:0.4,proj:null};
+    const key=`${this.totBalls()}|${this.inns.length}|${i.runs}|${i.wkts}|${this.md.over}`;
+    if(!this._wp||this._wp.k!==key) this._wp={k:key,v:mdWin(this)};
+    return this._wp.v; }
+}
+// Win, draw and loss for the side batting now, from 240 quick futures of the rest of the match: each
+// innings goes wicket by wicket, with the balls to the next wicket and the runs a ball from the two sides'
+// batting and bowling, the pitch, how worn it is and how long is left; a chase speeds up or shuts up shop
+// by the rate it needs, and the captains declare and enforce the follow-on as the AI does. Seeded by the
+// state, so the bar is steady between renders.
+function mdTeams(m){ const out={};
+  for(const t of [m.home,m.away]){ const lu=m.lineups[t]; const ps=lu.xi.map(id=>m.P(id)).filter(Boolean);
+    const top=lu.order.slice(0,7).map(id=>m.P(id)).filter(Boolean);
+    out[t]={bat:top.reduce((a,p)=>a+p.bat+fmOf(p),0)/Math.max(1,top.length),bowl:ps.map(p=>p.bowl+fmOf(p)).sort((x,y)=>y-x).slice(0,5).reduce((a,x)=>a+x,0)/5}; }
+  return out; }
+const POS=[1.2,1.15,1.1,1.05,1,.95,.8,.55,.4,.3];
+function mdWin(m){
+  const i=m.inns[m.inns.length-1]; const T=mdTeams(m);
+  let seed=((m.totBalls()*7919+m.inns.length*104729+i.wkts*31+i.runs)%2147483646)+1; const rng=()=>{seed=seed*16807%2147483647; return (seed-1)/2147483646;};
+  const N=240; let win=0,draw=0;
+  for(let k=0;k<N;k++){ const r=mdFuture(m,T,rng); if(r===i.bat) win++; else if(r==null) draw++; }
+  return {bat:i.bat,p:win/N,d:draw/N,l:(N-win-draw)/N,proj:null};
+}
+function mdFuture(m,T,rng){
+  const M=m.md; let L=m.leftBalls(); const k=clamp(M.days*M.perDay/450,0.45,1);
+  let n=m.inns.length; const cur=m.inns[n-1]; let bat=cur.bat, bowl=cur.bowl, runs=cur.runs, w=cur.wkts, target=cur.target, fo=M.fo, dw=cur.dw!=null?cur.dw:0.5;
+  const tot={[m.home]:m.total(m.home),[m.away]:m.total(m.away)}; tot[bat]-=runs;
+  const inR=m.inns.slice(0,n-1).map(x=>x.runs);
+  for(let g=0;g<6;g++){
+    // the edge is relative: batting ratings sit below bowling ratings, so equal sides are level
+    const e=((T[bat].bat-T[bowl].bowl)-(T[bowl].bat-T[bat].bowl))/200;
+    while(w<10){
+      const wear=clamp((m.maxBalls-L)/m.maxBalls,0,1);
+      let bpw=72*Math.exp(1.6*e)*POS[w]*(1-0.25*wear)*Math.sqrt(m.pitch), rpb=0.55*(1+0.8*e)*(w>=7?0.85:1)*m.pitch;
+      if(target){ const rrr=(target-runs)/Math.max(1,L/6); if(rrr>4.6||(w>=6&&rrr>3)){ bpw*=1.5; rpb*=0.7; } else if(rrr>3.4){ bpw*=0.9; rpb*=1.12; } }
+      const b=Math.max(1,Math.round(-Math.log(1-rng()*0.999)*bpw)); const r=b*rpb;
+      if(b>=L){ return target&&runs+L*rpb>=target?bat:null; }
+      if(target&&runs+r>=target) return bat;
+      let want=null;
+      if(n===1) want=L<m.maxBalls*0.62?Math.min((520+120*dw)*k,330*k):(520+120*dw)*k;
+      else if(n===2) want=inR[0]+(180+120*dw)*k;
+      else if(n===3&&!(fo&&tot[bowl]>tot[bat]+runs+60)) want=tot[bowl]-tot[bat]+clamp(L/6*3.3,180*k,450);
+      if(want!=null&&w<9&&runs+r>=want){ L-=Math.max(0,Math.round((want-runs)/rpb)); runs=want; break; }
+      L-=b; runs+=r; w++;
+    }
+    tot[bat]+=runs; inR.push(runs);
+    if(n===4) return Math.round(runs)===target-1?null:bowl;
+    if(n===3&&tot[bat]<tot[bowl]) return bowl;
+    L-=12; if(L<=0) return null;
+    if(n===1){ [bat,bowl]=[bowl,bat]; }
+    else if(n===2){ const lead=inR[0]-inR[1]; if(lead>=M.follow&&L>m.maxBalls*0.33&&rng()<0.8) fo=true; else [bat,bowl]=[bowl,bat]; }
+    else if(n===3){ target=tot[bat]-tot[bowl]+1; [bat,bowl]=[bowl,bat]; }
+    n++; runs=0; w=0; dw=0.5;
+  }
+  return null;
+}
+
+export {R,ri,rf,pick,clamp,shuffle,isSpin,isPace,TYPE_LABEL,fmtL,ovr,calcValue,mkPlayer,Match,MultiDay,dlsRes,cm,setPID,getPID,ballProbs,autoAggr,phaseOf,redProbs,spellLim,fatigueLabel};

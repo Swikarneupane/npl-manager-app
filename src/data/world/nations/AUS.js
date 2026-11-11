@@ -86,12 +86,12 @@ export default {
     ['aus-teague-wyllie', 'Teague Wyllie', 'AUS', 2004, 'BAT', 62, 0, '', 'L', { t20: -1, odi: 0, fc: 2 }, ['AUS', 'AUS-WA']],
   ],
   teams: [
-    { id: 'AUS-NSW', name: 'New South Wales', short: 'NSW', kind: 'domestic' },
-    { id: 'AUS-QLD', name: 'Queensland', short: 'QLD', kind: 'domestic' },
-    { id: 'AUS-VIC', name: 'Victoria', short: 'VIC', kind: 'domestic' },
-    { id: 'AUS-WA', name: 'Western Australia', short: 'WA', kind: 'domestic' },
-    { id: 'AUS-SA', name: 'South Australia', short: 'SA', kind: 'domestic' },
-    { id: 'AUS-TAS', name: 'Tasmania', short: 'TAS', kind: 'domestic' },
+    { id: 'AUS-NSW', name: 'New South Wales', short: 'NSW', kind: 'domestic', level: 1 },
+    { id: 'AUS-QLD', name: 'Queensland', short: 'QLD', kind: 'domestic', level: 1 },
+    { id: 'AUS-VIC', name: 'Victoria', short: 'VIC', kind: 'domestic', level: 1 },
+    { id: 'AUS-WA', name: 'Western Australia', short: 'WA', kind: 'domestic', level: 1 },
+    { id: 'AUS-SA', name: 'South Australia', short: 'SA', kind: 'domestic', level: 1 },
+    { id: 'AUS-TAS', name: 'Tasmania', short: 'TAS', kind: 'domestic', level: 1 },
   ],
   comps: [],
 };

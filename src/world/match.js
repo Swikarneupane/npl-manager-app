@@ -10,6 +10,8 @@ import * as ST from './state.js';
 import { record as recordFx } from './comp.js';
 import { autoXI } from './squads.js';
 import { selection, userNation, tick, keyOf } from './career.js';
+import { isMultiDay } from './fastfc.js';
+import { registry } from './players.js';
 
 const ODI_PAR = 270; // the win-probability model's par, scaled from 20 overs: give it an ODI par
 export function worldGame(G, S, f) {
@@ -21,6 +23,10 @@ export function worldGame(G, S, f) {
     for (const p of lu.xi) P[p.id] = p;
     teams[t] = { id: t, name: ST.teamName(G, t), squad: squad.map((p) => p.id), captainId: lu.cap ? lu.cap.id : null, keeperId: lu.wk ? lu.wk.id : null, xi: lu.xi.map((p) => p.id), order: lu.order.map((p) => p.id), lu };
   }
+  // a match being resumed keeps the players it started with, even one injured during it (the squad
+  // picker would now leave him out)
+  const L = G.s.liveMatch; if (L && L.w === f.id && L.data && L.data.lineups) { const by = registry(G).by;
+    for (const t in L.data.lineups) for (const id of [...L.data.lineups[t].xi, ...L.data.lineups[t].order]) if (!P[id] && by[id]) P[id] = by[id]; }
   const s = Object.create(G.s, {
     par: { value: fmt === 'ODI' ? { [G.year]: { sum: (ODI_PAR / 2.5) * 3, n: 3 } } : G.s.par, writable: true },
     log: { value: [], writable: true }, mu: { value: null, writable: true }, promises: { value: [], writable: true },
@@ -37,8 +43,10 @@ export function worldGame(G, S, f) {
   });
   return PG;
 }
+// Tests and first-class matches (fmt in fastfc.js FC) play the multi-day engine, weather and all.
 export function newWorldMatch(PG, f) {
   const fmt = PG.world.fmt;
+  if (isMultiDay(fmt)) return new Match(PG, f.a, f.b, { lang: PG.s.lang, fmt, world: 1 });
   return new Match(PG, f.a, f.b, { lang: PG.s.lang, overs: fmt === 'ODI' ? 50 : 20, noRain: true, night: fmt === 'T20' && (f.d % 3 === 0), dew: false, world: 1 });
 }
 export const findFixture = (G, sid, fid) => { const S = G.s.wd.seasons[sid]; const f = S && S.fx.find((x) => x.id === fid); return f ? [S, f] : null; };
@@ -48,7 +56,7 @@ export function savedWorld(G) { const L = G.s.liveMatch; if (!L || !L.w) return 
 // [id, r, b, 4s, 6s, 'out' | 'not out'] with the dismissal text added; bowling rows add wides and no-balls.
 export function engineCard(m) {
   return m.inns.map((inn) => ({
-    t: inn.bat, r: inn.runs, w: inn.wkts, b: inn.balls, ex: inn.extras, fow: inn.fow.slice(), eng: 1,
+    t: inn.bat, r: inn.runs, w: inn.wkts, b: inn.balls, ex: inn.extras, fow: inn.fow.slice(), eng: 1, ...(inn.dec ? { d: 1 } : {}),
     bat: inn.order.filter((id) => { const s = inn.bs[id]; return s && (s.batted || s.in || s.b > 0 || s.out); }).map((id) => { const s = inn.bs[id]; return [id, s.r, s.b, s.f, s.s, s.out ? 'out' : 'not out', s.out ? s.how : 'not out']; }),
     bowl: Object.keys(inn.bw).map((id) => { const s = inn.bw[id]; return [id, s.balls, s.r, s.w, (s.wd || 0) + (s.nb || 0)]; }),
   }));
@@ -57,7 +65,7 @@ export function engineCard(m) {
 export function recordWorld(G, S, f, m, inj0) {
   const inns = engineCard(m); const r = m.result || {}; const PG = m.G;
   const winner = r.winner || null; const loser = winner ? (winner === f.a ? f.b : f.a) : null;
-  const mm = /won by (.+)$/.exec(r.text || ''); const card = { inns, winner, loser, tie: !!r.tie, nr: !!r.nr, margin: mm ? mm[1] : '' };
+  const mm = /won by (.+)$/.exec(r.text || ''); const card = { inns, winner, loser, tie: !!r.tie, nr: !!r.nr, draw: !!r.draw, margin: r.margin != null && r.margin !== '' ? r.margin : mm ? mm[1] : '' };
   const res = ST.resultOf(G, f, card); res.text = r.text || res.text; if (r.mom) res.pom = r.mom; res.live = 1;
   const xi = (t) => m.lineups[t].xi.map((id) => PG.P(id)).filter(Boolean);
   f.card = inns; ST.addStats(G, S, card, xi(f.a), xi(f.b)); recordFx(S, ST.defOf(S), f, res);
@@ -65,7 +73,7 @@ export function recordWorld(G, S, f, m, inj0) {
   // form follows the innings and the spell, as in the NPL; injuries in a national match do not carry over
   for (const inn of m.inns) {
     for (const id in inn.bs) { const s = inn.bs[id]; const p = PG.P(id); if (p && (s.batted || s.in || s.b > 0)) p.form = Math.max(-10, Math.min(10, (p.form || 0) * 0.8 + (s.r - 20) / 12)); }
-    for (const id in inn.bw) { const s = inn.bw[id]; const p = PG.P(id); if (p && s.balls) p.form = Math.max(-10, Math.min(10, (p.form || 0) * 0.85 + s.w * 1.2 - (s.r / (s.balls / 6) - (f.fmt === 'ODI' ? 5 : 8)) * 0.4)); }
+    for (const id in inn.bw) { const s = inn.bw[id]; const p = PG.P(id); if (p && s.balls) p.form = Math.max(-10, Math.min(10, (p.form || 0) * 0.85 + s.w * 1.2 - (s.r / (s.balls / 6) - (isMultiDay(f.fmt) ? 3.3 : f.fmt === 'ODI' ? 5 : 8)) * 0.4)); }
   }
   if (inj0) for (const [id, v] of inj0) { const p = PG.P(id); if (p) p.inj = v; }
   if (G.s.liveMatch && G.s.liveMatch.w === f.id) delete G.s.liveMatch;

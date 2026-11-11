@@ -25,7 +25,9 @@ export const FULL = NATIONS_DB.filter((n) => n[2] === 'full').map((n) => n[0]);
 // Reputation a nation's board looks for. Nepal comes a little earlier for a manager who has done well in the NPL.
 export const REP = { associate: 50, full: 75, nepal: 45 };
 export const SACK = { easy: 15, normal: 25, hard: 35 };
-export const FMTS = [['ODI', 'ODI'], ['T20', 'T20I']];
+// Formats a national manager picks squads for: Tests too for a full member (they play Tests).
+export const FMTS = [['Test', 'Test'], ['ODI', 'ODI'], ['T20', 'T20I']];
+export const fmtsFor = (code) => FMTS.filter(([f]) => f !== 'Test' || MEMBER[code] === 'full');
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
 // ----- state -----

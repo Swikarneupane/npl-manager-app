@@ -76,21 +76,43 @@ export function openStage(season, def, k, start, end, rnd = Math.random) {
 }
 // After a knockout fixture: the next round, when it is due.
 function koNext(S) {
-  const by = (k) => S.fx.find((f) => f.ko === k); const W = (f) => f.res.w, L = (f) => f.res.l; const k = S.stage;
+  // a drawn or tied knockout goes to the side ahead on first innings, then the higher seed (team a)
+  const fiLead = (f) => { const fi = {}; for (const row of f.res.sc || []) if (!fi[row[0]]) fi[row[0]] = row[1]; return (fi[f.b] || 0) > (fi[f.a] || 0) ? f.b : f.a; };
+  const by = (k) => S.fx.find((f) => f.ko === k); const W = (f) => f.res.w || fiLead(f), L = (f) => (W(f) === f.a ? f.b : f.a); const k = S.stage;
   const mk = (a, b, d, ko) => S.fx.push({ id: fxId(S.id), d, a, b, fmt: S.fx[0].fmt, stage: k, grp: 'ko', res: null, ko });
   const sf1 = by('SF1'), sf2 = by('SF2'); if (sf1 && sf2 && sf1.res && sf2.res && !by('F')) mk(W(sf1), W(sf2), S.ko.final, 'F');
   const q1 = by('Q1'), el = by('EL'); if (q1 && el && q1.res && el.res && !by('Q2')) mk(L(q1), W(el), S.ko.q2, 'Q2');
   const q2 = by('Q2'); if (q1 && q2 && q2.res && !by('F')) mk(W(q1), W(q2), S.ko.final, 'F');
   const f = by('F'); if (f && f.res) { S.done = true; S.champ = W(f); S.runner = L(f); }
 }
-// Table update for a finished fixture. points: { win, tie, nr, loss } (defaults 2/1/1/0).
+// Table update for a finished fixture. points (defaults 2/1/1/0 for limited-overs):
+//   { win, loss, tie, nr, draw,
+//     leadDraw: [lead, trail]   points for the first-innings lead in a drawn match (Ranji style)
+//     bigWin: n                 extra for winning by an innings or by 10 wickets
+//     bonus: { overs, bat: [runs...], bowl: [wkts...] }  one point per threshold passed in each
+//                               side's first innings, within the first `overs` (county style) }
 export function applyRes(tbl, f, points) {
-  const P = { win: 2, tie: 1, nr: 1, loss: 0, ...(points || {}) }; const r = f.res;
+  const P = { win: 2, tie: 1, nr: 1, loss: 0, draw: 1, ...(points || {}) }; const r = f.res;
   for (const t of [f.a, f.b]) { tbl[t] ??= blankRow(); tbl[t].p++; }
   if (r.nr) { tbl[f.a].nr++; tbl[f.b].nr++; tbl[f.a].pts += P.nr; tbl[f.b].pts += P.nr; return; }
-  if (r.tie && !r.w) { tbl[f.a].t++; tbl[f.b].t++; tbl[f.a].pts += P.tie; tbl[f.b].pts += P.tie; }
-  else { tbl[r.w].w++; tbl[r.w].pts += P.win; tbl[r.l].l++; tbl[r.l].pts += P.loss; }
+  if (r.draw) { tbl[f.a].d++; tbl[f.b].d++; tbl[f.a].pts += P.draw; tbl[f.b].pts += P.draw;
+    if (P.leadDraw) { const lead = firstInnLead(f, r); if (lead) { tbl[lead.lead].pts += P.leadDraw[0]; tbl[lead.trail].pts += P.leadDraw[1]; } } }
+  else if (r.tie && !r.w) { tbl[f.a].t++; tbl[f.b].t++; tbl[f.a].pts += P.tie; tbl[f.b].pts += P.tie; }
+  else { tbl[r.w].w++; tbl[r.w].pts += P.win; tbl[r.l].l++; tbl[r.l].pts += P.loss;
+    if (P.bigWin && /innings|10 wickets/.test(r.text || '')) tbl[r.w].pts += P.bigWin; }
+  if (P.bonus) for (const [t, pts] of bonusPoints(f, r, P.bonus)) tbl[t].pts += pts;
   for (const [t, runs, , balls] of r.sc || []) { const o = t === f.a ? f.b : f.a; tbl[t].rf += runs; tbl[t].bf += balls; tbl[o].ra += runs; tbl[o].ba += balls; }
+}
+// First innings of each side (sc rows are in batting order).
+function firstInns(r) { const out = {}; for (const row of r.sc || []) if (!out[row[0]]) out[row[0]] = row; return out; }
+function firstInnLead(f, r) { const fi = firstInns(r); const a = fi[f.a], b = fi[f.b]; if (!a || !b || a[1] === b[1]) return null; return a[1] > b[1] ? { lead: f.a, trail: f.b } : { lead: f.b, trail: f.a }; }
+// Batting points for runs and bowling points for wickets in the first innings, scaled to the overs cap.
+function bonusPoints(f, r, B) {
+  const fi = firstInns(r); const out = [];
+  for (const [bat, row] of Object.entries(fi)) { const bowl = bat === f.a ? f.b : f.a; const [, runs, wkts, balls] = row;
+    const cap = (B.overs || 110) * 6; const share = balls > cap ? cap / balls : 1; const rr = runs * share, ww = Math.round(wkts * share);
+    out.push([bat, (B.bat || []).filter((x) => rr >= x).length]); out.push([bowl, (B.bowl || []).filter((x) => ww >= x).length]); }
+  return out;
 }
 // Record a result and move the season on (opening the next stage when this one is complete).
 export function record(S, def, f, res, rnd) {

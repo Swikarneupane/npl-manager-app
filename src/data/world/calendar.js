@@ -101,3 +101,83 @@ export const NEPAL_VENUES = ['Kirtipur', 'Mulpani'];
 export const NPL_WINDOW = [[9, 20], [11, 5]];
 // The IPL window, which full members keep clear of bilateral cricket (in-game).
 export const IPL_WINDOW = [[2, 25], [4, 31]];
+
+// ----- Test cricket and the World Test Championship -----
+// Facts below are checked against the sources listed with them on the asOf date. Results are real up to
+// the save's start (15 Sep 2026 for a new game); everything after it is simulated in-game, even where
+// the real result is known (those are kept here for the check in scripts/unit/tests-wtc.test.mjs).
+export const TEST_SOURCES = {
+  wtc: 'https://en.wikipedia.org/wiki/2025%E2%80%932027_ICC_World_Test_Championship (table "updated to match(es) played on 9 November 2026"; series, dates, venues, results and over-rate deductions)',
+  ded: 'ESPNcricinfo/ICC reports cited there: "England docked WTC points for slow over rate in Lord\'s Test" (16 Jul 2025), "… in Oval Test" (21 Jun 2026), "West Indies docked WTC points for slow over-rate" (8 Jul 2026), "Pakistan docked WTC points for slow over-rate in Mirpur Test" (15 May 2026), "Pakistan hit with dual World Test Championship sanction" (14 Sep 2026)',
+  final27: 'https://www.icc-cricket.com/news/venue-and-dates-for-world-test-championship-2027-final-revealed (The Oval, 9–13 June 2027)',
+  hosts: 'https://www.skysports.com/cricket/news/12040/13399291/world-test-championship-icc-confirm-next-three-finals-to-be-held-in-england (ICC annual conference, 20 Jul 2025: England host the 2027, 2029 and 2031 finals)',
+  points: 'ICC World Test Championship playing conditions: 12 points for a win, 6 for a tie, 4 for a draw; teams ranked by percentage of points won',
+  eng27: 'https://www.wisden.com/cricket-news/england-home-schedule-for-2027-announced-complete-list-of-tests-odis-and-t20is-for-the-summer (ECB, 23 Jul 2026)',
+  mcg150: 'https://www.cricket.com.au/news/4231356 (150th Anniversary Test, MCG, day-night, 11–15 March 2027; a one-off outside the WTC)',
+  tbc: 'Wisden, "WTC 2025-27: what is England\'s schedule" and South Africa\'s WTC schedule (chaseyoursport.com): Bangladesh v England (Feb 2027), Sri Lanka v South Africa (Feb–Mar 2027) and Pakistan v New Zealand (Mar 2027) have no published dates; the game picks dates in those windows',
+};
+// Real trophies for Test series between these pairs (sorted codes). Series without one are named by the teams.
+export const TROPHY = {
+  'AUS-ENG': 'The Ashes', 'AUS-IND': 'Border–Gavaskar Trophy', 'ENG-IND': 'Anderson–Tendulkar Trophy', 'AUS-WI': 'Frank Worrell Trophy',
+  'AUS-NZ': 'Trans-Tasman Trophy', 'ENG-SA': "Basil D'Oliveira Trophy", 'ENG-NZ': 'Crowe–Thorpe Trophy', 'SL-WI': 'Sobers–Tissera Trophy',
+  'IND-SA': 'Freedom Trophy', 'ENG-WI': 'Richards–Botham Trophy', 'AUS-PAK': 'Benaud–Qadir Trophy', 'AUS-SL': 'Warne–Muralitharan Trophy',
+  'NZ-SA': 'Tangiwai Shield', 'SA-WI': 'Sir Vivian Richards Trophy',
+};
+// A Test: [[y, m, d] first day, venue, result for the host ('H' won, 'A' lost, 'D' drawn, null to come), margin, { team: points deducted }].
+// A series: { h: host, v: visitor, tests } or, with dates not announced, { h, v, n, win: [[y, m, d], [y, m, d]] }.
+export const WTC = {
+  teams: ['IND', 'AUS', 'ENG', 'SA', 'NZ', 'PAK', 'SL', 'WI', 'BAN'],
+  points: { win: 12, tie: 6, draw: 4, loss: 0 },
+  // first-day order for teams level on percentage (in-game tie-break): wins, then fewer losses
+  c25: {
+    name: 'ICC World Test Championship 2025–27', from: 2025, to: 2027, src: TEST_SOURCES.wtc,
+    final: { venue: 'The Oval, London', start: [2027, 5, 9], end: [2027, 5, 13], src: TEST_SOURCES.final27 },
+    series: [
+      { h: 'SL', v: 'BAN', tests: [[[2025, 5, 17], 'Galle', 'D'], [[2025, 5, 25], 'Colombo (SSC)', 'H', 'an innings and 78 runs']] },
+      { h: 'ENG', v: 'IND', tests: [[[2025, 5, 20], 'Headingley', 'H', '5 wickets'], [[2025, 6, 2], 'Edgbaston', 'A', '336 runs'], [[2025, 6, 10], "Lord's", 'H', '22 runs', { ENG: 2 }], [[2025, 6, 23], 'Old Trafford', 'D'], [[2025, 6, 31], 'The Oval', 'A', '6 runs']] },
+      { h: 'WI', v: 'AUS', tests: [[[2025, 5, 25], 'Bridgetown', 'A', '159 runs'], [[2025, 6, 3], "St George's, Grenada", 'A', '133 runs'], [[2025, 6, 12], 'Kingston', 'A', '176 runs']] },
+      { h: 'IND', v: 'WI', tests: [[[2025, 9, 2], 'Ahmedabad', 'H', 'an innings and 140 runs'], [[2025, 9, 10], 'Delhi', 'H', '7 wickets']] },
+      { h: 'PAK', v: 'SA', tests: [[[2025, 9, 12], 'Lahore', 'H', '93 runs'], [[2025, 9, 20], 'Rawalpindi', 'A', '8 wickets']] },
+      { h: 'IND', v: 'SA', tests: [[[2025, 10, 14], 'Kolkata', 'A', '30 runs'], [[2025, 10, 22], 'Guwahati', 'A', '408 runs']] },
+      { h: 'AUS', v: 'ENG', tests: [[[2025, 10, 21], 'Perth', 'H', '8 wickets'], [[2025, 11, 4], 'Brisbane', 'H', '8 wickets'], [[2025, 11, 17], 'Adelaide', 'H', '82 runs'], [[2025, 11, 26], 'Melbourne', 'A', '4 wickets'], [[2026, 0, 4], 'Sydney', 'H', '5 wickets']] },
+      { h: 'NZ', v: 'WI', tests: [[[2025, 11, 2], 'Christchurch', 'D'], [[2025, 11, 10], 'Wellington', 'H', '9 wickets'], [[2025, 11, 18], 'Mount Maunganui', 'H', '323 runs']] },
+      { h: 'BAN', v: 'PAK', tests: [[[2026, 4, 8], 'Dhaka', 'H', '104 runs', { PAK: 8 }], [[2026, 4, 16], 'Sylhet', 'H', '78 runs']] },
+      { h: 'ENG', v: 'NZ', tests: [[[2026, 5, 4], "Lord's", 'H', '115 runs'], [[2026, 5, 17], 'The Oval', 'A', '253 runs', { ENG: 12 }], [[2026, 5, 25], 'Trent Bridge', 'A', '160 runs']] },
+      { h: 'WI', v: 'SL', tests: [[[2026, 5, 25], 'North Sound', 'H', 'an innings and 217 runs'], [[2026, 6, 3], 'North Sound', 'D', '', { WI: 2 }]] },
+      { h: 'WI', v: 'PAK', tests: [[[2026, 6, 25], 'San Fernando', 'H', '90 runs'], [[2026, 7, 2], 'Port of Spain', 'A', '8 wickets']] },
+      { h: 'AUS', v: 'BAN', tests: [[[2026, 7, 13], 'Darwin', 'A', '9 wickets'], [[2026, 7, 22], 'Mackay', 'H', 'an innings and 51 runs']] },
+      { h: 'SL', v: 'IND', tests: [[[2026, 7, 15], 'Galle', 'A', '165 runs'], [[2026, 7, 23], 'Colombo (SSC)', 'D']] },
+      { h: 'ENG', v: 'PAK', tests: [[[2026, 7, 19], 'Headingley', 'H', 'an innings and 103 runs'], [[2026, 7, 27], "Lord's", 'H', '194 runs'], [[2026, 8, 9], 'Edgbaston', 'H', '8 wickets', { PAK: 11 }]] },
+      // ----- after a new game's start (15 Sep 2026): played in-game -----
+      { h: 'SA', v: 'AUS', tests: [[[2026, 9, 9], 'Durban', 'A', '214 runs'], [[2026, 9, 18], 'Gqeberha', 'H', 'an innings and 31 runs'], [[2026, 9, 27], 'Cape Town', 'H', '176 runs']] },
+      { h: 'BAN', v: 'WI', tests: [[[2026, 9, 28], 'Dhaka', 'A', '8 wickets'], [[2026, 10, 5], 'Sylhet', 'D']] },
+      { h: 'PAK', v: 'SL', tests: [[[2026, 10, 9], 'Rawalpindi', null], [[2026, 10, 17], 'Lahore', null]] },
+      { h: 'SA', v: 'BAN', tests: [[[2026, 10, 15], 'Johannesburg', null], [[2026, 10, 23], 'Centurion', null]] },
+      { h: 'NZ', v: 'IND', tests: [[[2026, 10, 19], 'Wellington', null], [[2026, 10, 27], 'Christchurch', null]] },
+      { h: 'AUS', v: 'NZ', tests: [[[2026, 11, 9], 'Perth', null], [[2026, 11, 17], 'Adelaide', null], [[2026, 11, 26], 'Melbourne', null], [[2027, 0, 4], 'Sydney', null]] },
+      { h: 'SA', v: 'ENG', tests: [[[2026, 11, 17], 'Johannesburg', null], [[2026, 11, 26], 'Centurion', null], [[2027, 0, 3], 'Cape Town', null]] },
+      { h: 'IND', v: 'AUS', tests: [[[2027, 0, 21], 'Nagpur', null], [[2027, 0, 29], 'Chennai', null], [[2027, 1, 11], 'Guwahati', null], [[2027, 1, 19], 'Ranchi', null], [[2027, 1, 27], 'Ahmedabad', null]] },
+      { h: 'NZ', v: 'SL', tests: [[[2027, 1, 4], 'Mount Maunganui', null], [[2027, 1, 12], 'Hamilton', null]] },
+      { h: 'BAN', v: 'ENG', n: 2, win: [[2027, 1, 10], [2027, 1, 22]], venues: ['Dhaka', 'Chattogram'], src: TEST_SOURCES.tbc },
+      { h: 'SL', v: 'SA', n: 2, win: [[2027, 1, 24], [2027, 2, 9]], src: TEST_SOURCES.tbc },
+      { h: 'PAK', v: 'NZ', n: 2, win: [[2027, 2, 4], [2027, 2, 16]], src: TEST_SOURCES.tbc },
+    ],
+    // The published table after the matches of 9 Nov 2026: [team, played, won, lost, drawn, tied, deducted, points, PCT].
+    table: [['NZ', 6, 4, 1, 1, 0, 0, 52, 72.22], ['SA', 7, 5, 2, 0, 0, 0, 60, 71.43], ['AUS', 13, 9, 4, 0, 0, 0, 108, 69.23], ['IND', 11, 5, 4, 2, 0, 0, 68, 51.52],
+      ['BAN', 8, 3, 3, 2, 0, 0, 44, 45.83], ['ENG', 16, 7, 8, 1, 0, 14, 74, 38.54], ['SL', 6, 1, 2, 3, 0, 0, 24, 33.33], ['WI', 14, 3, 8, 3, 0, 2, 46, 27.38], ['PAK', 9, 2, 7, 0, 0, 19, 5, 4.63]],
+    tableAsOf: [2026, 10, 9],
+  },
+  // Later finals: England hosts 2029 and 2031 (venues not chosen yet); after that, not announced.
+  finalHost: (y) => (y === 2027 ? 'The Oval, London' : y === 2029 || y === 2031 ? 'England (venue not announced)' : 'Hosts not announced'),
+  // The 2027 Ashes opens the game's 2027–29 cycle (the ICC has not published that cycle's schedule).
+  c27: { series: [{ h: 'ENG', v: 'AUS', tests: [[[2027, 5, 18], 'Trent Bridge', null], [[2027, 5, 30], "Lord's", null], [[2027, 6, 8], 'Edgbaston', null], [[2027, 6, 21], 'Southampton', null], [[2027, 6, 29], 'The Oval', null]], src: TEST_SOURCES.eng27 }] },
+};
+// Real Tests outside the WTC.
+export const OTHER_TESTS = [
+  { h: 'AUS', v: 'ENG', name: '150th Anniversary Test', tests: [[[2027, 2, 11], 'Melbourne (day-night)', null]], src: TEST_SOURCES.mcg150 },
+  { h: 'ENG', v: 'BAN', tests: [[[2027, 4, 28], "Lord's", null]], src: TEST_SOURCES.eng27 },
+];
+// Series lengths the game uses for generated WTC series (sorted pair -> Tests); other pairs play two.
+export const TEST_LEN = { 'AUS-ENG': 5, 'AUS-IND': 5, 'ENG-IND': 5, 'AUS-SA': 3, 'AUS-NZ': 3, 'ENG-SA': 3, 'ENG-NZ': 3, 'ENG-WI': 3, 'ENG-PAK': 3, 'ENG-SL': 3, 'AUS-PAK': 3, 'AUS-WI': 3, 'IND-SA': 3, 'IND-NZ': 3, 'NZ-SA': 2 };
+// Nations that play Tests outside the WTC (fewer, generated in-game).
+export const TEST_OTHERS = ['AFG', 'IRE', 'ZIM'];

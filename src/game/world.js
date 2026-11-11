@@ -283,6 +283,15 @@ export function archive(G) {
     for (const f of S.fx) { if (!f.res) continue; const nep = f.a === 'NEP' || f.b === 'NEP'; const age = day - f.d;
       if (f.card && (nep ? f.nx && age > 60 : age > 14)) delete f.card; if (!nep && age > 30) { delete f.res.top; delete f.res.pom; } }
     if (!S.done) continue; const last = IN.lastDay(S); const kind = IN.info(S).kind;
+    // domestic seasons: four months after the end only the knockouts, tables and leading players stay;
+    // after three years the season becomes one archive line (champion and runner-up)
+    const def = ST.defOf(S);
+    if (def && def.kind === 'domestic') {
+      for (const f of S.fx) if (f.res && day - f.d > 14) { delete f.res.top; delete f.res.pom; }
+      if (!S.old && day - last > 45) { S.old = 1; S.fx = S.fx.filter((f) => f.ko || COMPS_KO(S, f.stage)); for (const f of S.fx) { delete f.card; if (f.res) { delete f.res.top; delete f.res.pom; } } trimStats(G, S, 'domestic'); }
+      if (day - last > 1095) { I.arc.push([id, `${S.champ || ''} won${S.runner ? `, ${S.runner} runners-up` : ''}`, last]); delete wd.seasons[id]; delete wd.st[id]; }
+      continue;
+    }
     if (S.teams.includes('NEP') && S.fx.some((f) => (f.a === 'NEP' || f.b === 'NEP') && f.res && !f.nx)) continue;
     if (!S.mg && day - last > 14) { RK.mergeSeason(G, S); S.mg = 1; trimStats(G, S, kind); delete I.nm[id]; }
     // tournaments two years on: tables, knockouts and Nepal's games stay; other group games go

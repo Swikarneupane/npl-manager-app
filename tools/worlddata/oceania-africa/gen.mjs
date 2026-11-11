@@ -14,7 +14,7 @@ N.AUS = {
     'https://www.cricket.com.au/news/4427747/all-the-squads-for-icc-mens-t20-world-cup-2026-as-they-drop-australia-india-england-pakistan-bangladesh-afghanistan',
     'ESPNcricinfo player pages (batting hand, bowling style, state)',
   ],
-  teams: [['NSW', 'New South Wales'], ['QLD', 'Queensland'], ['VIC', 'Victoria'], ['WA', 'Western Australia'], ['SA', 'South Australia'], ['TAS', 'Tasmania']],
+  teams: [['NSW', 'New South Wales', 1], ['QLD', 'Queensland', 1], ['VIC', 'Victoria', 1], ['WA', 'Western Australia', 1], ['SA', 'South Australia', 1], ['TAS', 'Tasmania', 1]],
   p: `
 Pat Cummins|1993|BOWL|52|92|RF|R|0/1/2|NSW
 Mitchell Starc|1990|BOWL|45|89|LF|L|1/2/1|NSW
@@ -99,7 +99,7 @@ N.NZ = {
     'https://www.nzc.nz/international/news',
     'ESPNcricinfo player pages (batting hand, bowling style, association)',
   ],
-  teams: [['AUC', 'Auckland'], ['NDI', 'Northern Districts'], ['CTD', 'Central Districts'], ['WEL', 'Wellington'], ['CAN', 'Canterbury'], ['OTA', 'Otago']],
+  teams: [['AUC', 'Auckland', 1], ['NDI', 'Northern Districts', 1], ['CTD', 'Central Districts', 1], ['WEL', 'Wellington', 1], ['CAN', 'Canterbury', 1], ['OTA', 'Otago', 1]],
   p: `
 Kane Williamson|1990|BAT|88|28|OB|R|0/2/3|NDI
 Tom Latham|1992|WK|80|0||L|-4/1/3|CAN
@@ -166,8 +166,10 @@ N.SA = {
     'https://www.cricket.com.au/news/4427747/all-the-squads-for-icc-mens-t20-world-cup-2026-as-they-drop-australia-india-england-pakistan-bangladesh-afghanistan',
     'ESPNcricinfo player pages (batting hand, bowling style, provincial team)',
   ],
-  teams: [['TIT', 'Titans'], ['LIO', 'Lions'], ['DOL', 'Dolphins'], ['WP', 'Western Province'], ['WAR', 'Warriors'], ['KNI', 'Knights'], ['NW', 'North West'], ['BOL', 'Boland'],
-    ['BOR', 'Border'], ['EAS', 'Easterns'], ['NC', 'Northern Cape'], ['KZI', 'KZN Inland'], ['SWD', 'South Western Districts'], ['LIM', 'Limpopo'], ['MPU', 'Mpumalanga']],
+  // level: the 2026-27 divisions (Knights promoted, KZN Inland relegated):
+  // https://supersport.com/cricket/news/1ea4d45c-e491-42b1-9871-b6aa07e53528/first-class-series-edges-closer-as-domestic-season-begins
+  teams: [['TIT', 'Titans', 1], ['LIO', 'Lions', 1], ['DOL', 'Dolphins', 1], ['WP', 'Western Province', 1], ['WAR', 'Warriors', 1], ['KNI', 'Knights', 1], ['NW', 'North West', 1], ['BOL', 'Boland', 1],
+    ['BOR', 'Border', 2], ['EAS', 'Easterns', 2], ['NC', 'Northern Cape', 2], ['KZI', 'KZN Inland', 2], ['SWD', 'South Western Districts', 2], ['LIM', 'Limpopo', 2], ['MPU', 'Mpumalanga', 2]],
   p: `
 Temba Bavuma|1990|BAT|80|0||R|-3/1/3|LIO
 Aiden Markram|1994|BAT|82|50|OB|R|0/1/2|TIT
@@ -234,7 +236,7 @@ N.ZIM = {
     'https://www.wisden.com/cricket-news/t20-world-cup-africa-qualifiers-squads-whos-in-whos-out',
     'ESPNcricinfo player pages (batting hand, bowling style)',
   ],
-  teams: [['ME', 'Mashonaland Eagles'], ['MOU', 'Mountaineers'], ['MT', 'Matabeleland Tuskers'], ['MWR', 'Mid West Rhinos'], ['SR', 'Southern Rocks']],
+  teams: [['ME', 'Mashonaland Eagles', 1], ['MOU', 'Mountaineers', 1], ['MT', 'Matabeleland Tuskers', 1], ['MWR', 'Mid West Rhinos', 1], ['SR', 'Southern Rocks', 1]],
   p: `
 Sikandar Raza|1986|AR|76|70|OB|R|1/1/0|
 Craig Ervine|1985|BAT|72|0||L|-1/1/2|
@@ -278,11 +280,13 @@ Ernest Masuku|2000|BOWL|20|64|RFM|R|0/0/0|
 Roy Kaia|1991|AR|58|55|OB|R|0/0/1|
 `};
 
-// Associates: no domestic teams; fm default favours white-ball (little first-class cricket).
+// Associates: domestic teams only where listed (Namibia); fm default favours white-ball (little first-class cricket).
 N.NAM = {
   name: 'Namibia', member: 'associate', asOf: '2026-02-21',
-  note: 'Squad list on Wikipedia (updated 21 Feb 2026), T20 World Cup 2026 squad and the 2025 Africa Qualifier squad.',
-  sources: ['https://en.wikipedia.org/wiki/Namibia_national_cricket_team', 'https://www.icc-cricket.com/tournaments/mens-t20-world-cup-2026/news/erasmus-leads-namibia-for-icc-men-s-t20-world-cup-2026', 'https://www.wisden.com/cricket-news/t20-world-cup-africa-qualifiers-squads-whos-in-whos-out'],
+  note: 'Squad list on Wikipedia (updated 21 Feb 2026), T20 World Cup 2026 squad and the 2025 Africa Qualifier squad. Domestic teams: clubs of the Cricket Namibia 50-over Premier League named in 2025-26 reports; club registrations not verified, so their rosters are generated.',
+  sources: ['https://en.wikipedia.org/wiki/Namibia_national_cricket_team', 'https://www.icc-cricket.com/tournaments/mens-t20-world-cup-2026/news/erasmus-leads-namibia-for-icc-men-s-t20-world-cup-2026', 'https://www.wisden.com/cricket-news/t20-world-cup-africa-qualifiers-squads-whos-in-whos-out',
+    'https://www.we.com.na/sport-wrap-main/leaders-ccd-tigers-to-meet-winless-old-boys2025-01-24146186', 'https://cricketnamibia.com/celebrating-excellence-at-2026-cricket-namibia-annual-awards/'],
+  teams: [['WAN', 'Wanderers', 2], ['TU', 'Trustco United', 2], ['WHS', 'WHS Old Boys', 2], ['CCD', 'CCD Tigers', 2]],
   p: `
 Gerhard Erasmus|1995|AR|68|56|OB|R||
 JJ Smit|1995|AR|64|64|LFM|R||
@@ -513,7 +517,7 @@ for (const [code, n] of Object.entries(N)) {
     return [id, name, code, +born, role, +bat, +bowl, type, hand, fm, teams];
   });
   const rec = (r) => `    [${r.slice(0, 9).map((x) => typeof x === 'string' ? `'${x.replace(/'/g, "\\'")}'` : x).join(', ')}, { t20: ${r[9].t20}, odi: ${r[9].odi}, fc: ${r[9].fc}${r[9].gen ? ', gen: 1' : ''} }, [${r[10].map((t) => `'${t}'`).join(', ')}]],`;
-  const teams = (n.teams || []).map(([s, nm]) => `    { id: '${code}-${s}', name: '${nm}', short: '${s}', kind: 'domestic' },`);
+  const teams = (n.teams || []).map(([s, nm, lv]) => `    { id: '${code}-${s}', name: '${nm}', short: '${s}', kind: 'domestic'${lv ? `, level: ${lv}` : ''} },`);
   const out = `// ${DESC[code]}: national and domestic players. Ratings are the game's estimates.
 // record: [id, name, nat, born, role, bat, bowl, type, hand, fm, teams]  (see docs/world/ARCHITECTURE.md)
 // Snapshot: ${n.note}

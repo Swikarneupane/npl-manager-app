@@ -5,18 +5,25 @@
 import { skill } from './fastsim.js';
 const SPIN = ['OB', 'LB', 'SLA', 'LWS'];
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
-export const FC = { Test: { days: 5, perDay: 90, follow: 200 }, FC4: { days: 4, perDay: 96, follow: 150 } };
+// Test: 5 days. FC4/FC3/FC2: four-, three- and two-day first-class and domestic multi-day cricket.
+export const FC = { Test: { days: 5, perDay: 87, follow: 200 }, FC4: { days: 4, perDay: 96, follow: 150 }, FC3: { days: 3, perDay: 96, follow: 150 }, FC2: { days: 2, perDay: 100, follow: 100 } };
+export const isMultiDay = (fmt) => !!FC[fmt];
+// Share of a match's time lost to weather and over rates. A wet spell costs a session or more about two
+// Tests in seven, and somewhat more often in first-class cricket (county and Shield cricket lose plenty).
+// The live engine uses this too, so the two agree.
+export function weatherLoss(kind, rnd = Math.random) { const wet = kind === 'Test' ? 0.28 : 0.45; return rnd() < wet ? 0.1 + rnd() * 0.35 : rnd() * 0.08; }
 const P = { sr: 56, life: 82, cap: 450 };
 
 function attackOf(xi, inn) {
   const pool = xi.filter((p) => p.bowl >= 30).map((p) => ({ p, k: skill(p, 'bowl', 'FC') + (SPIN.includes(p.type) ? (inn >= 3 ? 5 : inn === 2 ? 2 : -2) : (inn === 1 ? 2 : 0)) }))
     .sort((a, b) => b.k - a.k).slice(0, 5);
-  while (pool.length < 4) { const p = xi.find((x) => !pool.some((y) => y.p === x)); pool.push({ p, k: skill(p, 'bowl', 'FC') }); }
+  // a short side uses whoever it has
+  while (pool.length < 4) { const p = xi.find((x) => x && !pool.some((y) => y.p === x)); if (!p) break; pool.push({ p, k: skill(p, 'bowl', 'FC') }); }
   return pool;
 }
 // One innings. Stops at all out, a declaration, the target, or the end of the match (balls left).
 function innings(rnd, bat, bowl, inn, { target, ballsLeft, declareAt }) {
-  const atk = attackOf(bowl.xi, inn); const atkSkill = atk.reduce((a, x) => a + x.k, 0) / atk.length;
+  const atk = attackOf(bowl.xi, inn); const atkSkill = atk.length ? atk.reduce((a, x) => a + x.k, 0) / atk.length : 30;
   let r = 0, w = 0, b = 0, declared = false, won = false; const card = [];
   const extras = Math.round(8 + rnd() * 14);
   const exAt = (bb) => Math.round(extras * Math.min(1, bb / 540));
@@ -40,9 +47,9 @@ function innings(rnd, bat, bowl, inn, { target, ballsLeft, declareAt }) {
   // bowling: no quota, the best bowlers bowl most; wickets by skill
   const tw = atk.reduce((a, x) => a + Math.pow(Math.max(5, x.k), 2), 0);
   const bw = atk.map((x) => ({ p: x.p, k: x.k, balls: 0, r: 0, w: 0, sh: Math.pow(Math.max(5, x.k), 2) / tw }));
-  let rest = b; for (const x of bw) { const n = Math.round(b * (0.6 * x.sh + 0.4 / bw.length) / 6) * 6; x.balls = Math.min(rest, n); rest -= x.balls; } if (rest > 0) bw[0].balls += rest;
+  let rest = b; for (const x of bw) { const n = Math.round(b * (0.6 * x.sh + 0.4 / bw.length) / 6) * 6; x.balls = Math.min(rest, n); rest -= x.balls; } if (rest > 0 && bw.length) bw[0].balls += rest;
   const outs = card.filter((c) => c[5] === 'out').length; const ro = Math.round(outs * 0.04 * rnd() * 2);
-  for (let i = 0; i < outs - ro; i++) { let u = rnd(), j = 0; for (; j < bw.length - 1; j++) { u -= bw[j].sh; if (u <= 0) break; } bw[j].w++; }
+  if (bw.length) for (let i = 0; i < outs - ro; i++) { let u = rnd(), j = 0; for (; j < bw.length - 1; j++) { u -= bw[j].sh; if (u <= 0) break; } bw[j].w++; }
   const given = r - exAt(b); let g = 0; for (const x of bw) { x.r = Math.round(x.balls * (given / Math.max(1, b)) * (1 - (x.k - 60) / 220) * (0.85 + rnd() * 0.3)); g += x.r; }
   if (g) for (const x of bw) x.r = Math.max(0, Math.round((x.r * given) / g));
   return { t: bat.id, r, w, b, d: declared, bat: card, bowl: bw.filter((x) => x.balls > 0).map((x) => [x.p.id, x.balls, x.r, x.w]) };
@@ -50,7 +57,9 @@ function innings(rnd, bat, bowl, inn, { target, ballsLeft, declareAt }) {
 
 // kind: 'Test' (5 days) or 'FC4' (4 days). opts.weather: share of time lost (0 to 0.5).
 export function fastFC(home, away, kind = 'FC4', rnd = Math.random, opts = {}) {
-  const F = FC[kind]; const lost = opts.weather != null ? opts.weather : rnd() < 0.3 ? rnd() * 0.35 : rnd() * 0.06;
+  // time lost to weather and over rates: a wet spell costs a session or more about two matches in five,
+  // and in first-class cricket a little more often (county and Shield cricket lose plenty to the weather)
+  const F = FC[kind]; const lost = opts.weather != null ? opts.weather : weatherLoss(kind, rnd);
   let left = Math.round(F.days * F.perDay * 6 * (1 - lost)); const inns = [];
   const first = rnd() < 0.5 ? home : away, second = first === home ? away : home;
   const play = (bat, bowl, n, o) => { const x = innings(rnd, bat, bowl, n, { ...o, ballsLeft: left }); left -= x.b; inns.push(x); return x; };

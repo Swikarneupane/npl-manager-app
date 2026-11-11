@@ -7,11 +7,19 @@
 #source Wikipedia player articles (infobox: birth date, batting, bowling, teams), checked November 2026
 #source NPL Manager src/game/data.js and os-extra.js (players already in the NPL game, spelt identically so they alias)
 #note Domestic team is the player's first-class region where the sources name one. Rahmanullah Zadran, Noor Rahman, Mohammad Akram and Abdullah Tarakhail (October 2026 squads) are left out: batting hand and bowling type could not be verified.
-#team AFG-BEA|Band-e-Amir Region|BEA
-#team AFG-AMO|Amo Region|AMO
-#team AFG-MA|Mis Ainak Region|MAR
-#team AFG-SG|Speen Ghar Region|SGR
-#team AFG-BST|Boost Region|BST
+#team AFG-BEA|Band-e-Amir Region|BEA|2
+#team AFG-AMO|Amo Region|AMO|2
+#team AFG-MA|Mis Ainak Region|MAR|2
+#team AFG-SG|Speen Ghar Region|SGR|2
+#team AFG-BST|Boost Region|BST|2
+#source ACB, "Ahmad Shah Abdali First Class Tournament 2026 begins on August 29" (four teams, double round robin and a final, 29 August to 8 October 2026)
+#source Wikipedia, "2025 Ahmad Shah Abdali 4-day Tournament"
+#note The Ahmad Shah Abdali tournament is played by four sides (AFG-MWC, -MPS, -HKS, -PML) whose squads were not verified, so their rosters are generated; the regional teams (level 2) are kept for the players registered to them.
+#team AFG-MWC|Maiwand Champions|MWC|1
+#team AFG-MPS|Mahipar Stars|MPS|1
+#team AFG-HKS|Hindukush Strikers|HKS|1
+#team AFG-PML|Pamir Legends|PML|1
+#comp AFG-ASA
 Ibrahim Zadran;2001;BAT;80;15;RFM;R;0/2/0;AFG-MA
 Rahmat Shah;1993;BAT;74;20;LB;R;-2/1/2;AFG-BST
 Hashmatullah Shahidi;1994;BAT;74;10;OB;L;-2/1/2;AFG-BEA

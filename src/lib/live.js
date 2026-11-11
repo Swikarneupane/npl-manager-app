@@ -15,8 +15,8 @@ export class LiveMatch {
   constructor(G, f, onChange, saved, world) {
     this.G = G; this.f = f; this.onChange = onChange; this.world = world || null; this.RG = world ? G.real : G;
     this.m = saved ? Match.restore(G, saved.data) : world ? newWorldMatch(G, f) : G.newMatch(f);
-    // key moments are written for 20 overs; a 50-over match plays without them
-    this.noKey = !!world && this.m.maxBalls > 120; this.inj0 = world ? (saved && saved.inj0) || injuries(G) : null;
+    // key moments are written for 20 overs; a 50-over or multi-day match plays without them
+    this.md = !!this.m.md; this.noKey = this.md || (!!world && this.m.maxBalls > 120); this.inj0 = world ? (saved && saved.inj0) || injuries(G) : null;
     this.done = false; this.started = false; this.wait = null; this.simTo = null; this.pauseReq = false;
     this.pending = null; this.mode = G.s.settings.mode; this.prevOver = null; this.nextBat = null; this.nextBowler = null; this.lastInn = null; this.innIdx = 1;
     this.error = null; this.snap = null; this.resumed = false;
@@ -33,7 +33,8 @@ export class LiveMatch {
   }
   get inn() { return this.m.inns[this.m.inns.length - 1]; }
   speed() { return SPEEDS[this.G.s.settings.speed] || 480; }
-  fast() { return this.mode === 'quick' || this.simTo === 'match' || this.simTo === 'over' || this.simTo === 'innings'; }
+  // simTo: 'over', 'innings', 'match'; multi-day also 'session' (to the next lunch, tea or stumps) and 'stumps'
+  fast() { return this.mode === 'quick' || ['match', 'over', 'innings', 'session', 'stumps'].includes(this.simTo); }
   refresh() { this.onChange && this.onChange(); }
   waitUser(label) { this.persist(); return new Promise((res) => { this.wait = { res, label }; this.refresh(); }); }
   resume() { if (this.wait) { const r = this.wait.res; this.wait = null; r(); } this.refresh(); }
@@ -47,6 +48,7 @@ export class LiveMatch {
       else if (p.type === 'toss') this.resolvePending(this.m.night ? 'field' : 'bat');
       else if (p.type === 'drs') this.resolvePending(p.info && p.info.hint === 'doubt');
       else if (p.type === 'key') this.resolvePending(p.pick);
+      else if (p.type === 'follow') this.resolvePending(p.pick);
     }
     this.resume();
   }
@@ -58,7 +60,9 @@ export class LiveMatch {
     return resolveKey(this.G, this.m, inn, km, idx, false);
   }
   // Fraction of the match bowled, for the "also live" ticker.
-  progress() { const m = this.m; return m.inns.reduce((a, i) => a + i.balls, 0) / (2 * m.maxBalls); }
+  progress() { const m = this.m; if (this.md) return 1 - m.leftBalls() / m.maxBalls; return m.inns.reduce((a, i) => a + i.balls, 0) / (2 * m.maxBalls); }
+  // Multi-day: the user's batting side declares before the next ball.
+  declare() { const i = this.inn; if (!this.md || !i || i.bat !== this.G.user || this.m.inns.length >= 4 || this.done) return; i.decReq = true; this.takeSnap(); this.persist(); if (this.wait) this.resume(); else this.refresh(); }
   setMode(m) { this.mode = m; if (m !== 'ball' && this.wait && this.wait.label === 'Next ball') this.resume(); this.refresh(); }
 
   start() {
@@ -76,6 +80,12 @@ export class LiveMatch {
         const want = self.nextBowler; self.nextBowler = null;
         const ok = want && m.bowlerOptions(inn).includes(want) ? want : null;
         if (self.fast()) return ok;
+        if (self.md) {
+          // a spell carries on without asking; the game stops when the captain would make a change
+          if (ok) return ok; const pick = m.aiBowler(inn); const s = inn.bw[pick]; const ov = Math.floor(inn.balls / 6);
+          if (s && s.lo === ov - 2 && m.spellNext(s, ov) > 1 && self.mode !== 'ball') return pick;
+          return new Promise((res) => { self.pending = { type: 'bowler', res, pick }; self.refresh(); });
+        }
         const o = Math.floor(inn.balls / 6);
         if (ok || (self.mode === 'key' && !(o === 0 || o === 6 || o >= 15))) return ok;
         return new Promise((res) => { self.pending = { type: 'bowler', res, pick: m.aiBowler(inn) }; self.refresh(); });
@@ -86,8 +96,8 @@ export class LiveMatch {
       },
       pickNext: (inn, m, rem) => (self.nextBat && rem.includes(self.nextBat) ? self.nextBat : null),
       beforeOver: async (inn) => {
-        if (self.lastInn && self.lastInn !== inn) { self.lastInn = inn; self.prevOver = null; if (!self.fast()) await self.waitUser('Start the second innings'); }
-        self.lastInn = inn; applyPlan(G, self.m, inn);
+        if (self.lastInn && self.lastInn !== inn) { self.lastInn = inn; self.prevOver = null; if (!self.fast()) await self.waitUser(self.md ? `Start the ${['', 'first', 'second', 'third', 'fourth'][self.m.inns.length]} innings` : 'Start the second innings'); }
+        self.lastInn = inn; if (!self.md) applyPlan(G, self.m, inn);
         const km = self.noKey ? null : keyMoment(G, self.m, inn, 'over'); if (km) await self.askKey(inn, km);
         self.refresh();
       },
@@ -97,16 +107,27 @@ export class LiveMatch {
         if (self.simTo === 'over') self.simTo = null;
         if (!self.fast() && self.mode === 'over') { self.refresh(); await self.waitUser('Next over'); }
       },
+      // Multi-day: lunch, tea and stumps. The match pauses at each in normal play; a session or day sim
+      // stops at the break it was asked for.
+      brk: async (kind, m) => {
+        self.takeSnap(); self.prevOver = null;
+        if (self.simTo === 'session' || (self.simTo === 'stumps' && kind === 'stumps')) self.simTo = null;
+        if (self.fast()) { self.persist(); await sleep(0); return; }
+        await self.waitUser(kind === 'lunch' ? 'Start the afternoon session' : kind === 'tea' ? 'Start the evening session' : `Start day ${m.md.day}`);
+      },
+      followOn: (m, info) => (self.fast() ? info.rec : new Promise((res) => { self.pending = { type: 'follow', info, res, pick: info.rec }; self.persist(); self.refresh(); })),
       afterBall: async (inn, m, info) => {
-        if (self.mode !== 'quick' && self.simTo !== 'match') addExpert(G, m, inn, info.ev === 'drop' ? 'drop' : info.ev === 'wkt' ? 'wkt' : info.ev === '0' ? 'dot' : info.ev);
-        self.takeSnap(); self.refresh();
+        if (self.mode !== 'quick' && self.simTo !== 'match' && !(self.md && (info.ev === '0' || self.fast()))) addExpert(G, m, inn, info.ev === 'drop' ? 'drop' : info.ev === 'wkt' ? 'wkt' : info.ev === '0' ? 'dot' : info.ev);
+        // a multi-day sim snapshots once an over (a Test is long, and so is its log)
+        if (!self.md || !self.fast() || inn.balls % 6 === 0) self.takeSnap(); self.refresh();
         if (self.simTo === 'innings' && self.innIdx !== m.inns.length) self.simTo = null;
         if (self.fast()) { if (inn.balls % 12 === 0) await sleep(0); return; }
         const key = info.ev === 'wkt' || m.log.slice(-3).some((e) => e.c === 'mile' || e.c === 'drs');
         if (self.pauseReq) { self.pauseReq = false; await self.waitUser('Continue'); return; }
         if (self.mode === 'ball') { await self.waitUser('Next ball'); return; }
         if (self.mode === 'key' && key) { await sleep(self.speed()); await self.waitUser('Continue'); return; }
-        await sleep(self.mode === 'key' && Math.floor(inn.balls / 6) < 15 && !key ? self.speed() * 0.45 : self.speed());
+        // a multi-day match plays its quiet balls at a third of the speed setting's pause, so a session watches in minutes
+        await sleep(self.md && !key ? self.speed() * 0.3 : self.mode === 'key' && Math.floor(inn.balls / 6) < 15 && !key ? self.speed() * 0.45 : self.speed());
       },
     };
     if (this.world) {

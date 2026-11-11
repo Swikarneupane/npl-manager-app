@@ -1,10 +1,10 @@
 // Netherlands: national and domestic players. Ratings are the game's estimates.
 // record: [id, name, nat, born, role, bat, bowl, type, hand, fm, teams]  (see docs/world/ARCHITECTURE.md)
 // Real players carry only name, nationality, approximate birth year, role, batting hand, bowling type and teams.
-// Wikipedia "Current squad" (updated 21 Feb 2026) and the 2026 T20 World Cup squad.
+// Wikipedia "Current squad" (updated 21 Feb 2026) and the 2026 T20 World Cup squad. Domestic teams: the eight 2026 Topklasse clubs (tkcricket.com 2026 previews); club registrations not verified, so their rosters are generated.
 export default {
   code: 'NED', name: 'Netherlands', member: 'associate', asOf: '2026-02-21',
-  sources: ['https://en.wikipedia.org/wiki/Netherlands_national_cricket_team#Current_squad', 'https://en.wikipedia.org/wiki/2026_Men%27s_T20_World_Cup_squads'],
+  sources: ['https://en.wikipedia.org/wiki/Netherlands_national_cricket_team#Current_squad', 'https://en.wikipedia.org/wiki/2026_Men%27s_T20_World_Cup_squads', 'https://tkcricket.com/category/preview/preview-2026-tk/page/2/'],
   players: [
     ['ned-colin-ackermann', 'Colin Ackermann', 'NED', 1991, 'BAT', 66, 35, 'OB', 'R', { t20: 0, odi: 0, fc: 0 }, ['NED']],
     ['ned-cedric-de-lange', 'Cedric de Lange', 'NED', 2007, 'BAT', 54, 0, '', 'L', { t20: 0, odi: 0, fc: 0 }, ['NED']],
@@ -33,6 +33,15 @@ export default {
     ['ned-daniel-doram', 'Daniel Doram', 'NED', 1997, 'BOWL', 30, 58, 'SLA', 'L', { t20: 0, odi: 0, fc: 0 }, ['NED']],
     ['ned-aryan-dutt', 'Aryan Dutt', 'NED', 2003, 'BOWL', 30, 64, 'OB', 'R', { t20: 0, odi: 0, fc: 0 }, ['NED']],
   ],
-  teams: [],
+  teams: [
+    { id: 'NED-KAM', name: 'Kampong', short: 'KAM', kind: 'domestic', level: 2 },
+    { id: 'NED-VRA', name: 'VRA Amsterdam', short: 'VRA', kind: 'domestic', level: 2 },
+    { id: 'NED-RCC', name: 'Rotterdam CC', short: 'RCC', kind: 'domestic', level: 2 },
+    { id: 'NED-VCC', name: 'Voorburg CC', short: 'VCC', kind: 'domestic', level: 2 },
+    { id: 'NED-HCC', name: 'HCC', short: 'HCC', kind: 'domestic', level: 2 },
+    { id: 'NED-HBS', name: 'HBS Craeyenhout', short: 'HBS', kind: 'domestic', level: 2 },
+    { id: 'NED-HDV', name: 'Hermes DVS', short: 'HDV', kind: 'domestic', level: 2 },
+    { id: 'NED-VOC', name: 'VOC Rotterdam', short: 'VOC', kind: 'domestic', level: 2 },
+  ],
   comps: [],
 };

@@ -4,44 +4,48 @@
 #source Wikipedia, "India national cricket team", Current squad (last updated 30 October 2026), citing BCCI annual player retainership 2025-26 (bcci.tv)
 #source Wikipedia player articles (infobox: birth date, batting, bowling, teams) for the domestic players, checked November 2026
 #note Franchise teams (IPL-*) are from the national-squad table only; domestic extras carry no IPL team because 2026-27 moves could not be verified.
-#team IND-AP|Andhra|AND
-#team IND-ARP|Arunachal Pradesh|ARP
-#team IND-ASM|Assam|ASM
-#team IND-BAR|Baroda|BRD
-#team IND-BEN|Bengal|BEN
-#team IND-BIH|Bihar|BIH
-#team IND-CHD|Chandigarh|CHD
-#team IND-CHH|Chhattisgarh|CHH
-#team IND-DEL|Delhi|DEL
-#team IND-GOA|Goa|GOA
-#team IND-GUJ|Gujarat|GUJ
-#team IND-HAR|Haryana|HAR
-#team IND-HP|Himachal Pradesh|HP
-#team IND-HYD|Hyderabad|HYD
-#team IND-JK|Jammu and Kashmir|J&K
-#team IND-JHA|Jharkhand|JHA
-#team IND-KAR|Karnataka|KAR
-#team IND-KER|Kerala|KER
-#team IND-MP|Madhya Pradesh|MP
-#team IND-MAH|Maharashtra|MAH
-#team IND-MAN|Manipur|MNP
-#team IND-MEG|Meghalaya|MEG
-#team IND-MIZ|Mizoram|MIZ
-#team IND-MUM|Mumbai|MUM
-#team IND-NAG|Nagaland|NAG
-#team IND-ODI|Odisha|ODI
-#team IND-PDC|Puducherry|PDC
-#team IND-PUN|Punjab|PUN
-#team IND-RLY|Railways|RLY
-#team IND-RAJ|Rajasthan|RAJ
-#team IND-SAU|Saurashtra|SAU
-#team IND-SER|Services|SER
-#team IND-SIK|Sikkim|SKM
-#team IND-TN|Tamil Nadu|TN
-#team IND-TRI|Tripura|TRI
-#team IND-UP|Uttar Pradesh|UP
-#team IND-UKD|Uttarakhand|UKD
-#team IND-VID|Vidarbha|VID
+#team IND-AP|Andhra|AND|1
+#team IND-ARP|Arunachal Pradesh|ARP|3
+#team IND-ASM|Assam|ASM|1
+#team IND-BAR|Baroda|BRD|1
+#team IND-BEN|Bengal|BEN|1
+#team IND-BIH|Bihar|BIH|1
+#team IND-CHD|Chandigarh|CHD|1
+#team IND-CHH|Chhattisgarh|CHH|1
+#team IND-DEL|Delhi|DEL|1
+#team IND-GOA|Goa|GOA|1
+#team IND-GUJ|Gujarat|GUJ|1
+#team IND-HAR|Haryana|HAR|1
+#team IND-HP|Himachal Pradesh|HP|1
+#team IND-HYD|Hyderabad|HYD|1
+#team IND-JK|Jammu and Kashmir|J&K|1
+#team IND-JHA|Jharkhand|JHA|1
+#team IND-KAR|Karnataka|KAR|1
+#team IND-KER|Kerala|KER|1
+#team IND-MP|Madhya Pradesh|MP|1
+#team IND-MAH|Maharashtra|MAH|1
+#team IND-MAN|Manipur|MNP|3
+#team IND-MEG|Meghalaya|MEG|3
+#team IND-MIZ|Mizoram|MIZ|3
+#team IND-MUM|Mumbai|MUM|1
+#team IND-NAG|Nagaland|NAG|3
+#team IND-ODI|Odisha|ODI|1
+#team IND-PDC|Puducherry|PDC|1
+#team IND-PUN|Punjab|PUN|1
+#team IND-RLY|Railways|RLY|1
+#team IND-RAJ|Rajasthan|RAJ|1
+#team IND-SAU|Saurashtra|SAU|1
+#team IND-SER|Services|SER|1
+#team IND-SIK|Sikkim|SKM|3
+#team IND-TN|Tamil Nadu|TN|1
+#team IND-TRI|Tripura|TRI|1
+#team IND-UP|Uttar Pradesh|UP|1
+#team IND-UKD|Uttarakhand|UKD|1
+#team IND-VID|Vidarbha|VID|1
+#source Wikipedia, "2026–27 Ranji Trophy" (Elite groups A-D and Plate group, 11 October 2026 to 3 March 2027) and "2025–26 Ranji Trophy" (format and points), checked November 2026
+#note Domestic team level: 1 = Ranji Trophy Elite 2026-27, 3 = Plate.
+#comp IND-RANJI
+#comp IND-RANJI-PLATE
 // national squad (Wikipedia current squad, 30 Oct 2026)
 Ruturaj Gaikwad;1997;BAT;78;15;OB;R;2/0/-2;IND-MAH IPL-CSK
 Shubman Gill;1999;BAT;86;0;-;R;0/2/2;IND-PUN IPL-GT

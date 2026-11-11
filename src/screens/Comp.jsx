@@ -1,6 +1,7 @@
 // Any competition's season: table(s), fixtures and results with scorecards (fast-sim and engine cards),
 // stats leaders from s.wd.st, and how far the stages have gone. Phone: tabs. Desktop: tables and fixtures
-// beside the leaders.
+// beside the leaders. Multi-day cricket (Tests, first-class): drawn games and points in the table, the
+// series score, venues where they are real, and four-innings cards with declarations.
 import { useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { useGame } from '../lib/store.jsx';
@@ -11,6 +12,9 @@ import { COMPS } from '../world/comps.js';
 import { standings } from '../world/comp.js';
 import { teamName } from '../world/state.js';
 import { seasonName, userNation } from '../world/career.js';
+import { isMultiDay } from '../world/fastfc.js';
+import { seriesScore, wtcName } from '../world/intl.js';
+import { WTC } from '../data/world/calendar.js';
 import { short } from '../world/dates.js';
 import '../styles/career.css';
 
@@ -18,21 +22,57 @@ const STAGE = { rr: 'League', events: 'Series events', series: 'Series', super: 
 const KO = { SF1: 'Semi-final 1', SF2: 'Semi-final 2', F: 'Final', Q1: 'Qualifier 1', EL: 'Eliminator', Q2: 'Qualifier 2' };
 const grpName = (k) => (k === 'all' ? 'Table' : k === 'series' ? 'Series' : k === 'super' ? 'Super Six' : `Group ${k}`);
 const stagesOf = (S) => { const def = COMPS[S.comp]; return def ? def.stages : []; };
+const fmtOf = (S) => (S.fx[0] && S.fx[0].fmt) || (COMPS[S.comp] || {}).fmt || 'ODI';
+const FMT_L = { T20: 'T20', ODI: 'One-day', Test: 'Test', FC4: 'First-class', FC3: 'First-class', FC2: 'Two-day' };
+const fxFmt = (f) => (f.fmt === 'T20' ? 'T20' : f.fmt === 'ODI' ? 'ODI' : f.fmt === 'Test' ? 'Test' : FMT_L[f.fmt] || f.fmt);
+const ov = (b) => `${Math.floor(b / 6)}${b % 6 ? `.${b % 6}` : ''}`;
+const NTH = ['1st', '2nd', '3rd', '4th'];
+// A multi-day card: up to four innings, each side's innings counted, declarations marked.
+function MultiCard({ card, res }) {
+  const { G } = useGame(); if (!card || !card.length) return <p className="t-small faint">No scorecard for this match.</p>;
+  const nth = {}; return (
+    <div className="stack" style={{ gap: 12 }}>
+      {card.map((inn, k) => { nth[inn.t] = (nth[inn.t] || 0) + 1; const allOut = inn.w >= 10; return (
+        <div key={k}>
+          <h3 style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}><span><NDot id={inn.t} />{teamName(G, inn.t)} <span className="faint" style={{ fontWeight: 400 }}>· {NTH[nth[inn.t] - 1] || ''} innings</span></span>
+            <span className="num">{allOut ? inn.r : `${inn.r}/${inn.w}`}{inn.d ? <b title="declared">d</b> : ''} <span className="faint" style={{ fontWeight: 400 }}>({ov(inn.b)} ov{inn.d ? ', declared' : allOut ? ', all out' : ''})</span></span></h3>
+          <div className="tblwrap"><table className="tbl compact plain">
+            <thead><tr><th style={{ paddingLeft: 0 }}>Batter</th><th className="r">R</th><th className="r">B</th><th className="r">4s</th><th className="r">6s</th></tr></thead>
+            <tbody>{inn.bat.map(([id, r, b, f4, s6, how, txt]) => <tr key={id}><td style={{ paddingLeft: 0 }}>{pname(G, id)} <span className="faint t-micro">{txt || (how === 'out' ? 'out' : 'not out')}</span></td><td className="r b6">{r}{how !== 'out' ? '*' : ''}</td><td className="r">{b}</td><td className="r faint">{f4}</td><td className="r faint">{s6}</td></tr>)}</tbody></table></div>
+          <div className="tblwrap" style={{ marginTop: 6 }}><table className="tbl compact plain">
+            <thead><tr><th style={{ paddingLeft: 0 }}>Bowler</th><th className="r">O</th><th className="r">R</th><th className="r">W</th></tr></thead>
+            <tbody>{inn.bowl.map(([id, balls, r, w]) => <tr key={id}><td style={{ paddingLeft: 0 }}>{pname(G, id)}</td><td className="r">{ov(balls)}</td><td className="r">{r}</td><td className="r b6">{w}</td></tr>)}</tbody></table></div>
+        </div>); })}
+      {res && <p className="t-small"><b>{res.text}.</b>{res.pom ? <span className="mut"> Player of the match: {pname(G, res.pom)}.</span> : null}{res.live ? <span className="faint"> Played ball by ball.</span> : <span className="faint"> Simulated.</span>}</p>}
+    </div>);
+}
 
 function Head({ S, m }) {
   const { G } = useGame(); const st = stagesOf(S); const def = COMPS[S.comp] || {};
   return (
     <div className="stack" style={{ gap: 6, marginBottom: m ? 0 : 14 }}>
-      {!m && <><p className="t-small faint">{def.kind === 'international' ? 'International' : def.kind || 'Competition'} · {(S.fx[0] && S.fx[0].fmt) === 'T20' ? 'T20' : 'One-day'} · {S.start != null ? `${short(S.start)} – ${short(S.end ?? S.start)} ${S.y}` : S.y}</p>
+      {!m && <><p className="t-small faint">{def.kind === 'international' ? 'International' : def.kind || 'Competition'} · {FMT_L[fmtOf(S)] || fmtOf(S)} · {S.start != null ? `${short(S.start)} – ${short(S.endF ?? S.end ?? S.start)} ${S.y}` : S.y}{S.rf === 1 ? ' · real fixtures' : S.rf === 2 ? ' · real series, dates in-game' : ''}</p>
       <h1 className="t-h1">{seasonName(S)}</h1></>}
+      {S.tables && S.tables.series && <p className="b6">{seriesScore(G, S).text}{S.fx.some((f) => f.res) ? <span className="faint" style={{ fontWeight: 400 }}> · in-game</span> : null}</p>}
+      {S.wtc != null && <p className="t-small mut">Counts in the {wtcName(S.wtc)}: {WTC.points.win} points a win, {WTC.points.draw} a draw, {WTC.points.tie} a tie. <Link to="/international?tab=tests">Table ›</Link></p>}
       {st.length > 0 && <div className="cr-stages" aria-label="Stages">{st.map((x, k) => <span key={k} className={`cr-stage${S.done || k < S.stage ? ' done' : k === S.stage ? ' on' : ''}`}>{STAGE[x.type] || x.type}{x.type === 'ko' && x.plan ? ` · ${x.plan === 'semis' ? 'semis and final' : x.plan === 'ipl4' ? 'four-team playoffs' : 'final'}` : ''}</span>)}</div>}
-      {S.done && S.champ && <p className="gld b6">{teamName(G, S.champ)} won{S.runner ? <span className="mut" style={{ fontWeight: 400 }}> · runners-up {teamName(G, S.runner)}</span> : null}</p>}
+      {S.done && S.joint && <p className="gld b6">{teamName(G, S.teams[0])} and {teamName(G, S.teams[1])} share the title<span className="mut" style={{ fontWeight: 400 }}> · the final was drawn</span></p>}
+      {S.done && S.champ && !S.joint && !(S.tables && S.tables.series) && <p className="gld b6">{teamName(G, S.champ)} won{S.runner ? <span className="mut" style={{ fontWeight: 400 }}> · runners-up {teamName(G, S.runner)}</span> : null}</p>}
     </div>
   );
 }
 function Tables({ S }) {
   const { G } = useGame(); const me = userNation(G); const keys = Object.keys(S.tables);
   if (!keys.length) return <p className="t-small faint">No table yet.</p>;
+  if (isMultiDay(fmtOf(S))) return keys.map((k) => ( // multi-day: draws and points, no run rate
+    <section key={k} style={{ marginBottom: 18 }}>
+      {keys.length > 1 && <h2 className="sec">{grpName(k)}</h2>}
+      <div className="tblwrap"><table className="tbl compact">
+        <thead><tr><th>#</th><th>Team</th><th className="r">P</th><th className="r">W</th><th className="r">L</th><th className="r" title="Drawn">D</th><th className="r" title="Tied or abandoned">T/NR</th><th className="r">Pts</th></tr></thead>
+        <tbody>{standings(S.tables[k]).map((r, i) => <tr key={r.id} className={r.id === me ? 'me' : ''}><td className="faint">{i + 1}</td><td className="name"><NDot id={r.id} />{teamName(G, r.id)}</td><td className="r">{r.p}</td><td className="r">{r.w}</td><td className="r">{r.l}</td><td className="r">{r.d || 0}</td><td className="r faint">{r.t + r.nr}</td><td className="r b6">{r.pts}</td></tr>)}</tbody>
+      </table></div>
+      <p className="t-micro faint" style={{ marginTop: 6 }}>{k === 'series' ? (S.wtc != null ? 'Points as the WTC awards them for these Tests (before any over-rate deductions).' : 'Points for these Tests; this series is outside the WTC.') : 'First-class points as this competition awards them.'}</p>
+    </section>));
   return keys.map((k) => (
     <section key={k} style={{ marginBottom: 18 }}>
       {keys.length > 1 && <h2 className="sec">{grpName(k)}</h2>}
@@ -48,15 +88,15 @@ function Fixtures({ S }) {
   return Object.keys(by).sort((a, b) => a - b).map((k) => (
     <section key={k} style={{ marginBottom: 14 }}>
       <h2 className="sec">{STAGE[(st[k] || {}).type] || 'Matches'} · {by[k].filter((f) => f.res).length} of {by[k].length} played</h2>
-      {by[k].slice().sort((a, b) => a.d - b.d).map((f) => { const on = open === f.id; const mine = f.a === me || f.b === me; return (
+      {by[k].slice().sort((a, b) => a.d - b.d).map((f) => { const on = open === f.id; const mine = f.a === me || f.b === me; const md = isMultiDay(f.fmt); const ti = S.fx.indexOf(f); const ven = S.ven && S.ven[ti]; return (
         <div key={f.id}>
           <button type="button" className={`cr-fx${mine ? ' me' : ''}`} disabled={!f.res} aria-expanded={f.res ? on : undefined} onClick={() => setOpen(on ? null : f.id)}>
             <span className="d">{short(f.d)}</span>
-            <span className="t" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}><NDot id={f.a} />{teamName(G, f.a)} <span className="faint">v</span> <NDot id={f.b} />{teamName(G, f.b)}{f.ko && <span className="cr-pill g">{KO[f.ko] || f.ko}</span>}</span>
-            <span className="t-small faint">{f.res ? (on ? 'Hide card' : 'Card') : f.fmt === 'T20' ? 'T20' : 'ODI'}</span>
+            <span className="t" style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>{md && S.tables.series && S.fx.length > 1 && <span className="faint t-small">{NTH[ti] || `${ti + 1}th`} Test ·</span>}<NDot id={f.a} />{teamName(G, f.a)} <span className="faint">v</span> <NDot id={f.b} />{teamName(G, f.b)}{f.ko && <span className="cr-pill g">{KO[f.ko] || f.ko}</span>}{ven && <span className="faint t-small">· {ven}</span>}</span>
+            <span className="t-small faint">{f.res ? (on ? 'Hide card' : 'Card') : fxFmt(f)}</span>
             <span className="r">{f.res ? f.res.text : 'To be played'}</span>
           </button>
-          {on && f.res && <div className="cr-card"><ScoreCard card={f.card} res={f.res} /></div>}
+          {on && f.res && <div className="cr-card">{md ? <MultiCard card={f.card} res={f.res} /> : <ScoreCard card={f.card} res={f.res} />}</div>}
         </div>); })}
     </section>));
 }

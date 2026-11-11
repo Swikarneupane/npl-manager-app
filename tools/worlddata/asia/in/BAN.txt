@@ -5,15 +5,18 @@
 #source Wikipedia player articles for players outside the current squad, checked November 2026
 #source NPL Manager src/game/data.js and os-extra.js (players already in the NPL game, spelt identically so they alias)
 #note Domestic team is the player's National Cricket League division per the Wikipedia squad table. BPL franchises were not verified for 2026 and are left out.
-#team BAN-DHK|Dhaka Division|DHK
-#team BAN-DM|Dhaka Metropolis|DMT
-#team BAN-CTG|Chattogram Division|CTG
-#team BAN-RAJ|Rajshahi Division|RAJ
-#team BAN-KHU|Khulna Division|KHU
-#team BAN-SYL|Sylhet Division|SYL
-#team BAN-RAN|Rangpur Division|RAN
-#team BAN-BAR|Barishal Division|BAR
-#team BAN-MYM|Mymensingh Division|MYM
+#team BAN-DHK|Dhaka Division|DHK|1
+#team BAN-DM|Dhaka Metropolis|DMT|2
+#team BAN-CTG|Chattogram Division|CTG|1
+#team BAN-RAJ|Rajshahi Division|RAJ|1
+#team BAN-KHU|Khulna Division|KHU|1
+#team BAN-SYL|Sylhet Division|SYL|1
+#team BAN-RAN|Rangpur Division|RAN|1
+#team BAN-BAR|Barishal Division|BAR|1
+#team BAN-MYM|Mymensingh Division|MYM|1
+#source Wikipedia, "2025–26 National Cricket League" (eight divisions, single round robin, four-day); The Financial Express, "NCL to kick off on October 3" (2026-27)
+#note Domestic team level: 1 = National Cricket League 2026-27 (Dhaka Metropolis gave way to Mymensingh Division in 2025-26).
+#comp BAN-NCL
 Najmul Hossain Shanto;1998;BAT;76;20;OB;L;-;BAN-RAJ
 Towhid Hridoy;2000;BAT;74;0;-;R;1/1/-1;BAN-RAJ
 Mahmudul Hasan Joy;2000;BAT;68;10;OB;R;-2/0/2;BAN-CTG

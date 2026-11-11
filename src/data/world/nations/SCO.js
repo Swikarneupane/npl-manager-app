@@ -1,10 +1,10 @@
 // Scotland: national and domestic players. Ratings are the game's estimates.
 // record: [id, name, nat, born, role, bat, bowl, type, hand, fm, teams]  (see docs/world/ARCHITECTURE.md)
 // Real players carry only name, nationality, approximate birth year, role, batting hand, bowling type and teams.
-// Players for Scotland Dec 2024 - Feb 2026 (Wikipedia, updated 13 Aug 2026) plus the 2026 T20 World Cup squad.
+// Players for Scotland Dec 2024 - Feb 2026 (Wikipedia, updated 13 Aug 2026) plus the 2026 T20 World Cup squad. Domestic teams: the three Regional Super Series sides of 2026 (Cricket Scotland); player registrations to them not verified, so their rosters are generated.
 export default {
   code: 'SCO', name: 'Scotland', member: 'associate', asOf: '2026-08-13',
-  sources: ['https://en.wikipedia.org/wiki/Scotland_national_cricket_team#Current_squad', 'https://en.wikipedia.org/wiki/2026_Men%27s_T20_World_Cup_squads'],
+  sources: ['https://en.wikipedia.org/wiki/Scotland_national_cricket_team#Current_squad', 'https://en.wikipedia.org/wiki/2026_Men%27s_T20_World_Cup_squads', 'https://cricketscotland.com/Article/26986078-81b6-4ece-836a-ec31c8709d97'],
   players: [
     ['sco-richie-berrington', 'Richie Berrington', 'SCO', 1987, 'AR', 60, 60, 'RFM', 'R', { t20: 0, odi: 0, fc: 0 }, ['SCO']],
     ['sco-tom-bruce', 'Tom Bruce', 'SCO', 1991, 'BAT', 62, 0, '', 'R', { t20: 0, odi: 0, fc: 0 }, ['SCO']],
@@ -31,6 +31,10 @@ export default {
     ['sco-oliver-davidson', 'Oliver Davidson', 'SCO', 2004, 'BOWL', 25, 58, 'SLA', 'L', { t20: 0, odi: 0, fc: 0 }, ['SCO']],
     ['sco-zainullah-ihsan', 'Zainullah Ihsan', 'SCO', 2006, 'BOWL', 20, 54, 'RM', 'R', { t20: 0, odi: 0, fc: 0 }, ['SCO']],
   ],
-  teams: [],
+  teams: [
+    { id: 'SCO-CH', name: 'Caledonian Highlanders', short: 'CH', kind: 'domestic', level: 1 },
+    { id: 'SCO-EK', name: 'Eastern Knights', short: 'EK', kind: 'domestic', level: 1 },
+    { id: 'SCO-WW', name: 'Western Warriors', short: 'WW', kind: 'domestic', level: 1 },
+  ],
   comps: [],
 };

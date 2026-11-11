@@ -1,0 +1,23 @@
+/* Multi-day matches: the Test scoreboard, the three-way result bar, declarations, spells and the new ball.
+   Uses the design tokens only. */
+.md-strip{display:flex;flex-wrap:wrap;gap:4px 18px;margin-top:10px;color:var(--board-ink-2);font-size:15px}
+.md-strip b{color:var(--board-ink);font-weight:600}
+.md-cells{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px 18px;flex:1 1 0;min-width:0}
+.md-cells .cell{display:flex;flex-direction:column;gap:2px;min-width:0}
+.md-cells .bf{font-size:22px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.md-three{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:center;margin-top:14px}
+.md-three .wp i.draw{background:var(--board-rule)}
+.md-three .mid-l{font-size:13px;color:var(--board-ink-2);text-align:center;grid-column:1/-1;margin-top:-6px}
+.md-decl{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:10px 12px;border:1px solid var(--rule);border-radius:10px;background:var(--sunk)}
+.md-decl .autosw{flex:1 1 220px}
+.md-nb{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 14px;padding:10px 12px;border:1px solid var(--rule);border-radius:10px}
+.md-nb .btn.on{border-color:var(--blue);color:var(--blue)}
+.ev-brk{list-style:none;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;padding:10px 12px;margin:8px 0;border-radius:8px;background:var(--sunk);border-left:3px solid var(--gold)}
+.ev-brk b{font-weight:600}
+.ev-brk span{color:var(--ink-2);font-size:14px}
+@media (max-width:760px){
+  .md-cells{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .md-cells .bf{font-size:17px}
+  .md-strip{font-size:13px;gap:2px 12px;margin-top:6px}
+  .md-three{gap:8px;margin-top:8px}
+}

@@ -68,12 +68,12 @@ export default {
     ['nz-tom-bruce', 'Tom Bruce', 'NZ', 1991, 'BAT', 66, 0, '', 'R', { t20: 1, odi: 0, fc: 0 }, ['NZ', 'NZ-CTD']],
   ],
   teams: [
-    { id: 'NZ-AUC', name: 'Auckland', short: 'AUC', kind: 'domestic' },
-    { id: 'NZ-NDI', name: 'Northern Districts', short: 'NDI', kind: 'domestic' },
-    { id: 'NZ-CTD', name: 'Central Districts', short: 'CTD', kind: 'domestic' },
-    { id: 'NZ-WEL', name: 'Wellington', short: 'WEL', kind: 'domestic' },
-    { id: 'NZ-CAN', name: 'Canterbury', short: 'CAN', kind: 'domestic' },
-    { id: 'NZ-OTA', name: 'Otago', short: 'OTA', kind: 'domestic' },
+    { id: 'NZ-AUC', name: 'Auckland', short: 'AUC', kind: 'domestic', level: 1 },
+    { id: 'NZ-NDI', name: 'Northern Districts', short: 'NDI', kind: 'domestic', level: 1 },
+    { id: 'NZ-CTD', name: 'Central Districts', short: 'CTD', kind: 'domestic', level: 1 },
+    { id: 'NZ-WEL', name: 'Wellington', short: 'WEL', kind: 'domestic', level: 1 },
+    { id: 'NZ-CAN', name: 'Canterbury', short: 'CAN', kind: 'domestic', level: 1 },
+    { id: 'NZ-OTA', name: 'Otago', short: 'OTA', kind: 'domestic', level: 1 },
   ],
   comps: [],
 };

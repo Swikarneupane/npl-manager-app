@@ -20,13 +20,13 @@
 import { registerComps, COMPS } from './comps.js';
 import { newSeason, standings } from './comp.js';
 import { dayOfDate, yearOf, dateOf, MONTHS } from './dates.js';
-import { registry } from './players.js';
+import { registry, poolOf } from './players.js';
 import { onTick as onClockTick } from './state.js';
-import { REAL, PROGRAMME, HOME, REGIONS, FULL, regionOf, NEPAL_VENUES, NPL_WINDOW, IPL_WINDOW } from '../data/world/calendar.js';
+import { REAL, PROGRAMME, HOME, REGIONS, FULL, regionOf, NEPAL_VENUES, NPL_WINDOW, IPL_WINDOW, WTC, OTHER_TESTS, TROPHY, TEST_LEN, TEST_OTHERS } from '../data/world/calendar.js';
 import { NATIONS_DB } from '../data/world/index.js';
 import { NATION } from '../game/world-data.js';
 
-const ODI = 'ODI', T20 = 'T20';
+const ODI = 'ODI', T20 = 'T20', TEST = 'Test';
 const d = (y, m, day) => dayOfDate(y, m, day);
 const dA = (a) => d(a[0], a[1], a[2]);
 const NAME = Object.fromEntries(NATIONS_DB.map((n) => [n[0], n[1]]));
@@ -37,7 +37,8 @@ export const isFull = (c) => FULL.includes(c);
 const ASIA_FM = ['IND', 'PAK', 'SL', 'BAN', 'AFG'];
 const ASIA_ASSOC = REGIONS.Asia.filter((c) => !FULL.includes(c));
 // The game's strength estimate for a nation in a format (world-data.js); unknown nations sit low.
-export const strength = (c, fmt) => { const n = NATION[c]; return n ? (fmt === ODI ? n.odi : n.t20) : 50; };
+// Tests use the ODI estimate (the closer of the two to the long game).
+export const strength = (c, fmt) => { const n = NATION[c]; return n ? (fmt === T20 ? n.t20 : n.odi) : 50; };
 
 let ENABLED = true;
 export const setIntlEnabled = (on) => { ENABLED = !!on; };
@@ -51,7 +52,8 @@ const shuffled = (arr, r) => { const a = arr.slice(); for (let i = a.length - 1;
 export function st(G) {
   const wd = G.s.wd; if (!wd) return null;
   if (!wd.intl) wd.intl = { v: 1, seed: Math.floor(Math.random() * 1679616).toString(36), made: {}, arc: [], rk: { log: [], pa: { ODI: {}, T20: {} }, dy: yearOf(wd.day), snap: null, prev: null }, nsq: {}, nm: {}, ann: {}, start0: wd.day };
-  return wd.intl;
+  const I = wd.intl; I.rk.pa.Test ??= {}; if (!I.wtc) seedWTC(I);
+  return I;
 }
 
 // ----- the world states being simulated, for phases that open mid-advance -----
@@ -88,6 +90,9 @@ const STATIC = {
   T20RQ: { id: 'T20RQ', name: 'T20 World Cup regional final', fmt: T20, kind: 'international', stages: [{ type: 'rr', perDay: 3, name: 'Round robin' }] },
   T20RQ2: { id: 'T20RQ2', name: 'T20 World Cup regional final', fmt: T20, kind: 'international', stages: [{ type: 'rr', legs: 2, perDay: 1, name: 'Double round robin' }] },
   HIST: { id: 'HIST', name: 'Real results', fmt: ODI, kind: 'international', stages: [{ type: 'rr', name: 'Table' }] },
+  // Test series of one to five Tests (WTC points in the series table), and the WTC final (a one-off; a draw makes joint winners)
+  ...Object.fromEntries([1, 2, 3, 4, 5].map((n) => [`TEST_${n}`, { id: `TEST_${n}`, name: n === 1 ? 'One-off Test' : `${n}-Test series`, fmt: TEST, kind: 'international', points: WTC.points, stages: [{ type: 'series', n, name: n === 1 ? 'Test' : 'Series' }] }])),
+  WTCF: { id: 'WTCF', name: 'World Test Championship final', fmt: TEST, kind: 'international', points: WTC.points, stages: [{ type: 'rr', perDay: 1, name: 'Final', labels: ['Final'], ko: true }] },
 };
 // Per-edition definitions, built from the season's team order. Ids: PREFIX@year[@fmt]@seed.
 const BUILD = {
@@ -130,12 +135,14 @@ function buildDef(comp, teams, opts = {}) {
 export function ensureDefs(G) { const wd = G.s.wd; if (!wd) return; for (const id in wd.seasons) { const S = wd.seasons[id]; if (!COMPS[S.comp]) buildDef(S.comp, S.teams); } }
 
 // ----- what a season is, for the screens -----
-const KIND = { CWCL2: 'l2', CL: 'cl', CWCPO: 'po', CWCQ: 'wcq', WC50: 'wc', T20WC: 't20wc', T20GQ: 'gq', T20RQ: 'rq', T20RQ2: 'rq', ASIA: 'asia', ACCPC: 'accpc', TRI_T20: 'tri', TRI_ODI: 'tri', BILAT_ODI: 'bilat', BILAT_T20I: 'bilat', BILAT_T20I5: 'bilat', HIST: 'hist' };
+const KIND = { CWCL2: 'l2', CL: 'cl', CWCPO: 'po', CWCQ: 'wcq', WC50: 'wc', T20WC: 't20wc', T20GQ: 'gq', T20RQ: 'rq', T20RQ2: 'rq', ASIA: 'asia', ACCPC: 'accpc', TRI_T20: 'tri', TRI_ODI: 'tri', BILAT_ODI: 'bilat', BILAT_T20I: 'bilat', BILAT_T20I5: 'bilat', HIST: 'hist', TEST_1: 'bilat', TEST_2: 'bilat', TEST_3: 'bilat', TEST_4: 'bilat', TEST_5: 'bilat', WTCF: 'wtcf' };
 export function info(S) {
   const p = prefixOf(S.comp); const def = COMPS[S.comp] || {}; const kind = S.id === 'CL-2024' ? 'cl' : S.id === 'CWCL2-2023' ? 'l2' : KIND[p] || 'other';
   const fmt = def.fmt || ODI; const listA = !!def.listA || S.id === 'CL-2024';
-  return { kind, fmt, fmtL: listA ? 'List A' : fmt === ODI ? 'ODI' : 'T20I', listA, official: !listA, icc: ['l2', 'cl', 'po', 'wcq', 'wc', 't20wc', 'gq', 'rq'].includes(kind), cup: kind === 'wc' || kind === 't20wc',
-    real: !!S.real, realFixture: /^(CWCPO-2026|ASIA-2027|NEPBAN-2027|WC50-2027|CWCQ-2027|T20WC-2028)$/.test(S.id), stages: (def.stages || []).map((x) => x.name || ''), labels: (def.stages || []).map((x) => x.labels || null) };
+  // test: a Test series or the WTC final; wtc: the WTC cycle (its first year) a series counts in
+  return { kind, fmt, fmtL: listA ? 'List A' : fmt === ODI ? 'ODI' : fmt === TEST ? 'Test' : 'T20I', listA, official: !listA, icc: ['l2', 'cl', 'po', 'wcq', 'wc', 't20wc', 'gq', 'rq', 'wtcf'].includes(kind), cup: kind === 'wc' || kind === 't20wc',
+    test: fmt === TEST, wtc: S.wtc ?? null, trophy: S.tr || null,
+    real: !!S.real, realFixture: !!S.rf || /^(CWCPO-2026|ASIA-2027|NEPBAN-2027|WC50-2027|CWCQ-2027|T20WC-2028|WTCF-2027)$/.test(S.id), stages: (def.stages || []).map((x) => x.name || ''), labels: (def.stages || []).map((x) => x.labels || null) };
 }
 export const stageTables = (S, k) => (k === S.stage || k == null ? S.tables : (S.past && S.past[k]) || {});
 // Final placings of a season: champion and runner-up, knockout losers, then table order from the last
@@ -296,6 +303,10 @@ export function programme(G, y) {
     out.push({ id: `ASIA-${y}`, pre: 'ASIA', fmt, name: `Asia Cup ${y}`, host, start: d(y, 8, 1), ends: [d(y, 8, 9), d(y, 8, 17)], deps: [`ACCPC-${y - 1}`], resolve: (g) => asiaTeams(g, y, fmt) }); }
   if (y >= 2028 && y % 2 === 0) { const fmt = PROGRAMME.asiaFmt(y + 1) === ODI ? ODI : T20; const g = snake(ASIA_ASSOC, 2, fmt);
     out.push({ id: `ACCPC-${y}`, pre: 'ACCPC', fmt, name: `ACC Men's Premier Cup ${y}`, start: d(y, 3, 5), ends: [d(y, 3, 13), d(y, 3, 20)], teams: [...g[0], ...g[1]] }); }
+  // ----- Tests and the WTC final -----
+  out.push(...testPlan(G, y));
+  if (y >= 2027 && y % 2 === 1) { const C = y - 2; const F = wtcFinal(null, C);
+    out.push({ id: F.id, comp: 'WTCF', name: `${C === 2025 ? 'ICC World Test Championship final 2027' : `ICC World Test Championship final ${y}`} · ${F.venue}`, start: F.start, ends: [F.end], deps: [`WTC-${C}`], resolve: (g) => wtcTop2(g, C), wtcf: C }); }
   // ----- bilateral cricket -----
   out.push(...bilaterals(G, y));
   return out;
@@ -317,6 +328,8 @@ function bilaterals(G, y) {
   block('NEP', ...inYear(y, NPL_WINDOW)); if (y === 2026) block('NEP', d(2026, 10, 25), d(2026, 11, 24));
   if (y === 2027) block('NEP', d(2027, 2, 24), d(2027, 2, 31));
   const games = {}; const nOf = (comp) => (comp === 'BILAT_T20I5' ? 5 : comp.startsWith('TRI') ? 5 : 3);
+  // Test series come first: their days are kept clear, and each Test counts against the year's cap
+  for (const x of [...testPlan(G, y - 1).filter((t) => t.end >= d(y, 0, 1)), ...testPlan(G, y)]) for (const t of x.teams) { block(t, x.start - 3, x.end + 3); if (yearOf(x.start) === y) games[t] = (games[t] || 0) + x.days.length * 0.3; }
   const add = (comp, teams, s, len, name) => { for (const t of teams) { block(t, s, s + len); games[t] = (games[t] || 0) + nOf(comp); } out.push({ id: null, comp, teams, start: s, end: s + len, name }); };
   // full members' bilateral games a year, kept lower in years with a World Cup and an Asia Cup
   // (in an ODI World Cup year the full members likely to need the Qualifier play least)
@@ -367,12 +380,218 @@ function bilaterals(G, y) {
   }
   // every nation plays at least two series
   for (const c of ALL) { if (c === 'NEP') continue; let n = out.filter((x) => x.teams.includes(c)).length; let k = 0; while (n < 2 && k++ < 6) { const o = shuffled(pool.filter((x) => x !== c && regionOf(x) === regionOf(c)).concat(pool.filter((x) => x !== c)), r)[0]; if (series(c, o, T20) || series(o, c, T20)) n++; } }
+  // full members keep a white-ball year around their Tests: short series until about fifteen games
+  const wbOf = (t) => out.filter((x) => x.teams.includes(t)).reduce((a, x) => a + nOf(x.comp), 0);
+  for (const c of FULL) { const opp = shuffled([...FULL, ...top].filter((x) => x !== c), r); for (let k = 0; k < opp.length && wbOf(c) < 15; k++) { const o = opp[k]; const fmt = k % 2 ? ODI : T20; series(c, o, fmt) || series(o, c, fmt); } }
   // ids: year, host, visitor, format, with a counter for repeats
   const seenIds = {}; for (const x of out) { const base = `BIL-${y}-${x.teams.join('-')}-${x.comp === 'BILAT_ODI' || x.comp === 'TRI_ODI' ? 'ODI' : 'T20'}`; seenIds[base] = (seenIds[base] || 0) + 1; x.id = seenIds[base] > 1 ? `${base}-${seenIds[base]}` : base; }
   if (y === 2027) { const R0 = REAL.nepban27; out.push({ id: 'NEPBAN-2027', comp: 'BILAT_T20I', teams: [R0.host, R0.visitor], start: dA(R0.days[0]), end: dA(R0.days[2]) + 1, name: `${nm('NEP')} v ${nm('BAN')} · 3 T20Is · ${R0.venue}` }); }
   PLAN_CACHE.set(key, out); if (PLAN_CACHE.size > 40) PLAN_CACHE.delete(PLAN_CACHE.keys().next().value);
   return out;
 }
+// ----- Test cricket and the World Test Championship (W2) -----
+// Test series are planned a WTC cycle at a time (two years, June to March, then the final in June):
+//  - 2025–27 is real (calendar.js): the results before the save started seed the table; the series still
+//    to come are played in-game on their real dates (the game picks dates where none are published).
+//  - From 2027–29 the nine WTC sides each play six series, three at home and three away, against six of
+//    the other eight: the pairs left out form one nine-team ring (never the Ashes, the Border–Gavaskar or
+//    India v England), and hosts swap from the last meeting where they can. The 2027 Ashes is real.
+// Afghanistan, Ireland and Zimbabwe play a few Tests a year outside the WTC (in-game), as do the real
+// one-offs in OTHER_TESTS. Test series are bilateral seasons (kind 'bilat', info(S).test) with ids
+// BIL-<year>-<host>-<visitor>-Test; S.wtc is the cycle's first year for WTC series.
+// State: s.wd.intl.wtc = { [cycle]: { t: { code: [m, w, l, d, tie, deducted, points, series] }, fin } }.
+const WTC_T = WTC.teams;
+const pairKey = (a, b) => [a, b].sort().join('-');
+const TEST_GAP = 9; // days between the first days of Tests in a generated series
+// windows no Test series may use: ICC events, the Asia Cup and the IPL for the sides that play in them
+function testBlocked(t, s, e) {
+  for (let y = yearOf(s); y <= yearOf(e); y++) {
+    const hit = (a, b) => !(e < a || s > b);
+    if (FULL.includes(t) && hit(...inYear(y, IPL_WINDOW))) return true;
+    const T = PROGRAMME.t20WC(y); if (T && FULL.includes(t)) { const a = t20Start(T); if (hit(a - 6, a + 32)) return true; }
+    if (PROGRAMME.odiWC(y) && FULL.includes(t) && hit(d(y, 9, 1) - 6, d(y, 10, 22))) return true;
+    if (PROGRAMME.asiaCup(y) && ASIA_FM.includes(t)) { const [a, b] = y === 2027 ? [dA(REAL.asia27.start), dA(REAL.asia27.end)] : [d(y, 8, 1), d(y, 8, 18)]; if (hit(a - 4, b)) return true; }
+  }
+  return false;
+}
+function mkTest(h, v, days, wtc, o = {}) {
+  const n = days.length; const tr = wtc != null ? TROPHY[pairKey(h, v)] || null : null; const head = o.name || tr;
+  return { id: `BIL-${yearOf(days[0])}-${h}-${v}-Test`, comp: `TEST_${n}`, teams: [h, v], start: days[0], end: days[n - 1] + 4, ends: [days[n - 1] + 4], days,
+    name: `${head ? `${head} · ` : ''}${nm(h)} v ${nm(v)} · ${n === 1 ? 'one-off Test' : `${n} Tests`}`, test: 1, wtc, tr, ven: o.ven || null, rf: o.rf || 0 };
+}
+// A series from calendar.js: real dates (rf 1) or a window the game fills (rf 2).
+function realSeries(s, wtc) {
+  if (s.tests) return mkTest(s.h, s.v, s.tests.map((t) => dA(t[0])), wtc, { ven: s.tests.map((t) => t[1]), rf: 1, name: s.name });
+  const a = dA(s.win[0]), b = dA(s.win[1]); const gap = s.n > 1 ? Math.floor((b - a) / (s.n - 1)) : 0;
+  return mkTest(s.h, s.v, Array.from({ length: s.n }, (_, i) => a + i * gap), wtc, { ven: s.venues || null, rf: 2, name: s.name });
+}
+// Hosts that give every side three home series: the directions of an Euler circuit (every degree is six).
+function euler(T, pairs, r) {
+  const adj = Object.fromEntries(T.map((c) => [c, []])); pairs.forEach((p, i) => { adj[p[0]].push(i); adj[p[1]].push(i); });
+  for (const c of T) adj[c] = shuffled(adj[c], r);
+  const used = []; const out = []; const stack = [T[Math.floor(r() * T.length)]];
+  while (stack.length) { const u = stack[stack.length - 1]; const A = adj[u]; while (A.length && used[A[A.length - 1]]) A.pop();
+    if (!A.length) { stack.pop(); continue; } const e = A.pop(); used[e] = true; const v = pairs[e][0] === u ? pairs[e][1] : pairs[e][0]; out.push([u, v]); stack.push(v); }
+  return out;
+}
+const CYCLES = new Map();
+// Every series of the cycle starting in year C (2025, 2027, ...), with dates.
+export function cyclePlan(G, C) {
+  const key = `${st(G).seed}:${C}`; if (CYCLES.has(key)) return CYCLES.get(key);
+  const out = C === 2025 ? WTC.c25.series.map((s) => realSeries(s, 2025)) : genCycle(G, C);
+  CYCLES.set(key, out); if (CYCLES.size > 30) CYCLES.delete(CYCLES.keys().next().value); return out;
+}
+function genCycle(G, C) {
+  const r = rng(hashStr(`${st(G).seed}:wtc${C}`)); const T = WTC_T;
+  const fixed = C === 2027 ? WTC.c27.series.map((s) => realSeries(s, C)) : [];
+  const forced = Object.fromEntries(fixed.map((x) => [pairKey(...x.teams), x.teams[0]]));
+  const must = new Set(['AUS-ENG', 'AUS-IND', 'ENG-IND']); let ex = new Set();
+  for (let k = 0; k < 500; k++) { const p = shuffled(T, r); const e = p.map((c, i) => pairKey(c, p[(i + 1) % p.length])); if (!e.some((x) => must.has(x))) { ex = new Set(e); break; } }
+  const pairs = []; for (let i = 0; i < T.length; i++) for (let j = i + 1; j < T.length; j++) if (!ex.has(pairKey(T[i], T[j]))) pairs.push([T[i], T[j]]);
+  const prev = {}; for (const x of cyclePlan(G, C - 2)) prev[pairKey(...x.teams)] = x.teams[0];
+  let best = null, bs = -Infinity;
+  for (let k = 0; k < 80; k++) { const o = euler(T, pairs, r); let sc = 0;
+    for (const [h, v] of o) { const kk = pairKey(h, v); if (forced[kk]) sc += forced[kk] === h ? 100 : -100; else if (prev[kk] && prev[kk] !== h) sc += (TEST_LEN[kk] || 2) >= 5 ? 10 : 1; }
+    if (sc > bs) { bs = sc; best = o; } }
+  // dates: inside the host's home season, clear of ICC events, the IPL and each side's other Tests, spread over the two years
+  const lo = d(C, 5, 20), hi = d(C + 2, 2, 31); const busy = {}; const load = {}; const out = [...fixed];
+  const occ = (t, s, e, n = 1, count = true) => { (busy[t] ??= []).push([s, e]); if (!count) return; const y = yearOf(s); (load[t] ??= {})[y] = (load[t][y] || 0) + n; };
+  const free = (t, s, e) => (busy[t] || []).every(([a, b]) => e + 6 < a || s > b + 6) && !testBlocked(t, s, e);
+  // Tests per side per calendar year are balanced, counting the last cycle's Tests early in year C
+  for (const x of fixed) for (const t of x.teams) occ(t, x.start, x.end, x.days.length);
+  for (const s of OTHER_TESTS) { const x = realSeries(s, null); if (x.end >= lo - 200 && x.start <= hi) for (const t of x.teams) occ(t, x.start, x.end, x.days.length, x.end >= lo); }
+  for (const x of cyclePlan(G, C - 2)) if (yearOf(x.start) === C) for (const t of x.teams) occ(t, x.start, x.end, x.days.length, true);
+  const list = best.filter(([h, v]) => !forced[pairKey(h, v)]).map(([h, v]) => ({ h, v, n: TEST_LEN[pairKey(h, v)] || 2 })).sort((a, b) => b.n - a.n || hashStr(a.h + a.v) - hashStr(b.h + b.v));
+  const ANY = [[[0, 10], [11, 20]]];
+  for (const x of list) {
+    const len = (x.n - 1) * TEST_GAP + 5; let pick = null, ps = Infinity, host = x.h;
+    // the host's home season first; then the other side's (the hosts swap); then any time of year
+    for (const [h, wins] of [[x.h, HOME[x.h] || ANY], [x.v, HOME[x.v] || ANY], [x.h, ANY]]) { const v = h === x.h ? x.v : x.h;
+      for (let y = C; y <= C + 2; y++) for (const w of wins) { const [s, e] = inYear(y, w);
+        for (let q = Math.max(s, lo); q + len <= Math.min(e, hi); q += 4) { if (!free(h, q, q + len) || !free(v, q, q + len)) continue; const yy = yearOf(q);
+          const lh = ((load[h] || {})[yy] || 0) + x.n, lv = ((load[v] || {})[yy] || 0) + x.n; const sc = lh * lh + lv * lv + r() * 4; if (sc < ps) { ps = sc; pick = q; host = h; } } }
+      if (pick != null) break; }
+    if (pick == null) continue; // no room left anywhere in the cycle: the series is not played
+    const vis = host === x.h ? x.v : x.h; const it = mkTest(host, vis, Array.from({ length: x.n }, (_, i) => pick + i * TEST_GAP), C); out.push(it); for (const t of [host, vis]) occ(t, it.start, it.end, x.n);
+  }
+  return out.sort((a, b) => a.start - b.start);
+}
+// Tests outside the WTC in year y: the real one-offs, and (from 2027) a few for Afghanistan, Ireland and Zimbabwe.
+function otherTests(G, y) {
+  const out = OTHER_TESTS.map((s) => realSeries(s, null)).filter((x) => yearOf(x.start) === y); if (y < 2027) return out;
+  const r = rng(hashStr(`${st(G).seed}:oth${y}`)); const busy = {};
+  const occ = (t, s, e) => (busy[t] ??= []).push([s, e]); const free = (t, s, e) => (busy[t] || []).every(([a, b]) => e + 6 < a || s > b + 6) && !testBlocked(t, s, e);
+  const n0 = {}; for (let C = 2025; C <= y; C += 2) if (C + 2 >= y) for (const x of cyclePlan(G, C)) for (const t of x.teams) { occ(t, x.start, x.end); if (yearOf(x.start) === y) n0[t] = (n0[t] || 0) + x.days.length; }
+  for (const x of out) for (const t of x.teams) occ(t, x.start, x.end);
+  const [o1, o2, o3] = [TEST_OTHERS[y % 3], TEST_OTHERS[(y + 1) % 3], TEST_OTHERS[(y + 2) % 3]]; // the two WTC sides with the fewest Tests that year host or visit them
+  const [w1, w2] = WTC_T.slice().sort((a, b) => (n0[a] || 0) - (n0[b] || 0) || hashStr(`${a}${y}`) - hashStr(`${b}${y}`));
+  const want = [[y % 2 ? 'ZIM' : 'AFG', y % 2 ? 'AFG' : 'ZIM', 2], ['IRE', y % 2 ? 'ZIM' : 'AFG', 1], [w1, o1, y % 2 ? 1 : 2], [o2 === 'IRE' ? o3 : o2, w2, 2]];
+  const cnt = { ...n0 }; for (const x of out) for (const t of x.teams) cnt[t] = (cnt[t] || 0) + x.days.length;
+  const tryAdd = (h, v, n) => { if (h === v) return false; const len = (n - 1) * TEST_GAP + 5; const cand = [];
+    for (const w of HOME[h] || []) { const [s, e] = inYear(y, w); for (let q = s; q + len <= e; q += 4) if (free(h, q, q + len) && free(v, q, q + len)) cand.push(q); }
+    if (!cand.length) return false; const q = cand[Math.floor(r() * cand.length)]; const it = mkTest(h, v, Array.from({ length: n }, (_, i) => q + i * TEST_GAP), null); out.push(it);
+    for (const t of [h, v]) { occ(t, it.start, it.end); cnt[t] = (cnt[t] || 0) + n; } return true; };
+  for (const [h, v, n] of want) tryAdd(h, v, n);
+  // a WTC side with a thin year plays a short series against one of the three as well
+  for (const t of WTC_T) { if ((cnt[t] || 0) >= 6) continue; const o = TEST_OTHERS.slice().sort((a, b) => (cnt[a] || 0) - (cnt[b] || 0))[0]; if (!tryAdd(t, o, 2)) tryAdd(o, t, 2); }
+  return out;
+}
+const TPLAN = new Map();
+// Every Test series starting in year y.
+export function testPlan(G, y) {
+  const key = `${st(G).seed}:${y}`; if (TPLAN.has(key)) return TPLAN.get(key);
+  const out = []; for (let C = 2025; C <= y; C += 2) if (C + 2 >= y) out.push(...cyclePlan(G, C).filter((x) => yearOf(x.start) === y));
+  out.push(...otherTests(G, y)); const seenId = {};
+  const res = out.map((x) => { const n = (seenId[x.id] = (seenId[x.id] || 0) + 1); return n > 1 ? { ...x, id: `${x.id}-${n}` } : x; });
+  TPLAN.set(key, res); if (TPLAN.size > 40) TPLAN.delete(TPLAN.keys().next().value); return res;
+}
+// Make a Test series' season, with its Tests on their days and the host named first.
+function createTest(G, it) {
+  const wd = G.s.wd; const I = st(G); if (wd.seasons[it.id]) return null; const def = COMPS[it.comp];
+  // a side that cannot field eleven (a test world with a small database) plays no Tests
+  if (it.teams.some((c) => poolOf(G, c).filter((p) => !p.inj).length < 11)) { I.made[it.id] = 'skip'; return null; }
+  const S = newSeason(def, yearOf(it.start), it.teams, it.start, it.end); S.id = it.id; S.name = it.name; S.endF = it.end;
+  S.fx.forEach((f, i) => { f.d = it.days[i] ?? f.d; f.a = it.teams[0]; f.b = it.teams[1]; });
+  if (it.wtc != null) S.wtc = it.wtc; if (it.rf) S.rf = it.rf; if (it.tr) S.tr = it.tr; if (it.ven) S.ven = it.ven;
+  wd.seasons[S.id] = S; I.made[it.id] = 1; return S;
+}
+// A season's series score: { a, b, wa, wb, dr, played, n, text }.
+export function seriesScore(G, S) {
+  const [a, b] = S.teams; const t = (S.tables && S.tables.series) || {}; const wa = (t[a] || {}).w || 0, wb = (t[b] || {}).w || 0; const dr = (t[a] || {}).d || 0;
+  const played = S.fx.filter((f) => f.res).length; const n = S.fx.length; const N = (c) => nm(c);
+  let text;
+  if (!played) text = `${n === 1 ? 'One-off Test' : `${n}-Test series`} · to come`;
+  else if (n === 1) text = S.fx[0].res.text;
+  else if (S.done) text = wa === wb ? `Series drawn ${wa}–${wb}` : `${N(wa > wb ? a : b)} win ${Math.max(wa, wb)}–${Math.min(wa, wb)}`;
+  else text = wa === wb ? `Level ${wa}–${wb} after ${played} of ${n}` : `${N(wa > wb ? a : b)} lead ${Math.max(wa, wb)}–${Math.min(wa, wb)} after ${played} of ${n}`;
+  if (n > 1 && dr && played) text += ` (${dr} drawn)`;
+  return { a, b, wa, wb, dr, played, n, text };
+}
+
+// ----- the WTC table -----
+const blankW = () => [0, 0, 0, 0, 0, 0, 0, 0];
+function addW(T, team, kind, ded = 0) { const x = (T[team] ??= blankW()); x[0]++; const P = WTC.points;
+  if (kind === 'w') { x[1]++; x[6] += P.win; } else if (kind === 'l') { x[2]++; x[6] += P.loss; } else if (kind === 'd') { x[3]++; x[6] += P.draw; } else if (kind === 't') { x[4]++; x[6] += P.tie; }
+  if (ded) { x[5] += ded; x[6] -= ded; } }
+// The real 2025–27 table from the results of Tests finished before `cut` (a day number).
+export function wtcRealTable(cut) {
+  const T = {};
+  for (const s of WTC.c25.series) { if (!s.tests) continue; let any = false;
+    for (const [dt, , res, , ded] of s.tests) { if (!res || dA(dt) + 4 >= cut) continue; any = true;
+      const [kh, kv] = res === 'H' ? ['w', 'l'] : res === 'A' ? ['l', 'w'] : ['d', 'd']; addW(T, s.h, kh, (ded || {})[s.h]); addW(T, s.v, kv, (ded || {})[s.v]); }
+    if (any) { T[s.h][7]++; T[s.v][7]++; } }
+  return T;
+}
+function seedWTC(I) { I.wtc = { 2025: { t: wtcRealTable(I.start0 ?? 0), seed: I.start0 ?? 0 } }; }
+// Simulated WTC Tests go into the table once (f.w9), the final's result into the cycle.
+function wtcTick(G) {
+  const I = st(G); const wd = G.s.wd;
+  for (const S of Object.values(wd.seasons)) {
+    if (S.wtc != null && !S.real) { const C = (I.wtc[S.wtc] ??= { t: {} }); let first = !S.w9;
+      for (const f of S.fx) { if (!f.res || f.w9) continue; f.w9 = 1; const r = f.res;
+        const ka = r.draw || r.nr ? 'd' : r.tie && !r.w ? 't' : r.w === f.a ? 'w' : 'l'; const kb = ka === 'w' ? 'l' : ka === 'l' ? 'w' : ka; addW(C.t, f.a, ka); addW(C.t, f.b, kb);
+        if (first) { C.t[f.a][7]++; C.t[f.b][7]++; S.w9 = 1; first = false; } } }
+    if (S.wtcf != null && S.done && !(I.wtc[S.wtcf] && I.wtc[S.wtcf].fin)) {
+      const f = S.fx[0]; const joint = !!(f && f.res && (f.res.draw || f.res.nr || (f.res.tie && !f.res.w)));
+      if (joint) { S.joint = 1; S.champ = S.teams[0]; S.runner = S.teams[1]; } else if (f && f.res) { S.champ = f.res.w; S.runner = f.res.l; }
+      (I.wtc[S.wtcf] ??= { t: {} }).fin = { id: S.id, champ: S.champ, runner: S.runner, joint: joint ? 1 : 0 };
+    }
+  }
+  // a cycle is complete when every series is played (or was before the save): its final can be drawn
+  const y0 = yearOf(wd.day);
+  for (let C = 2025; C <= y0; C += 2) { if (I.made[`WTC-${C}`]) continue; const L = cyclePlan(G, C);
+    if (L.every((it) => { const S = wd.seasons[it.id]; return S ? S.done : !!I.made[it.id] || it.end < (I.start0 ?? 0); })) I.made[`WTC-${C}`] = 1; }
+}
+// Table rows for cycle C, best first: { code, name, m, w, l, d, t, ded, pts, con, pct, ser, pos }.
+export function wtcTable(G, C) {
+  const I = st(G); const T = (I && I.wtc && I.wtc[C] && I.wtc[C].t) || {};
+  const rows = WTC_T.map((c) => { const x = T[c] || blankW(); const con = x[0] * WTC.points.win; return { code: c, name: nm(c), m: x[0], w: x[1], l: x[2], d: x[3], t: x[4], ded: x[5], pts: x[6], con, pct: con ? Math.round((x[6] / con) * 10000) / 100 : 0, ser: x[7] }; });
+  rows.sort((a, b) => b.pct - a.pct || b.w - a.w || a.l - b.l || b.m - a.m || a.code.localeCompare(b.code)); rows.forEach((r, i) => { r.pos = i + 1; }); return rows;
+}
+export const wtcTop2 = (G, C) => wtcTable(G, C).slice(0, 2).map((r) => r.code);
+export const wtcName = (C) => (C === 2025 ? WTC.c25.name : `ICC World Test Championship ${C}–${String(C + 2).slice(2)}`);
+// When and where a cycle's final is played.
+export function wtcFinal(G, C) {
+  const y = C + 2; const real = C === 2025 ? WTC.c25.final : null; const start = real ? dA(real.start) : d(y, 5, 10); const end = real ? dA(real.end) : start + 4;
+  const S = G && G.s.wd ? G.s.wd.seasons[`WTCF-${y}`] || null : null; const fin = G && st(G) && st(G).wtc[C] ? st(G).wtc[C].fin || null : null;
+  return { id: `WTCF-${y}`, y, start, end, venue: WTC.finalHost(y), real: !!real, S, fin };
+}
+// The cycle in progress (its final not yet played), and every cycle the save knows.
+export function wtcCurrent(G) { const I = st(G); let C = 2025; while (I && I.wtc[C] && I.wtc[C].fin) C += 2; return C; }
+export function wtcCycles(G) { const I = st(G); return Object.keys((I && I.wtc) || {}).map(Number).sort((a, b) => a - b); }
+// The cycle's series for the screens: [{ it, S, line, real, done }] in date order. Played-before-the-save series
+// carry their real result; archived ones their archive line.
+export function wtcSeries(G, C) {
+  const I = st(G); const wd = G.s.wd; const arc = Object.fromEntries((I.arc || []).map((a) => [a[0], a[1]]));
+  return cyclePlan(G, C).map((it) => { const S = wd.seasons[it.id] || null; const src = C === 2025 ? WTC.c25.series.find((s) => s.h === it.teams[0] && s.v === it.teams[1]) : null;
+    if (S) { const sc = seriesScore(G, S); return { it, S, line: sc.text, real: false, done: S.done }; }
+    if (src && src.tests && it.end < (I.start0 ?? 0)) { let h = 0, v = 0, dr = 0; for (const t of src.tests) { if (t[2] === 'H') h++; else if (t[2] === 'A') v++; else if (t[2] === 'D') dr++; }
+      const line = h === v ? `Series drawn ${h}–${v}` : `${nm(h > v ? it.teams[0] : it.teams[1])} won ${Math.max(h, v)}–${Math.min(h, v)}`; return { it, S: null, line: `${line}${dr && it.days.length > 1 ? ` (${dr} drawn)` : ''}`, real: true, done: true }; }
+    if (arc[it.id]) { const [w, sc] = String(arc[it.id]).split(' '); return { it, S: null, line: sc ? `${nm(w)} won ${sc}` : `Series drawn ${w}`, real: false, done: true }; }
+    const made = I.made[it.id]; return { it, S: null, line: made && made !== 1 ? 'Not played' : it.start < wd.day ? 'Not played' : 'To come', real: false, done: it.start < wd.day };
+  });
+}
+
 // Associates with ODI status now: the League 2 sides (and the Play-off and Qualifier teams in their year).
 export function odiStatus(G) {
   const wd = G.s.wd; const cur = Object.values(wd.seasons).filter((S) => prefixOf(S.comp) === 'CWCL2' || S.id === 'CWCL2-2023').sort((a, b) => b.y - a.y)[0];
@@ -388,6 +607,7 @@ function planner(G, y) {
   if (!ENABLED || !G.s.wd) return []; seen(G); injectSides(G); const day = G.s.wd.day; const I = st(G); const out = [];
   for (const it of programme(G, y)) {
     if (!it.teams || it.start < day || I.made[it.id] || G.s.wd.seasons[it.id]) continue;
+    if (it.test) { createTest(G, it); continue; } // made here so the Tests keep their own days
     const comp = compFor(G, it, it.teams); const end = it.ends ? it.ends[Math.min(1, it.ends.length - 1)] : it.end;
     if (!COMPS[comp]) buildDef(comp, it.teams, { share: it.ends && it.ends.length > 1 ? (it.ends[0] - it.start) / Math.max(1, it.ends[1] - it.start) : undefined });
     if (!/^(BILAT|TRI)/.test(comp)) I.made[it.id] = 1; out.push({ comp, id: it.id, name: it.name, teams: it.teams, start: it.start, end });
@@ -408,7 +628,7 @@ function create(G, it, day) {
   const share = ends.length > 1 ? (ends[0] - start) / Math.max(1, ends[1] - start) : undefined;
   const def = COMPS[comp] && !BUILD[prefixOf(comp)] ? COMPS[comp] : buildDef(comp, teams, { share });
   const S = newSeason(def, yearOf(start), teams, start, ends[Math.min(1, ends.length - 1)]);
-  S.id = it.id; S.name = it.name; if (ends.length > 2) { S.ends = ends; } S.endF = ends[ends.length - 1]; if (it.host) S.host = it.host;
+  S.id = it.id; S.name = it.name; if (ends.length > 2) { S.ends = ends; } S.endF = ends[ends.length - 1]; if (it.host) S.host = it.host; if (it.wtcf != null) S.wtcf = it.wtcf;
   G.s.wd.seasons[S.id] = S; I.made[it.id] = 1; return S;
 }
 
@@ -417,20 +637,27 @@ function create(G, it, day) {
 export function tick(G) {
   if (!ENABLED || !G.s || !G.s.wd) return; seen(G); ensureDefs(G); injectSides(G); const wd = G.s.wd; const I = st(G); const day = wd.day; const y0 = yearOf(day);
   for (let y = y0 - 1; y <= y0 + 1; y++) for (const it of programme(G, y)) {
+    // a save whose year was planned before Tests existed gets them now, where the dates are clear
+    if (it.test) { if (!I.made[it.id] && !wd.seasons[it.id] && wd.years[yearOf(it.start)] && it.start > day && it.start - day <= 200) { if (clashes(G, it)) I.made[it.id] = 'clash'; else createTest(G, it); } continue; }
     if (it.teams || I.made[it.id] || wd.seasons[it.id]) continue; if (it.ends[it.ends.length - 1] < day) { I.made[it.id] = 'missed'; continue; }
     const ready = (it.deps || []).every((id) => { const S = wd.seasons[id]; return S ? S.done : !!I.made[id] || id === 'CWCL2-2023' || id === 'CL-2024'; });
     if (ready || it.start - day <= 7) create(G, it, day);
   }
+  try { wtcTick(G); } catch (e) { console.error('wtc', e); }
   for (const h of hooks) { try { h(G); } catch (e) { console.error('intl hook', e); } }
   announce(G);
 }
 // Other modules (rankings, Nepal's games) add work to the tick.
+const clashes = (G, it) => Object.values(G.s.wd.seasons).some((S) => !S.done && S.fx.some((f) => !f.res && (it.teams.includes(f.a) || it.teams.includes(f.b)) && f.d >= it.start - 1 && f.d <= it.end + 1));
+export { wtcTick };
 const hooks = []; export const onTick = (f) => { if (!hooks.includes(f)) hooks.push(f); };
 
 // News when a big event finishes (in-game).
 function announce(G) {
   const I = st(G); const wd = G.s.wd;
-  for (const S of Object.values(wd.seasons)) { if (!S.done || I.ann[S.id] || S.real) continue; const k = info(S).kind; if (!['wc', 't20wc', 'asia', 'wcq', 'po', 'gq', 'l2', 'cl', 'accpc', 'rq'].includes(k)) { I.ann[S.id] = 1; continue; }
+  for (const S of Object.values(wd.seasons)) { if (!S.done || I.ann[S.id] || S.real) continue; const k = info(S).kind;
+    if (k === 'wtcf') { I.ann[S.id] = 1; if (S.wtcf != null) wtcTick(G); const C = S.wtcf ?? S.y - 2;
+      G.news(S.joint ? `${nm(S.teams[0])} and ${nm(S.teams[1])} share the World Test Championship` : `${nm(S.champ)} win the World Test Championship`, 'intl', { to: '/international?tab=tests', sub: 'World', detail: `In-game. ${wtcName(C)} final${S.joint ? ' drawn: joint winners' : `: ${nm(S.champ)} beat ${nm(S.runner)}`}.` }); continue; } if (!['wc', 't20wc', 'asia', 'wcq', 'po', 'gq', 'l2', 'cl', 'accpc', 'rq'].includes(k)) { I.ann[S.id] = 1; continue; }
     I.ann[S.id] = 1; const nep = S.teams.includes('NEP'); const pl = placing(S); const pos = pl.indexOf('NEP');
     const big = k === 'wc' || k === 't20wc' || k === 'asia';
     let head = big ? `${nm(S.champ)} win the ${sbase(S)}` : `${sbase(S)}: ${nm(S.champ)} finish top`;

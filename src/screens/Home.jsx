@@ -46,7 +46,7 @@ export function WorldCard({ ev, m }) {
     <>
       <p className="faint t-micro">National match · {CR.seasonName(S)} · {dayLabel(f.d)}{f.ko ? ` · ${f.ko === 'F' ? 'Final' : f.ko}` : ''}</p>
       {m ? <p className="cr-teams"><T2 id={f.a} /><T2 id={f.b} /></p> : <H1><T2 id={f.a} /><span className="faint" style={{ fontWeight: 400 }}>v</span><T2 id={f.b} /></H1>}
-      <p className="t-small mut">{f.fmt === 'ODI' ? 'ODI · 50 overs' : 'T20I · 20 overs'} · Squad {sel.picked ? 'picked by you' : 'picked by the assistant'} · XI {sel.xi.length}/11{last ? ` · ${CR.nationName(G, opp)} last: ${last.res.text}` : ''}</p>
+      <p className="t-small mut">{{ ODI: 'ODI · 50 overs', Test: 'Test · 5 days', FC4: 'First-class · 4 days', FC3: 'First-class · 3 days', FC2: 'First-class · 2 days' }[f.fmt] || 'T20I · 20 overs'} · Squad {sel.picked ? 'picked by you' : 'picked by the assistant'} · XI {sel.xi.length}/11{last ? ` · ${CR.nationName(G, opp)} last: ${last.res.text}` : ''}</p>
       <div className={m ? 'cr-btns' : 'hero-btns'}>
         <button type="button" className={`btn btn-primary${m ? '' : ' btn-lg'}`} disabled={busy} onClick={go}>{busy ? 'Moving on…' : !due ? `Continue to ${short(f.d)}` : live ? 'Back to the match' : 'Play live'}</button>
         <Link to={`/nation?fmt=${f.fmt}`} className={`btn${m ? '' : ' btn-lg'}`}>Pick squad</Link>
