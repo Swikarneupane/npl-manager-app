@@ -3,7 +3,7 @@ Andrew Balbirnie|1990|BAT|70|0||R|-1,1,1|NWW
 Cade Carmichael|2002|BAT|62|0||R|-1,0,1|NK
 Paul Stirling|1990|BAT|72|35|OB|R|1,1,-2|NK
 Harry Tector|1999|BAT|71|30|OB|R|0,1,0|LEI
-Tim Tector|2003|BAT|62|0||R|1,0,-1|LEI
+Tim Tector|2003|BAT|62|0||R|1,0,-1|
 Curtis Campher|1999|AR|66|62|RFM|R|0,0,0|LEI
 Gareth Delany|1997|AR|62|58|LB|R|2,0,-2|NWW
 George Dockrell|1992|AR|64|62|SLA|R|0,0,0|LEI
@@ -24,7 +24,7 @@ Craig Young|1990|BOWL|25|66|RFM|R|0,0,0|NWW
 Gavin Hoey|2001|BOWL|25|62|LB|R|0,0,0|LEI
 Matthew Humphreys|2002|BOWL|25|64|SLA|R|0,0,0|NK
 Andy McBrine|1993|AR|56|66|OB|L|0,0,1|NWW
-Ben White|1998|BOWL|20|62|LB|R|1,0,-1|LEI
+Ben White|1998|BOWL|20|62|LB|R|1,0,-1|
 Sam Topping|2005|BAT|58|0||L|0,0,0|NWW
 Neil Rock|2000|WK|60|0||L|0,0,0|NK
 Fionn Hand|1998|AR|50|60|RM|R|0,0,0|LEI
@@ -34,3 +34,4 @@ Murray Commins|1997|BAT|60|0||L|0,0,0|
 Tyrone Kane|1994|BOWL|35|58|RFM|R|0,0,0|MUN
 Simi Singh|1987|AR|58|60|OB|R|0,0,0|
 Peter Chase|1993|BOWL|20|60|RFM|R|0,0,0|
+Jack Carson|2000|BOWL|18|57|OB|R|1,0,-1|

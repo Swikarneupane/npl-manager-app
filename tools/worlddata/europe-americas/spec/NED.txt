@@ -24,3 +24,4 @@ Ben Fletcher|2000|BOWL|20|56|LM|L|0,0,0|
 Shariz Ahmad|2003|BOWL|20|60|LB|L|0,0,0|
 Daniel Doram|1997|BOWL|30|58|SLA|L|0,0,0|
 Aryan Dutt|2003|BOWL|30|64|OB|R|0,0,0|
+Shane Snater|1996|BOWL|27|62|RFM|R|1,0,-1|

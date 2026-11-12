@@ -16,6 +16,7 @@ import { poolOf, registry, wp } from './players.js';
 import { autoSquad, autoXI, value } from './squads.js';
 import { dayOfDate, dayOfLabel, yearOf, short } from './dates.js';
 import { cautiousIndex } from '../game/game.js';
+import * as Club from './club.js';
 import { simFixture, completeSquad, startOffseason, afterFixture } from '../lib/flow.js';
 
 export const MEMBER = Object.fromEntries(NATIONS_DB.map((n) => [n[0], n[2]]));
@@ -34,13 +35,17 @@ const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 export function ensure(G) {
   const wd = G.s.wd; if (!wd) return null;
   wd.jobs ??= []; wd.jobHist ??= []; wd.offers ??= []; wd.xi ??= {}; wd.squads ??= {}; wd.cr ??= { offerDay: wd.day, apps: {} };
-  for (const j of wd.jobs) if (j.kind === 'nation') { j.board ??= 60; j.rec ??= { p: 0, w: 0, l: 0 }; j.sinceDay ??= wd.day; j.obj ??= []; }
+  for (const j of wd.jobs) if (j.kind === 'nation' || Club.isAbroad(j)) { j.board ??= 60; j.rec ??= { p: 0, w: 0, l: 0 }; j.sinceDay ??= wd.day; j.obj ??= []; }
   return wd;
 }
 export const jobs = (G) => (G.s.wd && G.s.wd.jobs) || [];
 export const clubJob = (G) => jobs(G).find((j) => j.kind === 'club') || null;
 export const nationJob = (G) => jobs(G).find((j) => j.kind === 'nation') || null;
-export const hasClub = (G) => !G.s.wd || !!clubJob(G); // a save without the world is a club career
+export const nplJob = (G) => jobs(G).find((j) => j.kind === 'club' && (!j.comp || j.comp === 'NPL')) || null;
+export const abroadJob = (G) => Club.abroadJob(G);
+// the NPL phase machine waits for the user only while the user holds an NPL club job
+export const hasClub = (G) => !G.s.wd || !!nplJob(G); // a save without the world is a club career
+export const mySide = (G, f) => [f.a, f.b].find((t) => ST.isUserTeam(G, t)) || null;
 export const userNation = (G) => { const j = nationJob(G); return j ? j.team : null; };
 export const rep = (G) => G.s.manager.rep;
 export const addRep = (G, d) => { G.s.manager.rep = clamp(Math.round((G.s.manager.rep + d) * 10) / 10, 0, 100); };
@@ -53,7 +58,7 @@ export const keyIn = (p, keys) => (p ? (keys.includes(p.id) ? p.id : p.wid && ke
 // The NPL's club job follows the phase 2 game: taking another franchise (Club screen) changes G.user, and
 // the board's dismissal (s.sacked) waits for the user to take an offer or carry on without a club.
 export function syncClub(G) {
-  const wd = ensure(G); if (!wd) return; const j = clubJob(G); if (!j) return;
+  const wd = ensure(G); if (!wd) return; const j = nplJob(G); if (!j) return;
   if (j.team !== G.user && G.teams[G.user]) { endJob(G, j, j.sacked ? 'sacked' : 'left'); wd.jobs.push({ kind: 'club', comp: 'NPL', team: G.user, since: G.year, sinceDay: wd.day }); }
   else if (G.s.sacked) j.sacked = true;
 }
@@ -70,10 +75,15 @@ export function takeJob(G, kind, team, { comp = 'NPL', replace = false, quiet = 
   const wd = ensure(G); const cur = kind === 'club' ? clubJob(G) : nationJob(G);
   if (cur && cur.team === team) return 'You already hold that job.';
   if (cur && !replace) return `You already manage ${nationName(G, cur.team)}. Leave that job first.`;
-  if (kind === 'club' && !G.teams[team]) return 'No such club.';
+  if (kind === 'club' && comp === 'NPL' && !G.teams[team]) return 'No such club.';
+  if (kind === 'club' && comp !== 'NPL') { registry(G); if (!Club.teamsAndLevels(G).some((t) => t.id === team && t.league === comp)) return 'No such club.'; }
   if (kind === 'nation' && !MEMBER[team]) return 'No such nation.';
   if (cur) endJob(G, cur, 'left');
-  if (kind === 'club') {
+  if (kind === 'club' && comp !== 'NPL') {
+    const j = { kind: 'club', comp, team, since: yearOf(wd.day), sinceDay: wd.day, board: 60, obj: [], objY: null, rec: { p: 0, w: 0, l: 0 } };
+    wd.jobs.push(j); setObjectives(G, j);
+    for (const S of ST.seasons(G)) for (const f of S.fx) if (f.res && (f.a === team || f.b === team)) f.cj = 1;
+  } else if (kind === 'club') {
     if (team !== G.user) G.takeJob(team); else { G.s.sacked = false; G.s.offers = null; G.teams[team].board = Math.max(G.teams[team].board, 55); }
     wd.jobs.push({ kind: 'club', comp, team, since: G.year, sinceDay: wd.day });
   } else {
@@ -90,14 +100,14 @@ export function takeJob(G, kind, team, { comp = 'NPL', replace = false, quiet = 
 export function resign(G, kind) {
   const wd = ensure(G); const j = kind === 'club' ? clubJob(G) : nationJob(G); if (!j) return 'You do not hold that job.';
   if (kind === 'club' && G.s.liveMatch && G.s.liveMatch.n) return 'Finish the match in progress first.';
-  endJob(G, j, j.sacked ? 'sacked' : 'resigned'); if (kind === 'club') { G.s.sacked = false; G.s.offers = null; G.s.promises = []; }
+  endJob(G, j, j.sacked ? 'sacked' : 'resigned'); if (kind === 'club' && !Club.isAbroad(j)) { G.s.sacked = false; G.s.offers = null; G.s.promises = []; }
   addRep(G, -1);
   G.news(`You have left ${nationName(G, j.team)}.`, 'world', { sub: kind === 'club' ? 'The club carries on under a caretaker' : 'The board will appoint a successor' });
   return null;
 }
 export function sack(G, j, why) {
   endJob(G, j, 'sacked'); addRep(G, -4);
-  G.news(`${nationName(G, j.team)} have dismissed you as national team manager.`, 'world', { sub: 'Sacked', detail: why });
+  G.news(`${nationName(G, j.team)} have dismissed you as ${j.kind === 'club' ? 'head coach' : 'national team manager'}.`, 'world', { sub: 'Sacked', detail: why });
 }
 
 // ----- offers and applications -----
@@ -118,7 +128,8 @@ export function makeOffers(G, rnd = Math.random) {
   const pickW = (list) => { let t = list.reduce((a, c) => a + w(c), 0) * rnd(); for (const c of list) { t -= w(c); if (t <= 0) return c; } return list[list.length - 1]; };
   const n = el.length ? (rnd() < (nj ? 0.3 : 0.75) ? 1 : 0) + (rnd() < (nj ? 0.05 : 0.3) ? 1 : 0) : 0; const left = el.slice();
   for (let k = 0; k < n && left.length; k++) { const c = pickW(left); left.splice(left.indexOf(c), 1); out.push({ id: `o${day}${c}`, kind: 'nation', team: c, day, until: day + 45 }); }
-  if (!clubJob(G) && r >= 40 && rnd() < 0.6) { const cs = clubCands(G).filter((t) => !have.has(t)); if (cs.length) { const t = cs[Math.floor(rnd() * cs.length)]; out.push({ id: `o${day}${t}`, kind: 'club', comp: 'NPL', team: t, day, until: day + 45 }); } }
+  for (const x of Club.offers(G, rnd, have)) { if (out.some((o) => o.kind === 'club')) break; out.push({ id: `o${day}${x.team}`, kind: 'club', comp: x.comp, team: x.team, day, until: day + 45 }); }
+  if (!clubJob(G) && !out.some((o) => o.kind === 'club') && r >= 40 && rnd() < 0.6) { const cs = clubCands(G).filter((t) => !have.has(t)); if (cs.length) { const t = cs[Math.floor(rnd() * cs.length)]; out.push({ id: `o${day}${t}`, kind: 'club', comp: 'NPL', team: t, day, until: day + 45 }); } }
   wd.offers.push(...out);
   for (const o of out) G.news(`${nationName(G, o.team)} would like to talk about their ${o.kind === 'club' ? 'head coach' : 'national team'} job.`, 'world', { sub: 'Job offer', detail: `The offer stands until ${short(o.until)}. See Jobs.` });
   return out;
@@ -206,6 +217,9 @@ export const sackLine = (G) => SACK[(G.s.settings && G.s.settings.difficulty) ||
 // Everything that follows the clock: new objectives each year, results counted, reviews, offers.
 export function tick(G, rnd = Math.random) {
   const wd = ensure(G); if (!wd) return; syncClub(G);
+  Club.tick(G, rnd);
+  const aj = Club.abroadJob(G);
+  if (aj) clubJobTick(G, aj);
   const j = nationJob(G);
   if (j) {
     if (j.objY !== yearOf(wd.day)) setObjectives(G, j);
@@ -216,6 +230,13 @@ export function tick(G, rnd = Math.random) {
   if (wd.day - (wd.cr.offerDay ?? wd.day) >= 90) { wd.cr.offerDay = wd.day; makeOffers(G, rnd); }
 }
 
+function clubJobTick(G, j) {
+  const y = yearOf(G.s.wd.day); if (j.objY !== y) setObjectives(G, j);
+  for (const S of ST.seasons(G)) for (const f of S.fx) if (f.res && !f.cj && (f.a === j.team || f.b === j.team)) { f.cj = 1; afterResult(G, j, S, f); }
+  review(G, j); if (!jobs(G).includes(j)) return;
+  j.vs ??= []; for (const S of Club.leagueSeasons(G, j.comp)) if (S.done && S.teams.includes(j.team) && !j.vs.includes(S.id)) { j.vs.push(S.id); Club.verdict(G, j, S); if (j.board < sackLine(G)) { sack(G, j, `Board confidence fell to ${j.board}.`); return; } }
+}
+
 // ----- national squads and the XI -----
 export function nationSel(G, code, fmt) { const wd = ensure(G); return (wd.xi[code] && wd.xi[code][fmt]) || null; }
 // a key is a database id or an NPL id; an NPL player found in the database later still matches either
@@ -223,6 +244,7 @@ const sameP = (p, k) => !!p && (p.id === k || p.wid === k);
 const byKey = (G, k) => registry(G).by[k] || wp(G, k) || Object.values(G.players).find((p) => p.wid === k) || null;
 // The squad (15), XI (11), batting order, captain and keeper the user's side will use in this format.
 export function selection(G, code, fmt) {
+  if (Club.isClubTeam(G, code)) return Club.selection(G, code, fmt);
   // with the assistant on (Settings), or before the user picks, the assistant's squad and XI are used
   const wd = ensure(G); const asst = !!(G.s.settings && G.s.settings.assistant); const picked = !asst && wd.squads[code] && wd.squads[code][fmt];
   const squad = picked ? picked.map((k) => byKey(G, k)).filter((p) => p && !p.retired) : autoSquad(poolOf(G, code).filter((p) => !p.inj), fmt);
@@ -298,10 +320,11 @@ export function nextEvent(G) {
   const wd = ensure(G); if (!wd) return null; const y = yearOf(wd.day); ST.ensureYear(G, y); ST.ensureYear(G, y + 1);
   const wf = ST.nextUserFixture(G); const ne = hasClub(G) ? nplEvent(G) : null;
   const w = wf ? { kind: 'world', S: wf[0], f: wf[1], day: wf[1].d } : null;
-  if (w && (!ne || w.day <= ne.day)) return w; return ne;
+  const ce = Club.clubEvent(G); let best = ne; if (w && (!best || w.day <= best.day)) best = w; if (ce && (!best || ce.day <= best.day)) best = ce; return best;
 }
 export function eventLabel(G, ev) {
   if (!ev) return 'Nothing scheduled';
+  if (ev.kind === 'club') return `${ST.teamName(G, Club.abroadJob(G).team)} ${Club.stageLabel(ev)}`;
   if (ev.kind === 'world') return `${nationName(G, ev.f.a)} v ${nationName(G, ev.f.b)} · ${seasonName(ev.S)}`;
   if (ev.what === 'match') return `${G.teams[ev.f.home].name.split(' ')[0]} v ${G.teams[ev.f.away].name.split(' ')[0]} · NPL`;
   return NPL_WHAT[ev.what] || ev.what;
@@ -393,9 +416,10 @@ export function nationSummary(G) {
   return out;
 }
 // A new career: the NPL club job (from Game.create), a national job, or both.
-export function startCareer(G, { club = true, nation = null } = {}) {
+export function startCareer(G, { club = true, nation = null, abroad = null } = {}) {
   const wd = ensure(G); if (!wd) return;
-  if (!club) { wd.jobs = wd.jobs.filter((j) => j.kind !== 'club'); G.s.inbox = G.s.inbox.filter((n) => n.kind === 'league' && !/^The ICC/.test(n.text)); }
+  if (abroad) { const t = Club.teamsAndLevels(G).find((x) => x.id === abroad); if (t) { club = false; wd.jobs = wd.jobs.filter((j) => j.kind !== 'club'); G.s.inbox = G.s.inbox.filter((n) => n.kind === 'league' && !/^The ICC/.test(n.text)); takeJob(G, 'club', abroad, { comp: t.league, quiet: true }); } }
+  else if (!club) { wd.jobs = wd.jobs.filter((j) => j.kind !== 'club'); G.s.inbox = G.s.inbox.filter((n) => n.kind === 'league' && !/^The ICC/.test(n.text)); }
   if (nation) takeJob(G, 'nation', nation, { quiet: true });
   if (nation) G.news(`Welcome. You are the new ${nationName(G, nation)} national team manager${club ? `, and head coach of ${G.teams[G.user].name}` : ''}.`, 'world', { sub: 'New job', detail: club ? 'Players you call up miss NPL matches that clash with national fixtures.' : 'The NPL runs without you. Clubs may call if your reputation grows.' });
 }

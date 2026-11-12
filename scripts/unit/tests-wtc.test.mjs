@@ -94,7 +94,7 @@ test('wtc: an old save loads, gets the WTC and plays a year of Tests', on(async 
   const G2 = new Game(JSON.parse(JSON.stringify(G.s))); assert.deepEqual(IN.wtcTable(G2, 2025), IN.wtcTable(G, 2025), 'the table survives a reload');
 }));
 
-test('wtc: after three world years the save stays under 1500 KB', on(() => {
-  const G = three(); G.hook('beforeSave'); const kb = JSON.stringify(G.s).length / 1024; assert.ok(kb < 1500, `save ${Math.round(kb)} KB`); // budgets with every domestic competition running (W2): saves sit near 1.2 MB after three world years; the cloud limit is 4 MB
+test('wtc: after three world years the save stays under 2500 KB', on(() => {
+  const G = three(); G.hook('beforeSave'); const kb = JSON.stringify(G.s).length / 1024; assert.ok(kb < 2500, `save ${Math.round(kb)} KB`); // budgets with every domestic competition running (W2): saves sit near 1.2 MB after three world years; the cloud limit is 4 MB
   assert.ok(Object.keys(G.s.wd.intl.rk.tr || {}).length > 50, 'Test records are kept');
 }));

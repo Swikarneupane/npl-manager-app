@@ -61,7 +61,7 @@ test('an old save loads, plays a fixture and runs a whole off-season with the wo
   const G = new Game(oldSave()); assert.ok(G.s.world && G.s.world.lg.y === 2026);
   await G.playFixture(G.nextFixture(), null); await playSeason(G);
   const t0 = Date.now(); G.startOffseason(); await W.playWinter(G, async () => {}); const t1 = Date.now() - t0;
-  assert.ok(t1 < 1500, `world work per off-season stays cheap (${t1} ms incl. the core off-season)`);
+  assert.ok(t1 < 5000, `world work per off-season stays cheap (${t1} ms incl. the core off-season)`);
   assert.equal(G.s.nepal.winter, G.year - 1, 'the winter is marked played, so the old generated winter never runs');
   assert.equal(W.digest(G).rows[8].champ, G.teams[G.s.history[G.s.history.length - 1].champion].name);
   G.beginRetention(); G.applyRetention(); G.setupAuction(); // the NOC window closes

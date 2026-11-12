@@ -281,12 +281,14 @@ export function archive(G) {
     const S = wd.seasons[id]; if (S.real) continue;
     // scorecards: two weeks for other matches, two months for Nepal's (once the save has seen them)
     for (const f of S.fx) { if (!f.res) continue; const nep = f.a === 'NEP' || f.b === 'NEP'; const age = day - f.d;
-      if (f.card && (nep ? f.nx && age > 60 : age > 14)) delete f.card; if (!nep && age > 30) { delete f.res.top; delete f.res.pom; } }
+      // scorecards: Nepal's for two months; other matches for two weeks, or three days in domestic and franchise cricket
+      const quick = S.comp && ST.defOf(S) && (ST.defOf(S).kind === 'domestic' || ST.defOf(S).kind === 'franchise') && !(S.fx.some((x) => x.user));
+      if (f.card && !f.user && (nep ? f.nx && age > 60 : age > (quick ? 3 : 14))) delete f.card; if (!nep && !f.user && age > (quick ? 14 : 30)) { delete f.res.top; delete f.res.pom; } }
     if (!S.done) continue; const last = IN.lastDay(S); const kind = IN.info(S).kind;
     // domestic seasons: four months after the end only the knockouts, tables and leading players stay;
     // after three years the season becomes one archive line (champion and runner-up)
     const def = ST.defOf(S);
-    if (def && def.kind === 'domestic') {
+    if (def && (def.kind === 'domestic' || def.kind === 'franchise')) {
       for (const f of S.fx) if (f.res && day - f.d > 14) { delete f.res.top; delete f.res.pom; }
       if (!S.old && day - last > 45) { S.old = 1; S.fx = S.fx.filter((f) => f.ko || COMPS_KO(S, f.stage)); for (const f of S.fx) { delete f.card; if (f.res) { delete f.res.top; delete f.res.pom; } } trimStats(G, S, 'domestic'); }
       if (day - last > 1095) { I.arc.push([id, `${S.champ || ''} won${S.runner ? `, ${S.runner} runners-up` : ''}`, last]); delete wd.seasons[id]; delete wd.st[id]; }

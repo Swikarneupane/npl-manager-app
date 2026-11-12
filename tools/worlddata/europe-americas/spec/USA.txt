@@ -25,3 +25,14 @@ Ayan Desai|2003|BOWL|25|54|LM|L|0,0,0|
 Ehsan Adil|1993|BOWL|25|62|RFM|R|0,0,0|
 Aaron Jones|1994|BAT|70|0||R|1,0,-1|
 Unmukt Chand|1993|BAT|64|0||R|1,0,-1|
+Saif Badar|1998|BAT|55|31|LB|R|1,0,-1|
+Matthew Tromp|2005|AR|57|55|RFM|R|1,0,-1|
+Carmi le Roux|1993|BOWL|18|61|LFM|R|1,0,-1|
+Kristopher Ramsaran|1992|BOWL|21|63|LB|R|1,0,-1|
+Corey Anderson|1990|AR|61|59|LFM|L|1,0,-1|
+Rahul Jariwala|2004|WK|61|8||R|1,0,-1|
+Cameron Gannon|1989|AR|59|57|RFM|R|1,0,-1|
+Sharad Lumba|1989|BAT|57|17||R|1,0,-1|
+Smit Patel|1993|WK|65|16||R|1,0,-1|
+Obus Pienaar|1989|BAT|58|12||R|1,0,-1|
+Ian Holland|1990|AR|56|54|RM|R|1,0,-1|

@@ -1,7 +1,7 @@
 // Scotland: national and domestic players. Ratings are the game's estimates.
 // record: [id, name, nat, born, role, bat, bowl, type, hand, fm, teams]  (see docs/world/ARCHITECTURE.md)
 // Real players carry only name, nationality, approximate birth year, role, batting hand, bowling type and teams.
-// Players for Scotland Dec 2024 - Feb 2026 (Wikipedia, updated 13 Aug 2026) plus the 2026 T20 World Cup squad. Domestic teams: the three Regional Super Series sides of 2026 (Cricket Scotland); player registrations to them not verified, so their rosters are generated.
+// W3: players added from the 2026 Hundred, MLC and CPL squads and the 18 county Current squad tables (Wikipedia, read 12 Nov 2026); birth year, hand, bowling type and role from the article or table; ratings are the game estimates (league-tier default, higher for current internationals). Players for Scotland Dec 2024 - Feb 2026 (Wikipedia, updated 13 Aug 2026) plus the 2026 T20 World Cup squad. Domestic teams: the three Regional Super Series sides of 2026 (Cricket Scotland); player registrations to them not verified, so their rosters are generated.
 export default {
   code: 'SCO', name: 'Scotland', member: 'associate', asOf: '2026-08-13',
   sources: ['https://en.wikipedia.org/wiki/Scotland_national_cricket_team#Current_squad', 'https://en.wikipedia.org/wiki/2026_Men%27s_T20_World_Cup_squads', 'https://cricketscotland.com/Article/26986078-81b6-4ece-836a-ec31c8709d97'],
@@ -30,6 +30,7 @@ export default {
     ['sco-mark-watt', 'Mark Watt', 'SCO', 1996, 'AR', 60, 72, 'SLA', 'L', { t20: 1, odi: 0, fc: -1 }, ['SCO']],
     ['sco-oliver-davidson', 'Oliver Davidson', 'SCO', 2004, 'BOWL', 25, 58, 'SLA', 'L', { t20: 0, odi: 0, fc: 0 }, ['SCO']],
     ['sco-zainullah-ihsan', 'Zainullah Ihsan', 'SCO', 2006, 'BOWL', 20, 54, 'RM', 'R', { t20: 0, odi: 0, fc: 0 }, ['SCO']],
+    ['sco-scott-currie', 'Scott Currie', 'SCO', 2001, 'AR', 60, 58, 'RFM', 'R', { t20: 1, odi: 0, fc: -1 }, ['SCO']],
   ],
   teams: [
     { id: 'SCO-CH', name: 'Caledonian Highlanders', short: 'CH', kind: 'domestic', level: 1 },

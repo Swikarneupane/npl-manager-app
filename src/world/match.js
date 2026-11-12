@@ -15,9 +15,9 @@ import { registry } from './players.js';
 
 const ODI_PAR = 270; // the win-probability model's par, scaled from 20 overs: give it an ODI par
 export function worldGame(G, S, f) {
-  const me = userNation(G); const fmt = f.fmt || 'ODI'; const P = {}; const teams = {};
+  const me = [f.a, f.b].find((t) => ST.isUserTeam(G, t)) || userNation(G); const fmt = f.fmt || 'ODI'; const P = {}; const teams = {};
   for (const t of [f.a, f.b]) {
-    const sel = t === me ? selection(G, t, fmt) : null;
+    const sel = ST.isUserTeam(G, t) ? selection(G, t, fmt) : null;
     const squad = sel ? sel.squad : ST.squadFor(G, t, fmt, S); for (const p of squad) P[p.id] = p;
     const lu = sel ? { xi: sel.xi, order: sel.order, wk: sel.wk, cap: sel.cap } : (() => { const a = autoXI(squad, fmt); const wk = a.xi.filter((p) => p.role === 'WK').sort((x, y) => y.bat - x.bat)[0] || a.xi[0]; const cap = a.xi.slice().sort((x, y) => (y.traits ? y.traits.lead : 0) - (x.traits ? x.traits.lead : 0))[0]; return { ...a, wk, cap }; })();
     for (const p of lu.xi) P[p.id] = p;

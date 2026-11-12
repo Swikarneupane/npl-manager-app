@@ -10,6 +10,7 @@ import { registry, poolOf, flush, teamInfo } from './players.js';
 import { autoSquad, autoXI } from './squads.js';
 import { dayOfDate, yearOf } from './dates.js';
 import * as Career from './career.js';
+import * as Club from './club.js';
 import './domestic.js'; // every domestic competition registers itself
 
 export const W = (G) => G.s.wd;
@@ -33,11 +34,12 @@ export function sideFor(G, team, fmt, S) {
 }
 export function squadFor(G, team, fmt, S) {
   const wd = W(G); const mine = isUserTeam(G, team) && wd.squads[team] && wd.squads[team][fmt];
+  if (teamInfo(team) && teamInfo(team).league) return Club.legalSquad(G, team, fmt, autoSquad);
   const pool = poolOf(G, team).filter((p) => !p.inj);
   if (mine) { const ps = mine.map((id) => registry(G).by[id]).filter((p) => p && !p.inj); if (ps.length >= 11) return ps; }
   return autoSquad(pool, fmt);
 }
-export const isUserTeam = (G, team) => (W(G).jobs || []).some((j) => j.team === team && j.kind === 'nation');
+export const isUserTeam = (G, team) => (W(G).jobs || []).some((j) => j.team === team && (j.kind === 'nation' || Club.isAbroad(j)));
 export const userTeams = (G) => (W(G).jobs || []).map((j) => j.team);
 
 // ----- seasons for a year -----
@@ -73,7 +75,7 @@ const topOf = (card) => card.inns.map((i) => { const b = i.bat.slice().sort((x, 
 
 export function playFast(G, S, f, rnd = Math.random) {
   const a = sideFor(G, f.a, f.fmt, S), b = sideFor(G, f.b, f.fmt, S);
-  const card = isMultiDay(f.fmt) ? fastFC(a, b, f.fmt, rnd) : fastMatch(a, b, f.fmt, rnd); f.card = compactCard(card);
+  const card = isMultiDay(f.fmt) ? fastFC(a, b, f.fmt, rnd) : fastMatch(a, b, f.fmt, rnd, f.balls ? { balls: f.balls } : {}); f.card = compactCard(card);
   addStats(G, S, card, a.xi, b.xi); recordFx(S, defOf(S), f, resultOf(G, f, card), rnd);
   for (const p of [...a.xi, ...b.xi]) p.fit = Math.max(40, (p.fit ?? 100) - 3);
   return card;
@@ -93,12 +95,15 @@ export function nextUserFixture(G) {
 export function advance(G, day, { auto = false, rnd = Math.random } = {}) {
   // next year's programme is made in the last 90 days of this one, not a year ahead (it keeps saves small)
   const wd = W(G); for (let y = yearOf(wd.day); y <= yearOf(day + 90); y++) ensureYear(G, y);
-  for (let guard = 0; guard < 20000; guard++) {
-    const list = due(G, day); if (!list.length) break; const [S, f] = list[0];
+  // The due fixtures are listed once and played in date order; the list is made again only when a match
+  // finishes a season or adds fixtures (a knockout round), since then the order can change.
+  let list = due(G, day);
+  for (let guard = 0; guard < 20000 && list.length; guard++) {
+    const [S, f] = list[0];
     if (!auto && (isUserTeam(G, f.a) || isUserTeam(G, f.b))) { wd.day = Math.max(wd.day, f.d); return [S, f]; }
-    wd.day = Math.max(wd.day, f.d); recover(G); playFast(G, S, f, rnd);
-    if (S.done) runTicks(G); // a finished event can decide who plays the next one
+    wd.day = Math.max(wd.day, f.d); recover(G); const n0 = S.fx.length; playFast(G, S, f, rnd);
     if (isUserTeam(G, f.a) || isUserTeam(G, f.b)) note(G, `The assistant took charge: ${f.res ? f.res.text : ''}.`);
+    if (S.done) { runTicks(G); list = due(G, day); } else if (S.fx.length !== n0) list = due(G, day); else list.shift();
   }
   wd.day = Math.max(wd.day, day); runTicks(G); recover(G); return null;
 }

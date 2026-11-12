@@ -1,7 +1,7 @@
 // Canada: national and domestic players. Ratings are the game's estimates.
 // record: [id, name, nat, born, role, bat, bowl, type, hand, fm, teams]  (see docs/world/ARCHITECTURE.md)
 // Real players carry only name, nationality, approximate birth year, role, batting hand, bowling type and teams.
-// Wikipedia "Current squad" (updated 20 Feb 2026) and the 2026 T20 World Cup squad. Birth years for Pargat Singh and Rishiv Joshi come from the age shown (approximate).
+// W3: players added from the 2026 Hundred, MLC and CPL squads and the 18 county Current squad tables (Wikipedia, read 12 Nov 2026); birth year, hand, bowling type and role from the article or table; ratings are the game estimates (league-tier default, higher for current internationals). Wikipedia "Current squad" (updated 20 Feb 2026) and the 2026 T20 World Cup squad. Birth years for Pargat Singh and Rishiv Joshi come from the age shown (approximate).
 export default {
   code: 'CAN', name: 'Canada', member: 'associate', asOf: '2026-02-20',
   sources: ['https://en.wikipedia.org/wiki/Canada_national_cricket_team#Current_squad', 'https://en.wikipedia.org/wiki/2026_Men%27s_T20_World_Cup_squads'],
@@ -29,6 +29,7 @@ export default {
     ['can-ravinderpal-singh', 'Ravinderpal Singh', 'CAN', 1988, 'BAT', 56, 0, '', 'R', { t20: 0, odi: 0, fc: 0 }, ['CAN']],
     ['can-kanwarpal-tathgur', 'Kanwarpal Tathgur', 'CAN', 1993, 'WK', 56, 0, '', 'R', { t20: 0, odi: 0, fc: 0 }, ['CAN']],
     ['can-dilpreet-bajwa', 'Dilpreet Bajwa', 'CAN', 2003, 'AR', 55, 55, 'OB', 'R', { t20: 0, odi: 0, fc: 0 }, ['CAN']],
+    ['can-nitish-kumar', 'Nitish Kumar', 'CAN', 1994, 'BAT', 63, 25, 'OB', 'R', { t20: 1, odi: 0, fc: -1 }, ['CAN']],
   ],
   teams: [],
   comps: [],

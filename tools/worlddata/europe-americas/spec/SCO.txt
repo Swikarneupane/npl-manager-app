@@ -22,3 +22,4 @@ Chris Greaves|1990|AR|52|62|LB|R|0,0,0|
 Mark Watt|1996|AR|60|72|SLA|L|1,0,-1|
 Oliver Davidson|2004|BOWL|25|58|SLA|L|0,0,0|
 Zainullah Ihsan|2006|BOWL|20|54|RM|R|0,0,0|
+Scott Currie|2001|AR|60|58|RFM|R|1,0,-1|

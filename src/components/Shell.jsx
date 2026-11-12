@@ -11,7 +11,7 @@ import { seasonNo, tr, userNextFixture, nextUnplayed, useNarrow } from '../lib/u
 import { tn, tnShort } from '../lib/i18n.js';
 import { DEPTH_GROUPS, MATCH_ROUTES, LEAGUE_ROUTES, NATION_ROUTES, CAL_ROUTES } from '../lib/nav.js';
 import { savedMatchFor } from '../lib/flow.js';
-import { hasClub, userNation, nationJob, nationName } from '../world/career.js';
+import { hasClub, userNation, nationJob, nationName, abroadJob } from '../world/career.js';
 import { savedWorld } from '../world/match.js';
 import { label as dayLabel, short } from '../world/dates.js';
 
@@ -46,7 +46,7 @@ function BottomBar({ more, openMore, closeMore, moreBtn }) {
     const onMoreN = more || !(loc.pathname === '/' || at([...NATION_ROUTES, '/match', ...CAL_ROUTES]));
     return (
       <nav className="bnav" aria-label="Main">
-        {item('/', 'Home', { end: true })}{item('/nation', 'Squad')}{item('/match', 'Match', { dot: live ? 'live' : null })}{item('/calendar', 'Calendar', { on: at(CAL_ROUTES) })}
+        {item('/', 'Home', { end: true })}{item(abroadJob(G) && !userNation(G) ? '/clubabroad' : '/nation', 'Squad')}{item('/match', 'Match', { dot: live ? 'live' : null })}{item('/calendar', 'Calendar', { on: at(CAL_ROUTES) })}
         <a href="#more" ref={moreBtn} className={onMoreN ? 'on' : ''} role="button" aria-haspopup="dialog" aria-expanded={more} onClick={(e) => { e.preventDefault(); if (more) closeMore(); else openMore(); }}>
           {tnShort(G, 'More')}{unreadCount(G) > 0 && <span className="badge" aria-label={`${unreadCount(G)} unread`}>{unreadCount(G) > 99 ? '99+' : unreadCount(G)}</span>}
         </a>
@@ -95,7 +95,7 @@ export default function Shell({ children }) {
   );
   const overlays = <>{more && <MoreSheet onClose={closeMore} />}{ui.decide && <DecisionSheet />}{modal}</>;
   const noClub = clubless(G); const nat = G.s.wd ? userNation(G) : null; const nj = nat ? nationJob(G) : null;
-  const ntop = noClub ? <MTop dflt title={<>{nat ? nationName(G, nat) : 'Between jobs'}</>} sub={G.s.wd ? short(G.s.wd.day) : ''} right={nj ? <>Board <b>{nj.board}</b><br />Rep <b>{Math.round(G.s.manager.rep)}</b></> : <>Rep <b>{Math.round(G.s.manager.rep)}</b></>} /> : null;
+  const ntop = noClub ? <MTop dflt title={<>{nat ? nationName(G, nat) : abroadJob(G) ? nationName(G, abroadJob(G).team) : 'Between jobs'}</>} sub={G.s.wd ? short(G.s.wd.day) : ''} right={nj ? <>Board <b>{nj.board}</b><br />Rep <b>{Math.round(G.s.manager.rep)}</b></> : <>Rep <b>{Math.round(G.s.manager.rep)}</b></>} /> : null;
   if (narrow) return (
     <>
       {ntop || <MTop dflt />}
@@ -108,7 +108,7 @@ export default function Shell({ children }) {
     <>
       <header className="top">
         <span className="brand">NPL Manager</span>
-        {noClub ? <span className="tm">{nat ? `${nationName(G, nat)} · national team` : 'Between jobs'}</span> : <span className="tm"><Dot id={G.user} />{t.name}{nat ? <span className="faint" style={{ fontWeight: 400 }}>&nbsp;· {nationName(G, nat)}</span> : null}</span>}
+        {noClub ? <span className="tm">{nat ? `${nationName(G, nat)} · national team` : abroadJob(G) ? nationName(G, abroadJob(G).team) : 'Between jobs'}</span> : <span className="tm"><Dot id={G.user} />{t.name}{nat ? <span className="faint" style={{ fontWeight: 400 }}>&nbsp;· {nationName(G, nat)}</span> : null}</span>}
         {G.s.wd && <span className="kv wide"><span>Today</span><span className="num">{dayLabel(G.s.wd.day)}</span></span>}
         <span className="kv wide"><span>Season</span><span>{seasonNo(G.year)} · {G.year}</span></span>
         <span className="phase wide">{noClub ? 'NPL · ' : ''}<b>{PHASES[ph] || ph}</b>{phaseExtra(G, ui)}</span>
@@ -119,7 +119,7 @@ export default function Shell({ children }) {
       </header>
       <div className="shell">
         {noClub ? <nav className="nav" aria-label="Main">
-          {L('/', 'Home', null, true)}{nat && L('/nation', 'National team')}{L('/match', 'Match', live ? 'Live' : '')}{L('/calendar', 'Calendar')}{L('/news', 'News', unread ? String(unread) : null)}{L('/jobs', 'Jobs', G.s.wd.offers.length ? String(G.s.wd.offers.length) : null)}
+          {L('/', 'Home', null, true)}{nat && L('/nation', 'National team')}{abroadJob(G) && L('/clubabroad', nationName(G, abroadJob(G).team))}{L('/match', 'Match', live ? 'Live' : '')}{L('/calendar', 'Calendar')}{L('/news', 'News', unread ? String(unread) : null)}{L('/jobs', 'Jobs', G.s.wd.offers.length ? String(G.s.wd.offers.length) : null)}
           <hr />{L('/season', 'NPL')}{L('/career', 'Career')}
           {DEPTH_GROUPS.filter(([g]) => g === 'World cricket').map(([g, links]) => <div key={g} className="navgrp"><hr />{links.map(([to, label]) => <NavLink key={to} to={to} className={({ isActive }) => (isActive ? 'on' : '')}>{tn(G, label)}</NavLink>)}</div>)}
           <hr />

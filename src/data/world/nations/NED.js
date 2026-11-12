@@ -1,7 +1,7 @@
 // Netherlands: national and domestic players. Ratings are the game's estimates.
 // record: [id, name, nat, born, role, bat, bowl, type, hand, fm, teams]  (see docs/world/ARCHITECTURE.md)
 // Real players carry only name, nationality, approximate birth year, role, batting hand, bowling type and teams.
-// Wikipedia "Current squad" (updated 21 Feb 2026) and the 2026 T20 World Cup squad. Domestic teams: the eight 2026 Topklasse clubs (tkcricket.com 2026 previews); club registrations not verified, so their rosters are generated.
+// W3: players added from the 2026 Hundred, MLC and CPL squads and the 18 county Current squad tables (Wikipedia, read 12 Nov 2026); birth year, hand, bowling type and role from the article or table; ratings are the game estimates (league-tier default, higher for current internationals). Wikipedia "Current squad" (updated 21 Feb 2026) and the 2026 T20 World Cup squad. Domestic teams: the eight 2026 Topklasse clubs (tkcricket.com 2026 previews); club registrations not verified, so their rosters are generated.
 export default {
   code: 'NED', name: 'Netherlands', member: 'associate', asOf: '2026-02-21',
   sources: ['https://en.wikipedia.org/wiki/Netherlands_national_cricket_team#Current_squad', 'https://en.wikipedia.org/wiki/2026_Men%27s_T20_World_Cup_squads', 'https://tkcricket.com/category/preview/preview-2026-tk/page/2/'],
@@ -32,6 +32,7 @@ export default {
     ['ned-shariz-ahmad', 'Shariz Ahmad', 'NED', 2003, 'BOWL', 20, 60, 'LB', 'L', { t20: 0, odi: 0, fc: 0 }, ['NED']],
     ['ned-daniel-doram', 'Daniel Doram', 'NED', 1997, 'BOWL', 30, 58, 'SLA', 'L', { t20: 0, odi: 0, fc: 0 }, ['NED']],
     ['ned-aryan-dutt', 'Aryan Dutt', 'NED', 2003, 'BOWL', 30, 64, 'OB', 'R', { t20: 0, odi: 0, fc: 0 }, ['NED']],
+    ['ned-shane-snater', 'Shane Snater', 'NED', 1996, 'BOWL', 27, 62, 'RFM', 'R', { t20: 1, odi: 0, fc: -1 }, ['NED']],
   ],
   teams: [
     { id: 'NED-KAM', name: 'Kampong', short: 'KAM', kind: 'domestic', level: 2 },

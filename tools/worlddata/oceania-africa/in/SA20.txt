@@ -1,0 +1,122 @@
+# SA20 season 4 (2026) squads, en.wikipedia.org/wiki/2026_SA20. Name|NAT
+@DSG
+Noor Ahmad|AFG
+Sunil Narine|WI
+Jos Buttler|ENG
+Heinrich Klaasen|SA
+Aiden Markram|SA
+Kwena Maphaka|SA
+Devon Conway|NZ
+Gerald Coetzee|SA
+David Bedingham|SA
+Marques Ackerman|SA
+Eathan Bosch|SA
+Andile Simelane|SA
+Tony de Zorzi|SA
+Dayyaan Galiem|SA
+Taijul Islam|BAN
+Evan Jones|ENG
+Gysbert Wege|SA
+David Wiese|NAM
+Daryn Dupavillon|SA
+@JSK
+Faf du Plessis|SA
+Richard Gleeson|ENG
+Akeal Hosein|WI
+James Vince|ENG
+Donovan Ferreira|SA
+Wiaan Mulder|SA
+Nandre Burger|SA
+Prenelan Subrayen|SA
+Dian Forrester|SA
+Steve Stolk|SA
+Janco Smit|SA
+Neil Timmers|SA
+Shubham Ranjane|USA
+Brandon King|WI
+Rilee Rossouw|SA
+Rivaldo Moonsamy|SA
+Imran Tahir|SA
+Reece Topley|ENG
+@MICT
+Nicholas Pooran|WI
+Corbin Bosch|SA
+Trent Boult|NZ
+Rashid Khan|AFG
+George Linde|SA
+Kagiso Rabada|SA
+Rassie van der Dussen|SA
+Ryan Rickelton|SA
+Reeza Hendricks|SA
+Dwaine Pretorius|SA
+Tristan Luus|SA
+Jason Smith|SA
+Tom Moores|ENG
+Dane Piedt|SA
+Tiaan van Vuuren|SA
+Dan Lategan|SA
+Tabraiz Shamsi|SA
+Karim Janat|AFG
+Jacques Snyman|SA
+@PRL
+Lhuan-dre Pretorius|SA
+Bjorn Fortuin|SA
+David Miller|SA
+Sikandar Raza|ZIM
+Mujeeb Ur Rahman|AFG
+Rubin Hermann|SA
+Ottniel Baartman|SA
+Gudakesh Motie|WI
+Delano Potgieter|SA
+Kyle Verreynne|SA
+Keagan Lion-Cachet|SA
+Asa Tribe|SA
+Hardus Viljoen|SA
+Jacob Johannes Basson|SA
+Dan Lawrence|ENG
+Eshan Malinga|SL
+Nqobani Mokoena|SA
+Vishen Halambage|SA
+Nqaba Peter|SA
+Thomas Rew|ENG
+@PRC
+Will Jacks|ENG
+Sherfane Rutherford|WI
+Andre Russell|WI
+Keshav Maharaj|SA
+Lungi Ngidi|SA
+Dewald Brevis|SA
+Lizaad Williams|SA
+Craig Overton|ENG
+Saqib Mahmood|ENG
+Codi Yusuf|SA
+Connor Esterhuizen|SA
+Bryce Parsons|SA
+Gideon Peters|SA
+Junaid Dawood|SA
+Will Smeed|ENG
+Meeka-eel Prince|SA
+Bayanda Majola|SA
+Wihan Lubbe|SA
+Sibonelo Makhanya|SA
+@SEC
+Tristan Stubbs|SA
+Jonny Bairstow|ENG
+Adam Milne|NZ
+Allah Ghazanfar|AFG
+Tharindu Rathnayake|SL
+Marco Jansen|SA
+Quinton de Kock|SA
+Matthew Breetzke|SA
+Anrich Nortje|SA
+Senuran Muthusamy|SA
+Patrick Kruger|SA
+Lutho Sipamla|SA
+Mitchell Van Buuren|SA
+Jordan Hermann|SA
+Beyers Swanepoel|SA
+James Coles|ENG
+Chris Wood|ENG
+Lewis Gregory|ENG
+CJ King|SA
+JP King|SA

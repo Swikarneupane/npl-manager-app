@@ -1,0 +1,41 @@
+// Major League Cricket. Ratings are the game's estimates; real players carry name, nationality, birth year, role, hand, bowling type and registrations only.
+// Squads of the 2026 season (Wikipedia lists up to 20 a team, above the 15 to 18 of the explainer, so max is 20 here: domestic retentions and draft picks, overseas signings). Ten players on the page have no article and could not be verified; they are left out and the rosters are topped up with generated players. Overseas = not American by the nationality field; many MLC players are US-resident players of other nationalities, so the count runs high. The 'min USA-qualified in the XI' of 6 is from one secondary source.
+export default {
+  code: 'MLC', name: 'Major League Cricket', kind: 'franchise', host: 'USA', asOf: '2026-07-18',
+  sources: ["https://en.wikipedia.org/wiki/2026_Major_League_Cricket_season", "https://www.mykhel.com/cricket/mlc-2026-explained-teams-squads-schedule-rules-and-players-to-watch-440957.html"],
+  teams: [
+    { id: "MLC-LAKR", name: "Los Angeles Knight Riders", short: "LAKR", city: "Los Angeles" },
+    { id: "MLC-MINY", name: "MI New York", short: "MINY", city: "New York" },
+    { id: "MLC-SFU", name: "San Francisco Unicorns", short: "SFU", city: "San Francisco" },
+    { id: "MLC-SO", name: "Seattle Orcas", short: "SO", city: "Seattle" },
+    { id: "MLC-TSK", name: "Texas Super Kings", short: "TSK", city: "Dallas" },
+    { id: "MLC-WF", name: "Washington Freedom", short: "WF", city: "Washington" },
+  ],
+  players: [
+    ["aus-lloyd-pope", "Lloyd Pope", "AUS", 1999, "BOWL", 27, 57, "LB", "R", { t20: 1, odi: 0, fc: -1 }, ["AUS"]],
+    ["afg-allah-ghazanfar", "Allah Ghazanfar", "AFG", 2006, "BOWL", 19, 69, "OB", "R", { t20: 1, odi: 0, fc: -1 }, ["AFG"]],
+    ["ind-tajinder-singh", "Tajinder Singh", "IND", 1992, "AR", 56, 54, "OB", "R", { t20: 1, odi: 0, fc: -1 }, ["IND"]],
+    ["ind-agni-chopra", "Agni Chopra", "IND", 1998, "BAT", 57, 30, "OB", "L", { t20: 1, odi: 0, fc: -1 }, ["IND"]],
+    ["ind-ravichandran-ashwin", "Ravichandran Ashwin", "IND", 1986, "AR", 59, 57, "OB", "R", { t20: 1, odi: 0, fc: -1 }, ["IND"]],
+    ["aus-brody-couch", "Brody Couch", "AUS", 1999, "BOWL", 19, 58, "RF", "L", { t20: 1, odi: 0, fc: -1 }, ["AUS"]],
+    ["pak-hammad-azam", "Hammad Azam", "PAK", 1991, "AR", 61, 59, "RFM", "R", { t20: 1, odi: 0, fc: -1 }, ["PAK"]],
+    ["pak-zia-ul-haq", "Zia Ul-Haq", "PAK", 1994, "BOWL", 21, 59, "LFM", "R", { t20: 1, odi: 0, fc: -1 }, ["PAK"]],
+    ["pak-mohammad-ilyas", "Mohammad Ilyas", "PAK", 1999, "BOWL", 23, 61, "RM", "R", { t20: 1, odi: 0, fc: -1 }, ["PAK"]],
+    ["ind-sujit-nayak", "Sujit Nayak", "IND", 1989, "BOWL", 26, 57, "SLA", "L", { t20: 1, odi: 0, fc: -1 }, ["IND"]],
+    ["sa-hardus-viljoen", "Hardus Viljoen", "SA", 1989, "BOWL", 23, 61, "RF", "R", { t20: 1, odi: 0, fc: -1 }, ["SA"]],
+    ["sa-calvin-savage", "Calvin Savage", "SA", 1993, "AR", 51, 49, "RF", "R", { t20: 1, odi: 0, fc: -1 }, ["SA"]],
+    ["sl-amshi-de-silva", "Amshi de Silva", "SL", 2001, "BOWL", 27, 64, "RFM", "R", { t20: 1, odi: 0, fc: -1 }, ["SL"]],
+    ["pak-mukhtar-ahmed", "Mukhtar Ahmed", "PAK", 1992, "BAT", 60, 31, "LB", "R", { t20: 1, odi: 0, fc: -1 }, ["PAK"]],
+    ["sl-amila-aponso", "Amila Aponso", "SL", 1993, "BOWL", 21, 67, "SLA", "R", { t20: 1, odi: 0, fc: -1 }, ["SL"]],
+    ["pak-asif-mehmood", "Asif Mehmood", "PAK", 1996, "BOWL", 27, 61, "RM", "R", { t20: 1, odi: 0, fc: -1 }, ["PAK"]],
+  ],
+  squads: {
+    'MLC-LAKR': ["wi-jason-holder", "eng-alex-hales", "wi-andre-fletcher", "wi-rovman-powell", "nz-colin-munro", "wi-andre-russell", "wi-sunil-narine", "aus-lloyd-pope", "usa-shadley-van-schalkwyk", "usa-unmukt-chand", "usa-ali-khan", "usa-saif-badar", "usa-matthew-tromp", "usa-carmi-le-roux", "wi-jahmar-hamilton", "can-nitish-kumar", "usa-kristopher-ramsaran"],
+    'MLC-MINY': ["wi-nicholas-pooran", "wi-kieron-pollard", "sa-quinton-de-kock", "sa-ryan-rickelton", "ban-shakib-al-hasan", "nz-trent-boult", "sa-corbin-bosch", "wi-romario-shepherd", "afg-allah-ghazanfar", "usa-corey-anderson", "usa-monank-patel", "ind-tajinder-singh", "usa-ehsan-adil", "usa-nosthush-kenjige", "ind-agni-chopra", "usa-rushil-ugarkar"],
+    'MLC-SFU': ["aus-matthew-short", "nz-finn-allen", "aus-aaron-hardie", "sa-lhuan-dre-pretorius", "aus-xavier-bartlett", "pak-haris-rauf", "aus-oliver-peake", "ind-ravichandran-ashwin", "ger-hassan-khan", "aus-brody-couch", "usa-sanjay-krishnamurthi", "pak-hammad-azam", "usa-juanoy-drysdale", "pak-zia-ul-haq", "pak-mohammad-ilyas"],
+    'MLC-SO': ["aus-marcus-stoinis", "nz-tim-seifert", "wi-shimron-hetmyer", "sl-dasun-shanaka", "sa-matthew-breetzke", "nz-tim-robinson", "sa-lungi-ngidi", "sa-ottniel-baartman", "aus-tanveer-sangha", "usa-harmeet-singh", "usa-ayan-desai", "usa-rahul-jariwala", "usa-shayan-jahangir", "usa-jessy-singh", "usa-ali-sheikh", "usa-cameron-gannon", "ind-sujit-nayak", "usa-shehan-jayasuriya", "usa-sharad-lumba"],
+    'MLC-TSK': ["sa-faf-du-plessis", "sa-donovan-ferreira", "sa-wiaan-mulder", "sa-rilee-rossouw", "nz-adam-milne", "sa-nandre-burger", "sa-keshav-maharaj", "wi-akeal-hosein", "sa-hardus-viljoen", "usa-shubham-ranjane", "usa-milind-kumar", "usa-saiteja-mukkamalla", "usa-mohammad-mohsin", "sa-calvin-savage", "usa-smit-patel", "sl-amshi-de-silva"],
+    'MLC-WF': ["aus-steve-smith", "aus-glenn-maxwell", "aus-mitchell-owen", "nz-lockie-ferguson", "sa-marco-jansen", "aus-jack-edwards", "nz-rachin-ravindra", "nz-mark-chapman", "aus-ben-dwarshuis", "usa-andries-gous", "usa-saurabh-netravalkar", "usa-obus-pienaar", "aus-nikhil-chaudhary", "pak-mukhtar-ahmed", "usa-ian-holland", "sl-lahiru-milantha", "sl-amila-aponso", "usa-abhishek-paradkar", "usa-yasir-mohammad", "pak-asif-mehmood"],
+  },
+  rules: { min: 15, max: 20, overseas: { max: 9, xi: 5, dataMax: 14, by: "nationality" }, recruit: "draft", retain: 6, purse: 1150000, currency: "USD", usMinXI: 6 },
+};

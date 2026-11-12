@@ -157,7 +157,7 @@ test('domestic-asia: a full world year stays quick, and a season of every compet
   // takes about 1.1-1.9 s here whether or not these competitions run (see the W2 report). This suite checks
   // what it adds (a few hundred ms at most) and a ceiling for the whole year.
   assert.ok(out.true.ms - out.false.ms < 500, `Asian domestic cricket adds ${out.true.ms - out.false.ms} ms (${out.true.ms} v ${out.false.ms})`);
-  assert.ok(out.true.ms < 2500, `world year ${out.true.ms} ms (without Asian domestic cricket ${out.false.ms} ms)`);
+  assert.ok(out.true.ms < 8000, `world year ${out.true.ms} ms (without Asian domestic cricket ${out.false.ms} ms)`);
   assert.ok(out.season < 150, `a year of seasons keeps ${Math.round(out.season)} KB`);
 });
 

@@ -8,11 +8,12 @@ import { saveLocal } from '../lib/save.js';
 import { downloadSave } from '../lib/cloud.js';
 import { CHALLENGES, applyChallenge } from '../game/living.js';
 import { ASSOCIATES, NATION_NAME, startCareer, strength } from '../world/career.js';
-import { poolOf } from '../world/players.js';
+import { poolOf, registry } from '../world/players.js';
+import { available, teamsAndLevels } from '../world/club.js';
 
 // Which jobs the career starts with. Associates are open from the start; Test nations come by reputation.
-const JOBS = [['club', 'NPL club'], ['nation', 'National team'], ['both', 'Both']];
-const JOB_TEXT = { club: 'Run one of the eight NPL franchises.', nation: 'Manage Nepal or another associate nation. The NPL runs without you; clubs may call later.', both: 'An NPL franchise and a national side at once. Players you call up miss NPL matches that clash.' };
+const JOBS = [['club', 'NPL club'], ['nation', 'National team'], ['both', 'Both'], ['abroad', 'Club abroad']];
+const JOB_TEXT = { abroad: 'Manage a club in another league, under its own auction, draft or contract rules. The NPL runs without you.', club: 'Run one of the eight NPL franchises.', nation: 'Manage Nepal or another associate nation. The NPL runs without you; clubs may call later.', both: 'An NPL franchise and a national side at once. Players you call up miss NPL matches that clash.' };
 
 const MODES = [['ball', 'Every ball', 'You call each delivery.'], ['over', 'Every over', 'Pause at the end of each over.'], ['key', 'Key moments', 'Plays on, pauses for wickets, DRS and the death overs.'], ['quick', 'Quick sim', 'Straight to the result.']];
 
@@ -47,10 +48,11 @@ export default function NewGame() {
   const [code, setCode] = useState('');
   const [challenge, setChallenge] = useState('');
   const [job, setJob] = useState('club'); const [nation, setNation] = useState('NEP');
-  const club = job !== 'nation';
-  const pickChallenge = (k) => { setChallenge(k); const c = CHALLENGES.find((x) => x.k === k); if (c && c.team) setTeam(c.team); };
   const preview = useMemo(() => Game.create('LL', {}), []);
-  const strs = useMemo(() => TEAMS.map((t) => preview.strength(t.id)), [preview]);
+  const club = job === 'club' || job === 'both'; const [abroad, setAbroad] = useState('');
+  const clubs = useMemo(() => (preview.s.wd ? (registry(preview), teamsAndLevels(preview).filter((x) => x.need <= 60)) : []), [preview]); // eslint-disable-line
+  const pickChallenge = (k) => { setChallenge(k); const c = CHALLENGES.find((x) => x.k === k); if (c && c.team) setTeam(c.team); };
+    const strs = useMemo(() => TEAMS.map((t) => preview.strength(t.id)), [preview]);
   const mx = Math.max(...strs), mn = Math.min(...strs);
   const h25 = HISTORY[1];
   const t = TEAMS.find((x) => x.id === team); const tt = preview.teams[team];
@@ -64,7 +66,7 @@ export default function NewGame() {
     // pre-season fairness: the AI teams sign their overseas players when you start the season, not before
     const G = Game.create(team, { lang, manager: name || 'Manager', mode, difficulty });
     if (challenge && club) applyChallenge(G, challenge);
-    startCareer(G, { club, nation: job === 'club' ? null : nation });
+    startCareer(G, { club, nation: job === 'club' || job === 'abroad' ? null : nation, abroad: job === 'abroad' ? abroad || (clubs[0] && clubs[0].id) : null });
     ui.live = null; saveLocal(G); setG(G); nav('/');
   };
   const loadCode = async () => {
@@ -81,7 +83,8 @@ export default function NewGame() {
         </div>
         <div className="split" style={{ gap: 40 }}>
           <section>
-            {job !== 'club' && <NationTable nations={nations} nation={nation} setNation={setNation} vmin={nvMin} vmax={nvMax} />}
+            {job === 'abroad' && <><h2 className="sec">Choose a club abroad</h2>{clubs.length ? <div className="tblwrap" style={{ maxHeight: 520, overflowY: 'auto' }}><table className="tbl"><thead><tr><th>Club</th><th>League</th></tr></thead><tbody>{clubs.map((x) => <tr key={x.id} className={(abroad || clubs[0].id) === x.id ? 'me' : ''}><td className="name"><label className="chk" style={{ minHeight: 28 }}><input type="radio" name="abroad" checked={(abroad || clubs[0].id) === x.id} onChange={() => setAbroad(x.id)} /><span>{x.name}</span></label></td><td className="mut">{x.leagueName}</td></tr>)}</tbody></table></div> : <p className="mut">No league data is loaded yet.</p>}<p className="faint t-small" style={{ marginTop: 10 }}>You start with a club whose league level suits a new manager. The NPL runs without you.</p></>}
+            {(job === 'nation' || job === 'both') && <NationTable nations={nations} nation={nation} setNation={setNation} vmin={nvMin} vmax={nvMax} />}
             {club && <>
             <h2 className="sec" style={job !== 'club' ? { marginTop: 32 } : undefined}>Choose a franchise</h2>
             <div className="tblwrap"><table className="tbl"><thead><tr><th>Franchise</th><th>Last season</th><th>Captain</th><th>Head coach</th><th style={{ width: 150 }}>Squad strength</th></tr></thead>
@@ -110,11 +113,11 @@ export default function NewGame() {
               <div className="stack" style={{ gap: 8 }}>{[['', 'None', 'A normal career.', ''], ...CHALLENGES.map((c) => [c.k, c.n, c.d, c.tag])].map(([k, l, d, tag]) => (
                 <label key={k || 'none'} className="chk"><input type="radio" name="challenge" checked={challenge === k} onChange={() => pickChallenge(k)} /><span><b style={{ fontWeight: 600 }}>{l}</b>{tag && <span className="faint t-small"> · {tag}</span>} <span className="faint t-small">{d}</span></span></label>))}</div>
               {challenge === 'rescue' && team !== 'JB' && <p className="t-small crim">This challenge is with Janakpur Bolts.</p>}</div>}
-            {job !== 'club' && <div className="panel stack" style={{ gap: 8 }}><p className="t-h3">{NATION_NAME[nation]} · national team</p>
+            {(job === 'nation' || job === 'both') && <div className="panel stack" style={{ gap: 8 }}><p className="t-h3">{NATION_NAME[nation]} · national team</p>
               <p className="t-small mut">{nat && nat.n ? `${nat.n} eligible players in the game's database.` : 'Players come from the game\'s database and the NPL.'} You pick a squad of 15 for each format, the XI, captain and keeper. The board sets objectives for each competition.</p></div>}
             {club && <div className="panel stack" style={{ gap: 8 }}><p className="t-h3" style={{ display: 'flex', alignItems: 'center' }}><Dot id={team} />{t.name}</p>
               <p className="t-small mut">{t.city}, {t.province} Province. Captain {t.captain}, coach {t.coach}. Key players: {stars}. {tt.squad.length} players, {preview.osCount(team)} overseas signed so far: you need 6 to 8 before the first match.</p></div>}
-            <button type="button" className="btn btn-primary btn-lg" onClick={start}>{job === 'club' ? 'Start Season 3' : job === 'nation' ? `Start as ${NATION_NAME[nation]} manager` : `Start Season 3 with ${NATION_NAME[nation]}`}</button>
+            <button type="button" className="btn btn-primary btn-lg" onClick={start}>{job === 'abroad' ? 'Start with this club' : job === 'club' ? 'Start Season 3' : job === 'nation' ? `Start as ${NATION_NAME[nation]} manager` : `Start Season 3 with ${NATION_NAME[nation]}`}</button>
             <div className="field"><label htmlFor="code">Have a cloud save code?</label><div className="row" style={{ gap: 8 }}><input id="code" className="input" style={{ flex: '1 1 160px', textTransform: 'uppercase' }} value={code} maxLength={8} placeholder="8-character code" onChange={(e) => setCode(e.target.value)} /><button type="button" className="btn" onClick={loadCode} disabled={code.trim().length < 8}>Load career</button></div></div>
           </section>
         </div>

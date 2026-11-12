@@ -16,7 +16,7 @@ const HOW = { resigned: 'Resigned', sacked: 'Dismissed', left: 'Left for another
 
 function Current() {
   const { G, update, toast } = useGame(); const [ask, setAsk] = useState(null);
-  const c = CR.clubJob(G), n = CR.nationJob(G); const t = c && G.teams[c.team];
+  const c = CR.clubJob(G), n = CR.nationJob(G); const ab = c && CR.abroadJob(G) === c; const t = c && !ab && G.teams[c.team];
   const leave = (kind) => update(() => { const e = CR.resign(G, kind); if (e) toast(e); else { autosave(G); toast(kind === 'club' ? 'The club carries on under a caretaker.' : 'The board will appoint a successor.'); } setAsk(null); });
   const only = CR.jobs(G).length === 1;
   const Resign = ({ kind, name }) => (ask === kind
@@ -24,7 +24,11 @@ function Current() {
     : <button type="button" className="btn btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => setAsk(kind)}>Resign</button>);
   return (
     <div className="cr-jobs">
-      {c ? <section className="panel cr-job"><p className="t-micro faint">Club · NPL · since {c.since}</p><p className="t-h3" style={{ display: 'flex', alignItems: 'center' }}><Dot id={c.team} />{t.name}</p>
+      {ab ? <section className="panel cr-job"><p className="t-micro faint">Club · {c.comp} · since {c.since}</p><p className="t-h3">{CR.nationName(G, c.team)}</p>
+        <p className="t-small">Record P{c.rec.p} W{c.rec.w} L{c.rec.l}</p><div className="sechead" style={{ margin: 0 }}><span className="t-small mut">Board confidence</span><span className="t-small num">{c.board} · {boardMood(c.board)}</span></div><Meter pct={c.board} blue />
+        {c.obj.length ? <ul className="mlist">{c.obj.map((o) => <li key={o.sid} style={{ minHeight: 36, padding: '6px 0' }}><Link to={`/comp/${o.sid}`} className="grow t-small">{o.t}</Link><span className={`t-micro b6 ${o.done === true ? 'blu' : o.done === false ? 'crim' : 'faint'}`}>{o.done === true ? 'Met' : o.done === false ? 'Missed' : 'Open'}</span></li>)}</ul> : null}
+        <div className="row" style={{ gap: 8 }}><Link to="/clubabroad" className="btn btn-sm">Club</Link><Resign kind="club" name={CR.nationName(G, c.team)} /></div></section>
+        : c ? <section className="panel cr-job"><p className="t-micro faint">Club · NPL · since {c.since}</p><p className="t-h3" style={{ display: 'flex', alignItems: 'center' }}><Dot id={c.team} />{t.name}</p>
         <p className="t-small">{(t.objective || {}).txt || 'No objective set'}</p>
         <div className="sechead" style={{ margin: 0 }}><span className="t-small mut">Board confidence</span><span className="t-small num">{t.board} · {boardMood(t.board)}</span></div><Meter pct={t.board} blue />
         <Link to="/club" className="t-small">Club and board</Link><Resign kind="club" name={t.name} /></section>
@@ -44,7 +48,7 @@ function Offers() {
   const take = (o) => update(() => { const cur = o.kind === 'club' ? CR.clubJob(G) : CR.nationJob(G); const e = CR.accept(G, o.id, { replace: !!cur }); if (e) toast(e); else { autosave(G); toast(`You are now with ${CR.nationName(G, o.team)}.`); } });
   if (!list.length) return <p className="t-small faint">No offers right now. Boards look again every few months, more often when your reputation grows.</p>;
   return <ul className="mlist">{list.map((o) => { const cur = o.kind === 'club' ? CR.clubJob(G) : CR.nationJob(G); return (
-    <li key={o.id} style={{ flexWrap: 'wrap', gap: 8 }}><span className="grow">{o.kind === 'club' ? <Dot id={o.team} /> : <NDot id={o.team} />}<b>{CR.nationName(G, o.team)}</b> · {o.kind === 'club' ? 'NPL head coach' : 'national team'}<br /><span className="l2">{o.applied ? 'After your application' : 'They called you'} · open until {short(o.until)}{cur ? ` · you would leave ${CR.nationName(G, cur.team)}` : ''}</span></span>
+    <li key={o.id} style={{ flexWrap: 'wrap', gap: 8 }}><span className="grow">{o.kind === 'club' ? (o.comp && o.comp !== 'NPL' ? null : <Dot id={o.team} />) : <NDot id={o.team} />}<b>{CR.nationName(G, o.team)}</b> · {o.kind === 'club' ? `${o.comp && o.comp !== 'NPL' ? o.comp : 'NPL'} head coach` : 'national team'}<br /><span className="l2">{o.applied ? 'After your application' : 'They called you'} · open until {short(o.until)}{cur ? ` · you would leave ${CR.nationName(G, cur.team)}` : ''}</span></span>
       <span className="row" style={{ gap: 6 }}><button type="button" className="btn btn-sm btn-primary" onClick={() => take(o)}>Accept</button><button type="button" className="btn btn-sm btn-ghost" onClick={() => update(() => { CR.decline(G, o.id); autosave(G); })}>Decline</button></span></li>); })}</ul>;
 }
 function Apply() {
@@ -68,7 +72,7 @@ export function JobHistory({ compact }) {
   if (!rows.length) return <p className="t-small faint">No jobs yet.</p>;
   return (
     <ul className="mlist">{rows.slice(0, compact ? 6 : 50).map((j, i) => (
-      <li key={i}><span className="grow">{j.kind === 'club' ? <Dot id={j.team} /> : <NDot id={j.team} />}{CR.nationName(G, j.team)} <span className="faint t-small">· {j.kind === 'club' ? 'NPL club' : 'national team'}</span><br />
+      <li key={i}><span className="grow">{j.kind === 'club' && (!j.comp || j.comp === 'NPL') ? <Dot id={j.team} /> : j.kind === 'club' ? null : <NDot id={j.team} />}{CR.nationName(G, j.team)} <span className="faint t-small">· {j.kind === 'club' ? `${j.comp && j.comp !== 'NPL' ? j.comp : 'NPL'} club` : 'national team'}</span><br />
         <span className="l2">{j.since ?? j.from}{j.cur ? ' to now' : ` to ${j.to}`}{j.rec && j.rec.p != null ? ` · P${j.rec.p} W${j.rec.w} L${j.rec.l}` : ''}</span></span>
         <span className={`t-small ${j.cur ? 'blu' : j.how === 'sacked' ? 'crim' : 'faint'}`}>{j.cur ? 'Current' : HOW[j.how] || j.how}</span></li>))}</ul>
   );

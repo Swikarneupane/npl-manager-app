@@ -5,6 +5,7 @@
 // A database player who is already in the NPL game (same name and nationality) resolves to that NPL
 // player, so club and country share one form, fitness and injury record.
 import { NATION_CODES, loadNation } from '../data/world/index.js';
+import { LEAGUE_CODES, loadLeague } from '../data/world/leagues.js';
 import { NATION } from '../game/world-data.js';
 import { OS_NAMES, NEP_NAMES } from '../game/data.js';
 import { NAME_POOLS } from '../data/world/names.js';
@@ -13,14 +14,21 @@ import { autoSquad, autoXI } from './squads.js';
 let DB = null; // id -> static record (array form)
 let DBN = 0; // records in DB (the registry's cache key)
 const NAT = {}; // nation code -> module default export
+const LG = {}; // league code -> module default export
+export const leagueData = (code) => LG[code] || null;
+export const leagues = () => Object.values(LG);
 export const dbReady = () => !!DB;
 export async function loadDB(codes = NATION_CODES) {
   const mods = await Promise.all(codes.map((c) => loadNation(c).then((m) => [c, m.default || m]).catch((e) => { console.warn('nation data', c, e); return [c, null]; })));
   DB = DB || {}; for (const [c, m] of mods) { if (!m) continue; NAT[c] = m; for (const r of m.players) DB[r[0]] = r; }
+  const lms = await Promise.all(LEAGUE_CODES.map((c) => loadLeague(c).then((m) => m.default || m).catch((e) => { console.warn('league data', c, e); return null; })));
+  addLeagues(lms.filter(Boolean));
   DBN = Object.keys(DB).length; CAL = null; return DB;
 }
+// League modules add players missing from the nation files; their squads are resolved by the registry.
+function addLeagues(mods) { for (const m of mods) { LG[m.code] = m; for (const r of m.players || []) if (!DB[r[0]]) DB[r[0]] = r; } }
 // For tests and Node: load synchronously from already-imported modules.
-export function setDB(mods) { DB = {}; for (const m of mods) { NAT[m.code] = m; for (const r of m.players) DB[r[0]] = r; } DBN = Object.keys(DB).length; CAL = null; }
+export function setDB(mods, leagueMods = []) { DB = {}; for (const k in LG) delete LG[k]; for (const m of mods) { NAT[m.code] = m; for (const r of m.players) DB[r[0]] = r; } addLeagues(leagueMods); DBN = Object.keys(DB).length; CAL = null; }
 export const nationData = (code) => NAT[code] || null;
 export const record = (id) => (DB && DB[id]) || null;
 
@@ -80,17 +88,38 @@ function genRecord(c, team, slot, year, used) {
 function rosters(R, year, pd) {
   R.team = {}; const used = new Set(Object.values(R.by).map((p) => p && p.name));
   for (const c in NAT) for (const t of NAT[c].teams || []) { TEAMS[t.id] = { ...t, nat: c }; R.team[t.id] = []; }
+  const byName = {}; for (const id in R.by) { const p = R.by[id]; if (p) byName[nameKey(p.name, p.nat)] = id; }
+  for (const code in LG) { const m = LG[code]; for (const t of m.teams || []) { TEAMS[t.id] = { ...t, nat: t.nat || m.host || null, league: code, kind: m.kind }; R.team[t.id] = [];
+    for (const key of (m.squads || {})[t.id] || []) { let id = DB[key] ? key : null; if (!id && typeof key === 'string' && key.includes('|')) { const [nm, nat] = key.split('|'); id = byName[nameKey(nm, nat)] || null; }
+      if (id && R.by[id] && !R.team[t.id].includes(id)) R.team[t.id].push(id); } } }
   for (const id in R.by) { const p = R.by[id]; for (const t of (p && (p.regs || (DB && DB[id] && DB[id][10]))) || []) if (R.team[t] && !R.team[t].includes(id)) R.team[t].push(id); }
   for (const tid in R.team) { const t = TEAMS[tid]; const list = R.team[tid];
     const have = (role) => list.filter((id) => R.by[id] && R.by[id].role === role).length;
-    let slot = 0; while (list.length < 18 && slot < 40) { const role = ROLE_SLOTS[slot % ROLE_SLOTS.length]; const need = ROLE_SLOTS.filter((r) => r === role).length;
+    const want = (t.league && LG[t.league] && LG[t.league].rules && LG[t.league].rules.min) || 18;
+    let slot = 0; while (list.length < want && slot < 40) { const role = ROLE_SLOTS[slot % ROLE_SLOTS.length]; const need = ROLE_SLOTS.filter((r) => r === role).length;
       if (have(role) < need) { const rec = genRecord(t.nat, t, slot, year, used); GEN[rec[0]] = rec; const p = hydrate(rec, year, pd[rec[0]]); p.gen = 1; p.dom = 1; R.by[rec[0]] = p; list.push(rec[0]); }
       slot++; }
-    if (list.length < 18) for (; list.length < 18 && slot < 80; slot++) { const rec = genRecord(t.nat, t, slot, year, used); GEN[rec[0]] = rec; const p = hydrate(rec, year, pd[rec[0]]); p.gen = 1; p.dom = 1; R.by[rec[0]] = p; list.push(rec[0]); }
+    if (list.length < want) for (; list.length < want && slot < 80; slot++) { const rec = genRecord(t.nat, t, slot, year, used); GEN[rec[0]] = rec; const p = hydrate(rec, year, pd[rec[0]]); p.gen = 1; p.dom = 1; R.by[rec[0]] = p; list.push(rec[0]); }
   }
 }
 export const teamInfo = (id) => TEAMS[id] || null;
-export const rosterOf = (G, teamId) => ((registry(G).team || {})[teamId] || []).map((id) => freshen(G, registry(G).by[id])).filter((p) => p && !p.retired);
+// A team's roster. When retirements leave it short of its minimum, deterministic generated players
+// fill the gaps (slots 100 and up, so they never collide with the first top-up).
+export const rosterOf = (G, teamId) => {
+  const R = registry(G); const ids = (R.team || {})[teamId] || []; const t = TEAMS[teamId];
+  let list = ids.map((id) => freshen(G, R.by[id])).filter((p) => p && !p.retired);
+  const want = t ? ((t.league && LG[t.league] && LG[t.league].rules && LG[t.league].rules.min) || 18) : 0;
+  if (t && list.length < want) {
+    // the fill-ins for this team at this roster size are made once and reused
+    const key = `${teamId}:${list.length}`; const cache = (R.fill ??= {});
+    if (!cache[key]) { const used = R.used || (R.used = new Set(Object.values(R.by).map((p) => p && p.name))); const fill = [];
+      for (let slot = 100; list.length + fill.length < want && slot < 140; slot++) { const rec = genRecord(t.nat, t, slot, G.year, used); let p = R.by[rec[0]];
+        if (!p) { GEN[rec[0]] = rec; p = hydrate(rec, G.year, ((G.s.wd && G.s.wd.pd) || {})[rec[0]]); p.gen = 1; p.dom = 1; R.by[rec[0]] = p; } if (!p.retired) fill.push(p); }
+      cache[key] = fill; }
+    list = list.concat(cache[key]);
+  }
+  return list;
+};
 
 // ----- calibration between the NPL scale and the world database -----
 // The NPL data rates Nepal's players on the league's own scale; the database was rated nation by

@@ -1,7 +1,7 @@
 // West Indies: national and domestic players. Ratings are the game's estimates.
 // record: [id, name, nat, born, role, bat, bowl, type, hand, fm, teams]  (see docs/world/ARCHITECTURE.md)
 // Real players carry only name, nationality, approximate birth year, role, batting hand, bowling type and teams.
-// National squad list: Wikipedia "Current squad" (CWI contracts 2025-26, players since 17 Nov 2024; last updated 17 Nov 2025) plus the 2026 T20 World Cup squad. Added: Pooran, Russell, Narine and other leading regional / franchise players, each checked against their Wikipedia infobox (Nov 2026). Players from Combined Campuses or the WI Academy have no regional team listed.
+// W3: players added from the 2026 Hundred, MLC and CPL squads and the 18 county Current squad tables (Wikipedia, read 12 Nov 2026); birth year, hand, bowling type and role from the article or table; ratings are the game estimates (league-tier default, higher for current internationals). National squad list: Wikipedia "Current squad" (CWI contracts 2025-26, players since 17 Nov 2024; last updated 17 Nov 2025) plus the 2026 T20 World Cup squad. Added: Pooran, Russell, Narine and other leading regional / franchise players, each checked against their Wikipedia infobox (Nov 2026). Players from Combined Campuses or the WI Academy have no regional team listed.
 export default {
   code: 'WI', name: 'West Indies', member: 'full', asOf: '2026-02-07',
   sources: ['https://en.wikipedia.org/wiki/West_Indies_cricket_team#Current_squad', 'https://www.espncricinfo.com/story/justin-greaves-sherfane-rutherford-jomel-warrican-get-cricket-west-indies-contracts-for-2025-26-season-1505145', 'https://en.wikipedia.org/wiki/2026_Men%27s_T20_World_Cup_squads', 'Wikipedia player articles (infobox), read 11 Nov 2026'],
@@ -68,6 +68,35 @@ export default {
     ['wi-rahkeem-cornwall', 'Rahkeem Cornwall', 'WI', 1993, 'AR', 55, 68, 'OB', 'R', { t20: -1, odi: 0, fc: 2 }, ['WI', 'WI-LEE']],
     ['wi-shamarh-brooks', 'Shamarh Brooks', 'WI', 1988, 'BAT', 66, 0, '', 'R', { t20: -1, odi: 0, fc: 1 }, ['WI', 'WI-BAR']],
     ['wi-andre-fletcher', 'Andre Fletcher', 'WI', 1987, 'WK', 66, 0, '', 'R', { t20: 3, odi: 0, fc: -6 }, ['WI']],
+    ['wi-jahmar-hamilton', 'Jahmar Hamilton', 'WI', 1990, 'WK', 62, 16, '', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI', 'WI-LEE']],
+    ['wi-joshua-james', 'Joshua James', 'WI', 2001, 'BOWL', 19, 61, 'RM', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI', 'WI-TT']],
+    ['wi-kadeem-alleyne', 'Kadeem Alleyne', 'WI', 2001, 'AR', 53, 51, 'RM', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI']],
+    ['wi-kofi-james', 'Kofi James', 'WI', 1997, 'BAT', 63, 27, 'OB', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI', 'WI-LEE']],
+    ['wi-rivaldo-clarke', 'Rivaldo Clarke', 'WI', 2002, 'WK', 61, 27, 'RM', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI']],
+    ['wi-shadrack-descarte', 'Shadrack Descarte', 'WI', 1997, 'AR', 53, 51, 'RFM', 'L', { t20: 1, odi: 0, fc: -1 }, ['WI', 'WI-WIN']],
+    ['wi-zachary-carter', 'Zachary Carter', 'WI', 2006, 'BAT', 62, 25, 'SLA', 'L', { t20: 1, odi: 0, fc: -1 }, ['WI', 'WI-BAR']],
+    ['wi-isai-thorne', 'Isai Thorne', 'WI', 2004, 'BOWL', 19, 61, 'RM', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI']],
+    ['wi-jonathan-van-lange', 'Jonathan van Lange', 'WI', 2006, 'AR', 58, 56, 'RM', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI']],
+    ['wi-matthew-nandu', 'Matthew Nandu', 'WI', 2003, 'BAT', 57, 32, 'OB', 'L', { t20: 1, odi: 0, fc: -1 }, ['WI', 'WI-GUY']],
+    ['wi-ronaldo-alimohamed', 'Ronaldo Alimohamed', 'WI', 1998, 'AR', 58, 56, 'RFM', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI', 'WI-GUY']],
+    ['wi-veerasammy-permaul', 'Veerasammy Permaul', 'WI', 1989, 'BOWL', 19, 63, 'SLA', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI', 'WI-GUY']],
+    ['wi-jeavor-royal', 'Jeavor Royal', 'WI', 1998, 'BOWL', 27, 61, 'SLA', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI']],
+    ['wi-kelvin-pitman', 'Kelvin Pitman', 'WI', 2003, 'BOWL', 23, 63, 'RF', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI']],
+    ['wi-romaine-morris', 'Romaine Morris', 'WI', 1995, 'BAT', 59, 10, '', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI']],
+    ['wi-shaqkere-parris', 'Shaqkere Parris', 'WI', 2003, 'BAT', 63, 14, '', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI']],
+    ['wi-vitel-lawes', 'Vitel Lawes', 'WI', 2007, 'BOWL', 27, 63, 'LB', 'L', { t20: 1, odi: 0, fc: -1 }, ['WI']],
+    ['wi-ashmead-nedd', 'Ashmead Nedd', 'WI', 2001, 'BOWL', 21, 64, 'SLA', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI']],
+    ['wi-jeremiah-louis', 'Jeremiah Louis', 'WI', 1996, 'BOWL', 26, 60, 'RF', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI', 'WI-LEE']],
+    ['wi-kevin-wickham', 'Kevin Wickham', 'WI', 2003, 'BAT', 62, 31, 'OB', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI', 'WI-BAR']],
+    ['wi-amari-goodridge', 'Amari Goodridge', 'WI', 2001, 'BOWL', 23, 60, 'RM', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI']],
+    ['wi-johann-jeremiah', 'Johann Jeremiah', 'WI', 1999, 'BAT', 58, 29, 'OB', 'L', { t20: 1, odi: 0, fc: -1 }, ['WI', 'WI-WIN']],
+    ['wi-joshua-bishop', 'Joshua Bishop', 'WI', 2000, 'BOWL', 26, 62, 'SLA', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI']],
+    ['wi-kamil-pooran', 'Kamil Pooran', 'WI', 1996, 'BAT', 58, 29, 'RM', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI', 'WI-TT']],
+    ['wi-mckenny-clarke', 'McKenny Clarke', 'WI', 2003, 'BOWL', 18, 60, 'RFM', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI']],
+    ['wi-dominic-drakes', 'Dominic Drakes', 'WI', 1998, 'AR', 62, 60, 'LFM', 'L', { t20: 1, odi: 0, fc: -1 }, ['WI', 'WI-BAR']],
+    ['wi-jyd-goolie', 'Jyd Goolie', 'WI', 1997, 'BAT', 60, 28, 'OB', 'L', { t20: 1, odi: 0, fc: -1 }, ['WI', 'WI-TT']],
+    ['wi-nathan-edward', 'Nathan Edward', 'WI', 2005, 'AR', 56, 54, 'LFM', 'L', { t20: 1, odi: 0, fc: -1 }, ['WI']],
+    ['wi-terrance-hinds', 'Terrance Hinds', 'WI', 1992, 'BOWL', 27, 69, 'RFM', 'R', { t20: 1, odi: 0, fc: -1 }, ['WI', 'WI-TT']],
   ],
   teams: [
     { id: 'WI-BAR', name: 'Barbados Pride', short: 'BAR', kind: 'domestic', level: 1 },

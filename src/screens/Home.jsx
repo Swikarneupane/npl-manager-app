@@ -14,6 +14,7 @@ import { lastMeeting } from '../game/depth.js';
 import { autosave } from '../lib/save.js';
 import { simUntilUser, simFixture, simToSeasonEnd, completeSquad, startSeason, savedMatchFor, quickSimUserMatch, startOffseason, matchPath, afterMatchRoute } from '../lib/flow.js';
 import * as CR from '../world/career.js';
+import { ClubEventCard, ClubPortal } from './ClubAbroadCard.jsx';
 import { savedWorld } from '../world/match.js';
 import { NDot } from '../components/NationBits.jsx';
 import { short, label as dayLabel } from '../world/dates.js';
@@ -36,9 +37,9 @@ export function ClockBar({ m }) {
 // The user's next national fixture: move on to the match day, then play it live or let the assistant play it.
 export function WorldCard({ ev, m }) {
   const { G, ui, update, toast } = useGame(); const nav = useNavigate(); const [busy, setBusy] = useState(false);
-  const { S, f } = ev; const now = G.s.wd.day; const due = ev.day <= now; const me = CR.userNation(G); const opp = f.a === me ? f.b : f.a;
+  const { S, f } = ev; const now = G.s.wd.day; const due = ev.day <= now; const me = CR.mySide(G, f); const opp = f.a === me ? f.b : f.a;
   const sel = CR.selection(G, me, f.fmt); const sw = savedWorld(G); const live = (ui.live && ui.live.world && ui.live.f === f && ui.live.started && !ui.live.done) || (sw && sw.f === f);
-  const j = CR.nationJob(G); const last = S.fx.filter((x) => x.res && (x.a === opp || x.b === opp)).slice(-1)[0];
+  const j = CR.jobs(G).find((x) => x.team === me); const last = S.fx.filter((x) => x.res && (x.a === opp || x.b === opp)).slice(-1)[0];
   const go = async () => { if (!due) { setBusy(true); toast('Moving on to the match day…'); try { await CR.continueWorld(G); autosave(G); } finally { setBusy(false); update(); } return; } nav('/match'); };
   const quick = () => update(() => { if (sw) delete G.s.liveMatch; ui.live = null; const r = CR.assistantPlays(G, S, f); autosave(G); toast(`${r.text}.`); });
   const T2 = ({ id }) => <span className="tm"><NDot id={id} big />{CR.nationName(G, id)}</span>;
@@ -49,7 +50,7 @@ export function WorldCard({ ev, m }) {
       <p className="t-small mut">{{ ODI: 'ODI · 50 overs', Test: 'Test · 5 days', FC4: 'First-class · 4 days', FC3: 'First-class · 3 days', FC2: 'First-class · 2 days' }[f.fmt] || 'T20I · 20 overs'} · Squad {sel.picked ? 'picked by you' : 'picked by the assistant'} · XI {sel.xi.length}/11{last ? ` · ${CR.nationName(G, opp)} last: ${last.res.text}` : ''}</p>
       <div className={m ? 'cr-btns' : 'hero-btns'}>
         <button type="button" className={`btn btn-primary${m ? '' : ' btn-lg'}`} disabled={busy} onClick={go}>{busy ? 'Moving on…' : !due ? `Continue to ${short(f.d)}` : live ? 'Back to the match' : 'Play live'}</button>
-        <Link to={`/nation?fmt=${f.fmt}`} className={`btn${m ? '' : ' btn-lg'}`}>Pick squad</Link>
+        <Link to={CR.abroadJob(G) && CR.abroadJob(G).team === me ? '/clubabroad?tab=squad' : `/nation?fmt=${f.fmt}`} className={`btn${m ? '' : ' btn-lg'}`}>Pick squad</Link>
       </div>
       <div className="row" style={{ gap: 8, alignItems: 'center' }}>
         {due && !(ui.live && ui.live.world && ui.live.started && !ui.live.done) && <button type="button" className="btn btn-ghost btn-sm" onClick={quick}>{G.s.settings.assistant ? 'Let the assistant play' : 'Quick sim'}</button>}
@@ -146,7 +147,7 @@ function DecisionPin() {
 function Hero() {
   const { G, ui, update, toast, setG } = useGame(); const nav = useNavigate();
   const s = G.s, t = G.teams[G.user];
-  if (G.s.wd && !CR.hasClub(G)) return CR.nationJob(G) ? null : <OutOfWork />;
+  if (G.s.wd && !CR.hasClub(G)) return CR.nationJob(G) || CR.abroadJob(G) ? null : <OutOfWork />;
   const busy = (fn) => async () => { toast('Simulating…'); await fn(); autosave(G); update(); };
   if (s.sacked) return (
     <Card><H1>You have been dismissed.</H1><p className="mut">The {t.name} board has ended your contract. Board confidence fell to {t.board}.</p>
@@ -368,8 +369,8 @@ function MToday() {
   return (
     <>
       <ClockBar m />
-      {ev && ev.kind === 'world' && <WorldCard ev={ev} m />}
-      {club ? (f ? <MNext f={f} pos={pos} form={form} /> : <div style={{ paddingTop: 12 }}><Hero /></div>) : !CR.nationJob(G) && <div style={{ paddingTop: 12 }}><Hero /></div>}
+      {ev && ev.kind === 'world' && <WorldCard ev={ev} m />}{ev && ev.kind === 'club' && <ClubEventCard ev={ev} />}
+      {club ? (f ? <MNext f={f} pos={pos} form={form} /> : <div style={{ paddingTop: 12 }}><Hero /></div>) : !CR.nationJob(G) && !CR.abroadJob(G) && <div style={{ paddingTop: 12 }}><Hero /></div>}
       {G.s.wd && G.s.wd.offers.length > 0 && <div style={{ paddingTop: 10 }}><OffersPin /></div>}
       {pending.length > 0 && <><p className="mhead">Needs your decision · {pending.length}</p>
         <div className="stack" style={{ gap: 10 }}>{pending.slice(0, 4).map((n) => (
@@ -460,7 +461,7 @@ function MClub() {
   );
 }
 function MNation() {
-  return <div style={{ paddingTop: 14 }} className="stack"><NationPortal /><CompsPortal /><NationResults /></div>;
+  return <div style={{ paddingTop: 14 }} className="stack"><ClubPortal /><NationPortal /><CompsPortal /><NationResults /></div>;
 }
 function HomeMobile() {
   const { G } = useGame(); const club = !G.s.wd || CR.hasClub(G); const third = club ? 'club' : 'nation';
@@ -477,11 +478,11 @@ function HomeMobile() {
 export default function Home() {
   const { G } = useGame(); const narrow = useNarrow();
   if (narrow) return <HomeMobile />;
-  const club = !G.s.wd || CR.hasClub(G); const ev = G.s.wd ? CR.nextEvent(G) : null; const wcard = ev && ev.kind === 'world' ? <WorldCard ev={ev} /> : null;
+  const club = !G.s.wd || CR.hasClub(G); const ev = G.s.wd ? CR.nextEvent(G) : null; const wcard = ev && ev.kind === 'world' ? <WorldCard ev={ev} /> : ev && ev.kind === 'club' ? <ClubEventCard ev={ev} /> : null;
   if (!club) return (
     <div className="wrap portals">
       <div className="pcol"><ClockBar /><OffersPin />{wcard}<Hero /><NationResults /><NewsPortal /></div>
-      <div className="pcol"><NationPortal /><CompsPortal /></div>
+      <div className="pcol"><ClubPortal /><NationPortal /><CompsPortal /></div>
     </div>
   );
   return (

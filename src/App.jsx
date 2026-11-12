@@ -52,6 +52,7 @@ const Calendar = lazy(() => import('./screens/Calendar.jsx'));
 const Comp = lazy(() => import('./screens/Comp.jsx'));
 const NationSquad = lazy(() => import('./screens/NationSquad.jsx'));
 const Jobs = lazy(() => import('./screens/Jobs.jsx'));
+const ClubAbroad = lazy(() => import('./screens/ClubAbroad.jsx'));
 
 class ErrorBoundary extends Component {
   constructor(p) { super(p); this.state = { err: null }; }
@@ -150,6 +151,7 @@ export default function App() {
                   <Route path="/comp/:seasonId" element={<Comp />} />
                   <Route path="/nation" element={<NationSquad />} />
                   <Route path="/jobs" element={<Jobs />} />
+                  <Route path="/clubabroad" element={<ClubAbroad />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </Suspense>

@@ -1,0 +1,13 @@
+/* Clubs abroad: team, squad, recruitment, money. Reuses the career.css vocabulary (panel, mlist, cr-pill). */
+.ca-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.ca-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 24px; }
+.ca-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
+.ca-stats > div { display: flex; flex-direction: column; gap: 2px; }
+.ca-stats .v { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ca-lot { display: flex; flex-direction: column; gap: 8px; padding: 16px; }
+.ca-price { font-size: 32px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ca-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ca-bad { color: var(--crim, #b3261e); }
+.ca-tab { margin: 12px 0 16px; }
+.ca-pick { min-width: 28px; }
+@media (max-width: 820px) { .ca-grid { grid-template-columns: 1fr; gap: 16px; } .ca-price { font-size: 28px; } .ca-tbl .hide-m { display: none; } }

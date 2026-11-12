@@ -21,3 +21,4 @@ Navneet Dhaliwal|1988|BAT|58|0||R|0,0,0|
 Ravinderpal Singh|1988|BAT|56|0||R|0,0,0|
 Kanwarpal Tathgur|1993|WK|56|0||R|0,0,0|
 Dilpreet Bajwa|2003|AR|55|55|OB|R|0,0,0|
+Nitish Kumar|1994|BAT|63|25|OB|R|1,0,-1|

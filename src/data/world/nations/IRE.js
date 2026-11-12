@@ -1,7 +1,7 @@
 // Ireland: national and domestic players. Ratings are the game's estimates.
 // record: [id, name, nat, born, role, bat, bowl, type, hand, fm, teams]  (see docs/world/ARCHITECTURE.md)
 // Real players carry only name, nationality, approximate birth year, role, batting hand, bowling type and teams.
-// Players for Ireland since 4 Oct 2025 plus Cricket Ireland contracts of March 2026 (Wikipedia, updated 1 Nov 2026), the 2026 T20 World Cup squad, and recent internationals checked against their Wikipedia infobox. Munster Reds play the white-ball interprovincials only, and sat out the 2026 Inter-Provincial Cup (three teams).
+// W3: players added from the 2026 Hundred, MLC and CPL squads and the 18 county Current squad tables (Wikipedia, read 12 Nov 2026); birth year, hand, bowling type and role from the article or table; ratings are the game estimates (league-tier default, higher for current internationals). Players for Ireland since 4 Oct 2025 plus Cricket Ireland contracts of March 2026 (Wikipedia, updated 1 Nov 2026), the 2026 T20 World Cup squad, and recent internationals checked against their Wikipedia infobox. Munster Reds play the white-ball interprovincials only, and sat out the 2026 Inter-Provincial Cup (three teams).
 export default {
   code: 'IRE', name: 'Ireland', member: 'full', asOf: '2026-11-01',
   sources: ['https://en.wikipedia.org/wiki/Ireland_cricket_team#Current_squad', 'https://cricketireland.ie/news/central-contracts-awarded/', 'https://en.wikipedia.org/wiki/2026_Men%27s_T20_World_Cup_squads', 'Wikipedia player articles (infobox), read 11 Nov 2026'],
@@ -11,7 +11,7 @@ export default {
     ['ire-cade-carmichael', 'Cade Carmichael', 'IRE', 2002, 'BAT', 62, 0, '', 'R', { t20: -1, odi: 0, fc: 1 }, ['IRE', 'IRE-NK']],
     ['ire-paul-stirling', 'Paul Stirling', 'IRE', 1990, 'BAT', 72, 35, 'OB', 'R', { t20: 1, odi: 1, fc: -2 }, ['IRE', 'IRE-NK']],
     ['ire-harry-tector', 'Harry Tector', 'IRE', 1999, 'BAT', 71, 30, 'OB', 'R', { t20: 0, odi: 1, fc: 0 }, ['IRE', 'IRE-LEI']],
-    ['ire-tim-tector', 'Tim Tector', 'IRE', 2003, 'BAT', 62, 0, '', 'R', { t20: 1, odi: 0, fc: -1 }, ['IRE', 'IRE-LEI']],
+    ['ire-tim-tector', 'Tim Tector', 'IRE', 2003, 'BAT', 62, 0, '', 'R', { t20: 1, odi: 0, fc: -1 }, ['IRE']],
     ['ire-curtis-campher', 'Curtis Campher', 'IRE', 1999, 'AR', 66, 62, 'RFM', 'R', { t20: 0, odi: 0, fc: 0 }, ['IRE', 'IRE-LEI']],
     ['ire-gareth-delany', 'Gareth Delany', 'IRE', 1997, 'AR', 62, 58, 'LB', 'R', { t20: 2, odi: 0, fc: -2 }, ['IRE', 'IRE-NWW']],
     ['ire-george-dockrell', 'George Dockrell', 'IRE', 1992, 'AR', 64, 62, 'SLA', 'R', { t20: 0, odi: 0, fc: 0 }, ['IRE', 'IRE-LEI']],
@@ -32,7 +32,7 @@ export default {
     ['ire-gavin-hoey', 'Gavin Hoey', 'IRE', 2001, 'BOWL', 25, 62, 'LB', 'R', { t20: 0, odi: 0, fc: 0 }, ['IRE', 'IRE-LEI']],
     ['ire-matthew-humphreys', 'Matthew Humphreys', 'IRE', 2002, 'BOWL', 25, 64, 'SLA', 'R', { t20: 0, odi: 0, fc: 0 }, ['IRE', 'IRE-NK']],
     ['ire-andy-mcbrine', 'Andy McBrine', 'IRE', 1993, 'AR', 56, 66, 'OB', 'L', { t20: 0, odi: 0, fc: 1 }, ['IRE', 'IRE-NWW']],
-    ['ire-ben-white', 'Ben White', 'IRE', 1998, 'BOWL', 20, 62, 'LB', 'R', { t20: 1, odi: 0, fc: -1 }, ['IRE', 'IRE-LEI']],
+    ['ire-ben-white', 'Ben White', 'IRE', 1998, 'BOWL', 20, 62, 'LB', 'R', { t20: 1, odi: 0, fc: -1 }, ['IRE']],
     ['ire-sam-topping', 'Sam Topping', 'IRE', 2005, 'BAT', 58, 0, '', 'L', { t20: 0, odi: 0, fc: 0 }, ['IRE', 'IRE-NWW']],
     ['ire-neil-rock', 'Neil Rock', 'IRE', 2000, 'WK', 60, 0, '', 'L', { t20: 0, odi: 0, fc: 0 }, ['IRE', 'IRE-NK']],
     ['ire-fionn-hand', 'Fionn Hand', 'IRE', 1998, 'AR', 50, 60, 'RM', 'R', { t20: 0, odi: 0, fc: 0 }, ['IRE', 'IRE-LEI']],
@@ -42,6 +42,7 @@ export default {
     ['ire-tyrone-kane', 'Tyrone Kane', 'IRE', 1994, 'BOWL', 35, 58, 'RFM', 'R', { t20: 0, odi: 0, fc: 0 }, ['IRE', 'IRE-MUN']],
     ['ire-simi-singh', 'Simi Singh', 'IRE', 1987, 'AR', 58, 60, 'OB', 'R', { t20: 0, odi: 0, fc: 0 }, ['IRE']],
     ['ire-peter-chase', 'Peter Chase', 'IRE', 1993, 'BOWL', 20, 60, 'RFM', 'R', { t20: 0, odi: 0, fc: 0 }, ['IRE']],
+    ['ire-jack-carson', 'Jack Carson', 'IRE', 2000, 'BOWL', 18, 57, 'OB', 'R', { t20: 1, odi: 0, fc: -1 }, ['IRE']],
   ],
   teams: [
     { id: 'IRE-LEI', name: 'Leinster Lightning', short: 'LEI', kind: 'domestic', level: 1 },
