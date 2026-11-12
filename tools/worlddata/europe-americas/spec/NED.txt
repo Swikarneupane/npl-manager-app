@@ -14,7 +14,7 @@ Noah Croes|1999|WK|60|0||R|0,0,0|
 Scott Edwards|1996|WK|68|0||R|0,1,0|
 Wesley Barresi|1984|WK|60|0||R|0,0,0|
 Paul van Meekeren|1993|BOWL|27|68|RFM|R|0,0,0|
-Logan van Beek|1990|AR|59|65|RFM|R|0,0,0|
+Logan van Beek|1990|AR|59|65|RFM|R|0,0,0|ENG-YOR
 Vivian Kingma|1994|BOWL|20|64|RFM|R|0,0,0|
 Fred Klaassen|1992|BOWL|20|66|LFM|R|0,0,0|
 Kyle Klein|2001|BOWL|25|60|RFM|R|0,0,0|

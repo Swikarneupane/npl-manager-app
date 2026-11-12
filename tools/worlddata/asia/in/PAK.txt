@@ -29,66 +29,403 @@
 #note Domestic team level: 1 = Quaid-e-Azam Trophy Gold 2026-27, 2 = Silver. PAK-PES and PAK-SKT keep their ids as Peshawar Blues and Sialkot Blues; Peshawar and Sialkot field two sides from 2026-27.
 #team PAK-PEW|Peshawar Whites|PEW|2
 #team PAK-SKW|Sialkot Whites|SKW|2
+#source Wikipedia, "2026 National Champions Cup" (4 teams, 11-18 Aug 2026, Multan) and "Champions One-Day Cup"; Wikipedia, "2025-26 National T20 Cup" (Super 10, qualifier)
+#source Wisden, "Quaid-e-Azam Trophy 2026: all you need to know" (Gold and Silver squads, 2 Nov 2026); Daily Pakistan, "Quaid-e-Azam Trophy 2026-27 complete squads and schedule" (Gold squads cross-check)
+#note Domestic squads (W4): the Quaid-e-Azam Trophy 2026-27 squads (main squads, plus reserves already in this file) are registered through each team id; players the PSL module already holds under its own record (Azam Khan, Haider Ali, Ihsanullah, Hassan Ali, Maaz Sadaqat, Hunain Shah, Sufyan Moqim, Zaman Khan) are not duplicated here and so are missing from their squads. Domestic registrations of players not named in the 2026-27 squads were dropped.
+#note The roughly 330 domestic regulars added this way are real registered names; their birth year, role, batting hand, bowling type and ratings are the game's placeholders (role is real only where the source marks a wicket-keeper) and were not verified.
+#team PAK-GRN|Pakistan Greens|GRN|3
+#team PAK-GLD|Pakistan Gold|GLD|3
+#team PAK-WHT|Pakistan Whites|WHT|3
+#team PAK-BLU|Pakistan Blues|BLU|3
 #comp PAK-QEA
 #comp PAK-QEA-SILVER
-Saim Ayub;2002;BAT;76;35;OB;L;3/1/-2;PAK-KHW PSL-PZ
-Babar Azam;1994;BAT;86;0;-;R;-2/3/2;PAK-LHB PSL-PZ
+#comp PAK-CHAMP
+#comp PAK-NT20
+Saim Ayub;2002;BAT;76;0;-;L;3/1/-2;PSL-PZ PAK-KHB
+Babar Azam;1994;BAT;86;0;-;R;-2/3/2;PSL-PZ PAK-LHW
 Sahibzada Farhan;1996;BAT;74;0;-;R;3/0/-2;PAK-PES
 Imam-ul-Haq;1995;BAT;74;0;-;L;-3/2/1;PAK-MUL
-Mohammad Huraira;2002;BAT;68;0;-;R;-3/0/3;PAK-FSD
-Irfan Khan;2002;BAT;66;30;RFM;R;2/0/-1;PAK-FSD PSL-KK
-Shan Masood;1989;BAT;73;10;RFM;L;-4/0/3;PAK-KHW PSL-KK
-Hasan Nawaz;2002;BAT;70;0;-;R;3/0/-2;-
-Abdul Samad;1998;BAT;67;0;-;R;3/0/-2;-
-Saud Shakeel;1995;BAT;78;15;SLA;L;-3/1/3;PAK-KHW PSL-QG
-Abdullah Shafique;1999;BAT;75;10;OB;R;-3/0/3;PSL-LQ
-Tayyab Tahir;1993;BAT;66;15;LB;R;-;PAK-LHW PSL-MS
-Omair Bin Yousuf;1998;BAT;66;0;-;R;1/0/0;PAK-KHW PSL-KK
-Fakhar Zaman;1990;BAT;76;15;SLA;L;2/2/-4;PAK-ABT PSL-LQ
-Khawaja Nafay;2002;BAT;66;15;OB;R;3/0/-2;PSL-QG
-Sameer Minhas;2006;BAT;66;10;LB;R;0/0/1;PSL-IU
+Mohammad Huraira;2002;BAT;68;0;-;R;-3/0/3;PAK-SKT
+Irfan Khan;2002;BAT;66;0;-;R;2/0/-1;PSL-KK PAK-FSD
+Shan Masood;1989;BAT;73;10;RFM;L;-4/0/3;PSL-KK PAK-KHB
+Hasan Nawaz;2002;BAT;70;0;-;R;3/0/-2;PAK-ISB
+Abdul Samad;1998;BAT;67;0;-;R;3/0/-2;PAK-FSD
+Saud Shakeel;1995;BAT;78;15;SLA;L;-3/1/3;PSL-QG PAK-KHB
+Abdullah Shafique;1999;BAT;75;10;OB;R;-3/0/3;PSL-LQ PAK-SKT
+Tayyab Tahir;1993;BAT;66;15;LB;R;-;PSL-MS PAK-LHW
+Omair Bin Yousuf;1998;BAT;66;0;-;R;1/0/0;PSL-KK PAK-KHB
+Fakhar Zaman;1990;BAT;76;15;SLA;L;2/2/-4;PSL-LQ PAK-ABT
+Khawaja Nafay;2002;BAT;66;15;OB;R;3/0/-2;PSL-QG PAK-KHW
+Sameer Minhas;2006;BAT;66;10;LB;R;0/0/1;PSL-IU PAK-MUL
 Abdullah Fazal;2003;BAT;66;0;-;L;-2/0/3;PAK-KHB
 Azan Awais;2004;BAT;66;0;-;L;-3/0/3;PAK-SKT
-Mohammad Taha;2000;BAT;65;15;SLA;L;-2/0/3;-
-Shamyl Hussain;2004;BAT;64;0;-;L;-;-
-Iftikhar Ahmed;1990;BAT;70;45;OB;R;2/0/-2;-
-Kamran Ghulam;1995;BAT;72;25;SLA;R;-2/0/3;PAK-PES PSL-MS
+Mohammad Taha;2000;BAT;65;15;SLA;L;-2/0/3;PAK-KHW
+Shamyl Hussain;2004;BAT;64;0;-;L;-;PAK-ISB
+Iftikhar Ahmed;1990;BAT;70;0;-;R;2/0/-2;PAK-PES
+Kamran Ghulam;1995;BAT;72;25;SLA;R;-2/0/3;PSL-MS PAK-ABT
 Salman Ali Agha;1993;AR;74;60;OB;R;1/1/0;PSL-IU
 Asif Afridi;1986;AR;45;68;SLA;R;-3/0/3;-
-Faheem Ashraf;1994;AR;64;66;RM;L;1/0/0;-
-Aamir Jamal;1996;AR;58;68;RFM;R;0/0/1;PAK-LHW PSL-KK
-Jahandad Khan;2003;AR;52;64;LFM;L;-;PAK-RWP PSL-LQ
-Shadab Khan;1998;AR;66;74;LB;R;3/0/-3;PAK-RWP PSL-IU
-Mohammad Nawaz;1994;AR;65;65;SLA;L;1/0/-1;PAK-RWP PSL-IU
-Hussain Talat;1996;AR;64;55;RFM;L;1/0/0;-
-Khushdil Shah;1995;AR;66;50;SLA;L;2/0/-2;-
-Arafat Minhas;2005;AR;58;64;SLA;L;-;-
-Mohammad Rizwan;1992;WK;80;0;-;R;0/3/0;PAK-PES PSL-MS
-Usman Khan;1995;WK;70;0;-;R;3/0/-2;PAK-KHW PSL-MS
-Haseebullah Khan;2003;WK;66;0;-;L;-;PAK-MUL PSL-QG
-Mohammad Haris;2001;WK;67;0;-;R;3/0/-2;PSL-PZ
-Rohail Nazir;2001;WK;64;0;-;R;-1/0/2;-
-Ghazi Ghori;2003;WK;62;0;-;R;-2/0/3;-
-Saad Baig;2006;WK;62;0;-;L;-;-
-Abrar Ahmed;1998;BOWL;20;79;LB;R;-;PAK-KHW PSL-QG
-Faisal Akram;2003;BOWL;20;66;LWS;L;-;PAK-MUL PSL-MS
-Noman Ali;1986;BOWL;40;77;SLA;L;-6/-2/5;PAK-KHW
+Faheem Ashraf;1994;AR;64;66;RM;L;1/0/0;PAK-FSD
+Aamir Jamal;1996;AR;58;68;RFM;R;0/0/1;PSL-KK
+Jahandad Khan;2003;AR;52;64;LFM;L;-;PSL-LQ PAK-RWP
+Shadab Khan;1998;AR;66;74;LB;R;3/0/-3;PSL-IU PAK-RWP
+Mohammad Nawaz;1994;AR;65;65;SLA;L;1/0/-1;PSL-IU PAK-RWP
+Hussain Talat;1996;AR;64;55;RFM;L;1/0/0;PAK-LHW
+Khushdil Shah;1995;AR;66;50;SLA;L;2/0/-2;PAK-FATA
+Arafat Minhas;2005;AR;58;64;SLA;L;-;PAK-MUL
+Mohammad Rizwan;1992;WK;80;0;-;R;0/3/0;PSL-MS PAK-PES
+Usman Khan;1995;WK;70;0;-;R;3/0/-2;PSL-MS PAK-KHB
+Haseebullah Khan;2003;WK;66;0;-;L;-;PSL-QG PAK-QTA
+Mohammad Haris;2001;WK;67;0;-;R;3/0/-2;PSL-PZ PAK-PES
+Rohail Nazir;2001;WK;64;0;-;R;-1/0/2;PAK-ISB
+Ghazi Ghori;2003;WK;62;0;-;R;-2/0/3;PAK-KHB
+Saad Baig;2006;WK;62;0;-;L;-;PAK-KHB
+Abrar Ahmed;1998;BOWL;20;79;LB;R;-;PSL-QG PAK-KHB
+Faisal Akram;2003;BOWL;20;66;LWS;L;-;PSL-MS PAK-MUL
+Noman Ali;1986;BOWL;40;77;SLA;L;-6/-2/5;PAK-LHW
 Sajid Khan;1993;BOWL;40;74;OB;R;-4/0/4;PAK-PES
-Sufiyan Muqeem;1999;BOWL;15;70;LWS;L;2/0/-2;PAK-LHW PSL-PZ
-Usman Tariq;1995;BOWL;15;70;OB;R;3/0/-3;PSL-QG
+Sufiyan Muqeem;1999;BOWL;15;70;LWS;L;2/0/-2;PSL-PZ
+Usman Tariq;1995;BOWL;15;70;OB;R;3/0/-3;PSL-QG PAK-PEW
 Usama Mir;1995;BOWL;32;71;LB;R;1/0/-1;-
 Mohammad Abbas;1990;BOWL;25;76;RFM;R;-6/-2/5;-
-Abbas Afridi;2001;BOWL;30;68;RFM;R;2/0/-2;PAK-PES PSL-KK
-Shaheen Shah Afridi;2000;BOWL;30;84;LF;L;-;PAK-FATA PSL-LQ
+Abbas Afridi;2001;BOWL;30;68;RFM;R;2/0/-2;PSL-KK PAK-PES
+Shaheen Shah Afridi;2000;BOWL;30;84;LF;L;-;PSL-LQ PAK-FATA
 Hasan Ali;1994;BOWL;40;72;RFM;R;-;PSL-KK
-Mohammad Ali;1992;BOWL;20;68;RFM;R;-2/0/2;PAK-FSD PSL-PZ
-Mir Hamza;1992;BOWL;20;68;LM;L;-3/0/3;PAK-KHW PSL-KK
-Mohammad Hasnain;2000;BOWL;15;70;RF;R;-;PAK-HYD PSL-MS
-Akif Javed;2000;BOWL;15;64;LFM;R;-;-
-Salman Mirza;1994;BOWL;15;68;LF;R;1/0/0;-
-Haris Rauf;1993;BOWL;15;79;RF;R;2/0/-3;PAK-ISB PSL-LQ
+Mohammad Ali;1992;BOWL;20;68;RFM;R;-2/0/2;PSL-PZ
+Mir Hamza;1992;BOWL;20;68;LM;L;-3/0/3;PSL-KK PAK-KHB
+Mohammad Hasnain;2000;BOWL;15;70;RF;R;-;PSL-MS PAK-HYD
+Akif Javed;2000;BOWL;15;64;LFM;R;-;PAK-FATA
+Salman Mirza;1994;BOWL;15;68;LF;R;1/0/0;PAK-LHW
+Haris Rauf;1993;BOWL;15;79;RF;R;2/0/-3;PSL-LQ
 Naseem Shah;2003;BOWL;25;80;RF;R;-;PSL-IU
-Khurram Shahzad;1999;BOWL;25;72;RFM;R;-2/0/2;PAK-FSD PSL-QG
-Mohammad Wasim;2001;BOWL;35;68;RFM;R;-;PAK-FATA PSL-QG
-Shahnawaz Dahani;1998;BOWL;15;66;RFM;R;-;-
+Khurram Shahzad;1999;BOWL;25;72;RFM;R;-2/0/2;PSL-QG PAK-FSD
+Mohammad Wasim;2001;BOWL;35;68;RFM;R;-;PSL-QG PAK-ISB
+Shahnawaz Dahani;1998;BOWL;15;66;RFM;R;-;PAK-LRK
 Ahmed Daniyal;1997;BOWL;20;64;RFM;R;-;PAK-LHW
+
+Abdul Basit;2002;BAT;47;0;-;R;u;PAK-KHB
+Umer Farooq;1999;AR;45;42;LB;R;u;PAK-KHB
+Danish Aziz;2001;BAT;59;0;-;L;u;PAK-KHB
+Saifullah Bangash;2001;AR;50;47;RFM;R;u;PAK-KHB
+Rameez Aziz;1999;BAT;43;0;-;R;u;PAK-KHB
+Haroon Arshad;1998;BAT;60;0;-;R;u;PAK-KHB
+Afnan Khan;1996;BAT;48;0;-;R;u;PAK-KHB
+Muhammad Asghar;2005;BOWL;27;42;LFM;R;u;PAK-KHB
+Muhammad Umar;2001;BOWL;21;47;RFM;L;u;PAK-KHB
+Hamza Sohail;1998;BOWL;18;55;SLA;R;u;PAK-KHB
+Raza Chandio;1999;BAT;51;0;-;R;u;PAK-KHB
+Asad Umar;1995;BOWL;29;44;RFM;L;u;PAK-KHB
+Aamer Jamal;2004;BOWL;28;60;RFM;R;u;PAK-LHW
+Ali Zaryab;2003;BOWL;21;62;RFM;R;u;PAK-LHW
+Mohib Haider;2003;BOWL;17;58;SLA;R;u;PAK-LHW
+Muhammad Faiq;1999;BOWL;26;52;RFM;R;u;PAK-LHW
+Muhammad Imran;1997;BAT;49;25;-;L;u;PAK-LHW
+Muhammad Mohsin;1995;BAT;58;0;-;R;u;PAK-LHW
+Muhammad Akhlaq;2004;BOWL;29;51;LFM;R;u;PAK-LHW
+Zain Bin Farooq;1998;WK;45;0;-;R;u;PAK-LHW
+Kamran Afzal;2002;BAT;43;25;-;R;u;PAK-LHW
+Zulqarnain;1996;BAT;48;0;-;R;u;PAK-LHW
+Muhammad Farooq;2002;AR;48;45;RFM;R;u;PAK-FATA
+Salman Khan Jnr;2005;BAT;45;25;LB;R;u;PAK-FATA
+Kashif Noor;2003;BOWL;16;51;OB;R;u;PAK-FATA
+Muhammad Sarwar;2001;BOWL;18;42;RFM;L;u;PAK-FATA
+Shahid Aziz;2000;BAT;58;25;LFM;R;u;PAK-FATA
+Rehan Afridi;1999;WK;56;0;-;R;u;PAK-FATA
+Afaq Afridi;1999;AR;64;61;RFM;L;u;PAK-FATA
+Sameen Gul;1998;BOWL;27;64;RM;R;u;PAK-FATA
+Sirajuddin;2002;AR;47;44;OB;R;u;PAK-FATA
+Hayatullah;2005;BAT;48;0;-;L;u;PAK-FATA
+Fawad Arshad;2002;BOWL;23;40;RFM;R;u;PAK-FATA
+Muhammad Usman Khan;1998;BAT;52;25;-;R;u;PAK-FATA
+Adnan Khan;2003;AR;61;58;LB;R;u;PAK-FATA
+Khyalman;2004;WK;45;0;-;L;u;PAK-FATA
+Muhammad Tahir;2005;BOWL;23;42;LFM;R;u;PAK-FATA
+Raja Hamza Waheed;2004;BAT;46;0;-;R;u;PAK-ISB
+Ali Imran;1998;AR;59;56;RFM;L;u;PAK-ISB
+Azim Bari;1999;BOWL;17;52;RFM;R;u;PAK-ISB
+Sarmad Bhatti;2005;BAT;43;25;-;R;u;PAK-ISB
+Hammad Khan;1997;BAT;47;0;-;R;u;PAK-ISB
+Azan Tariq;2003;BOWL;24;41;SLA;L;u;PAK-ISB
+Musa Khan;1997;BAT;51;25;-;R;u;PAK-ISB
+Sajid Raza;1999;BOWL;29;54;RM;R;u;PAK-ISB
+Mohammad Qaiser;1995;BAT;55;0;-;R;u;PAK-ISB
+Asfand Yar;1996;AR;47;44;LFM;L;u;PAK-ISB
+Umer Hameed;1999;BAT;62;0;-;R;u;PAK-ISB
+Shahid Islam;2002;BAT;50;0;-;L;u;PAK-ISB
+Sudais Ulfat;2002;BOWL;24;64;SLA;R;u;PAK-ISB
+Rizwan Ali;1995;WK;61;0;-;L;u;PAK-ISB
+Israrullah;1999;BOWL;22;55;RM;R;u;PAK-PES
+Najab Khan;1996;BOWL;23;62;LB;L;u;PAK-PES
+Nabi Gul;2003;BOWL;28;62;RFM;L;u;PAK-PES
+Mohammad Haleem;2004;BAT;42;0;-;L;u;PAK-PES
+Mohammad Irfan;2002;BAT;51;0;-;L;u;PAK-PES
+Mohammad Amir Khan;2004;BOWL;24;47;LFM;R;u;PAK-PES
+Niaz Khan;2000;BOWL;21;60;LFM;R;u;PAK-PES
+Mohammad Adnan;2003;BAT;49;25;RFM;L;u;PAK-PES
+Sahibzada Abdullah;1996;BAT;64;0;-;R;u;PAK-PES
+Najeebullah;2001;BOWL;17;56;RFM;L;u;PAK-PES
+Mohammad Wisal;2000;AR;43;40;LFM;R;u;PAK-PES
+Uzair Mumtaz;1995;BAT;54;0;-;R;u;PAK-MUL
+Yousuf Babar;2001;BOWL;24;52;RM;R;u;PAK-MUL
+Moheer Saeed;2001;BAT;44;0;-;R;u;PAK-MUL
+Sharoon Siraj;1996;BOWL;17;51;RFM;R;u;PAK-MUL
+Imran Rafiq;2002;AR;63;60;LB;L;u;PAK-MUL
+Waseem Akram Jr;2002;BAT;53;0;-;L;u;PAK-MUL
+Mohammad Ismail;1998;AR;46;43;RFM;R;u;PAK-MUL
+Muhammad Shan;2003;BOWL;23;52;LB;L;u;PAK-MUL
+Aamer Yamin;2001;BOWL;21;54;RFM;R;u;PAK-MUL
+Hasan Hafeez;1998;BOWL;21;53;SLA;R;u;PAK-MUL
+Bilal Khan;2003;BOWL;28;50;RFM;R;u;PAK-MUL
+Waqar Ahmed;1999;WK;48;0;-;L;u;PAK-MUL
+Mohammad Shahzad;1997;BAT;55;25;LB;R;u;PAK-MUL
+Ali Usman;2000;BAT;48;0;-;R;u;PAK-MUL
+Ahmed Safi Abdullah;1999;BAT;49;0;-;R;u;PAK-FSD
+Ali Asfand;2000;BAT;52;25;-;R;u;PAK-FSD
+Ali Shan;1997;WK;48;0;-;R;u;PAK-FSD
+Asad Raza;2002;BAT;46;25;LB;L;u;PAK-FSD
+Asim Ali Nasir;2001;WK;40;0;-;R;u;PAK-FSD
+Atiq-ur-Rehman;2002;BAT;63;25;-;R;u;PAK-FSD
+Faham-ul-Haq;1995;BAT;46;25;RFM;R;u;PAK-FSD
+Malik Abdul Rafay;1997;BAT;50;0;-;R;u;PAK-FSD
+Awais Zafar;1998;BOWL;23;47;SLA;L;u;PAK-FSD
+Sameer Saqib;2003;AR;64;61;RFM;R;u;PAK-FSD
+Shehzad Gul;1996;BOWL;21;62;SLA;R;u;PAK-FSD
+Daniyal Ali Khan;2004;AR;47;44;LFM;R;u;PAK-FSD
+Mudasir Zunair;1999;BOWL;19;55;RFM;R;u;PAK-FSD
+Tayyab Arif;2004;AR;55;52;OB;R;u;PAK-SKT
+Hamza Sheraz;2000;BOWL;28;46;SLA;R;u;PAK-SKT
+Ahmed Hassan;2003;AR;54;51;RM;R;u;PAK-SKT
+Mohsin Riaz;1999;BOWL;28;45;LB;R;u;PAK-SKT
+Abdul Rehman;2005;BAT;61;0;-;R;u;PAK-SKT
+Hamza Nazar;2002;BAT;64;0;-;R;u;PAK-SKT
+Muhammad Hamza;2005;AR;51;48;LFM;R;u;PAK-SKT
+Muhammad Ali;1999;AR;43;40;LB;R;u;PAK-SKT
+Ammad Butt;2000;AR;64;61;RFM;R;u;PAK-SKT
+Athar Mehmood;1998;AR;45;42;RFM;R;u;PAK-SKT
+Shahzaib Bhatti;2001;BOWL;23;51;RFM;R;u;PAK-SKT
+Tayyab Ali;2003;AR;64;61;RFM;L;u;PAK-SKT
+Afzaal Manzoor;2004;WK;53;0;-;L;u;PAK-SKT
+Ali Raza;2001;BOWL;23;64;LB;R;u;PAK-SKT
+Rahatullah;1998;WK;52;0;-;R;u;PAK-SKT
+Khalid Usman;2001;BOWL;21;43;RFM;R;u;PAK-ABT
+Shahzaib Khan;1999;AR;59;56;OB;R;u;PAK-ABT
+Zain Ishaq;1996;BAT;51;25;-;R;u;PAK-ABT
+Ahmed Khan;1996;BAT;43;0;-;R;u;PAK-ABT
+Mohsin Khan;2005;BAT;48;0;-;R;u;PAK-ABT
+Muhammad Riazullah;2001;BOWL;27;62;SLA;R;u;PAK-ABT
+Umair Badshah;1998;BAT;49;0;-;L;u;PAK-ABT
+Muhammad Shayan;1997;BAT;54;25;-;R;u;PAK-ABT
+Arshad Iqbal;1995;BAT;62;0;-;R;u;PAK-ABT
+Razaullah;2001;BAT;60;25;LB;L;u;PAK-ABT
+Israr Hussain;1996;BAT;53;25;SLA;R;u;PAK-ABT
+Aqib Khan;1996;BAT;50;0;-;R;u;PAK-ABT
+Junaid Ahmed;1997;BAT;41;25;-;R;u;PAK-ABT
+Khayyam Khan;2003;BOWL;24;43;RFM;R;u;PAK-ABT
+Mehroz Rasheed;1998;BOWL;16;53;SLA;R;u;PAK-ABT
+Aftab Khan;1999;BAT;52;25;-;R;u;PAK-ABT
+Muhammad Arif;1998;AR;55;52;LB;R;u;PAK-ABT
+Khan Zaib;1997;BAT;42;25;-;R;u;PAK-ABT
+Hasan Raza;1998;BAT;55;0;-;L;u;PAK-AJK
+Husnain Nadeem;2005;AR;63;60;SLA;R;u;PAK-AJK
+Hamad Islam;2000;BAT;40;0;-;R;u;PAK-AJK
+Umer Hayat;1997;AR;61;58;RM;R;u;PAK-AJK
+Muhammad Ammar;1995;BAT;54;0;-;L;u;PAK-AJK
+Saad Mumtaz;1998;BAT;63;0;-;R;u;PAK-AJK
+Naveed Malik;2003;BOWL;24;64;SLA;R;u;PAK-AJK
+Awais Akram;1998;WK;44;0;-;R;u;PAK-AJK
+Aqib Liaqat;2002;BAT;50;0;-;R;u;PAK-AJK
+Faizan Saleem;2001;BOWL;23;45;LB;R;u;PAK-AJK
+Muhammad Jawad;2003;BAT;58;25;RM;L;u;PAK-AJK
+Adil Azad;2003;BOWL;16;55;SLA;R;u;PAK-AJK
+Usman Maroof;1995;BAT;52;0;-;R;u;PAK-AJK
+Aman Arshad;2000;AR;51;48;SLA;L;u;PAK-AJK
+Usman Yousuf;1995;BAT;63;0;-;L;u;PAK-AJK
+Raja Farhan;1998;WK;52;0;-;R;u;PAK-AJK
+Shadab Majeed;2005;BOWL;29;57;RM;R;u;PAK-AJK
+Muhammad Imran Randhawa;1999;BOWL;26;46;RFM;L;u;PAK-BWP
+Muhammad Aon Shahzad;2005;BOWL;26;45;RM;R;u;PAK-BWP
+Ali Hamza Wasim;1999;BAT;40;25;-;L;u;PAK-BWP
+Muhammad Sudais;1996;BOWL;21;53;RFM;L;u;PAK-BWP
+Mohammad Alamgir;2003;AR;46;43;RM;R;u;PAK-BWP
+Mohammad Shahiryar;1996;BOWL;21;55;RFM;R;u;PAK-BWP
+Ali Afzal;1998;BAT;44;25;-;L;u;PAK-BWP
+Muhammad Umair;2002;BAT;46;0;-;R;u;PAK-BWP
+Muhammad Akram;2005;WK;63;0;-;R;u;PAK-BWP
+Muhammad Junaid;1996;BOWL;23;48;LFM;L;u;PAK-BWP
+Khaqan Bashir;1995;BOWL;28;48;RFM;R;u;PAK-BWP
+Muhammad Azab;2001;BOWL;17;62;LB;R;u;PAK-BWP
+Muhammad Basit;2003;BAT;52;0;-;R;u;PAK-BWP
+Shoaib Manzoor;2000;BAT;58;0;-;R;u;PAK-BWP
+Ali Shabbir;1999;BOWL;23;64;SLA;R;u;PAK-BWP
+Burhan Basharat;2003;BAT;49;0;-;R;u;PAK-BWP
+Faizan Zafar;1999;AR;48;45;LB;R;u;PAK-BWP
+Ibrar Amin;2001;BAT;46;0;-;L;u;PAK-BWP
+Amjad Ali;1997;AR;53;50;RFM;L;u;PAK-BWP
+Hasnain Majid;2003;WK;53;0;-;R;u;PAK-BWP
+Nabeel Arshad;2003;WK;48;0;-;R;u;PAK-BWP
+Fahad Hussain;2001;AR;45;42;SLA;R;u;PAK-DMJ
+Nasir Khan;1998;BOWL;18;59;LB;R;u;PAK-DMJ
+Aqib Junaid;2002;BAT;55;0;-;R;u;PAK-DMJ
+Muhammad Uzair;1997;BAT;64;0;-;R;u;PAK-DMJ
+Ubaid Ullah;2000;BAT;47;0;-;R;u;PAK-DMJ
+Taimur Ali;2002;BOWL;29;61;RFM;R;u;PAK-DMJ
+Dawood Khan;1997;BOWL;19;51;SLA;R;u;PAK-DMJ
+Muhammad Deen;1999;BOWL;24;55;RFM;R;u;PAK-DMJ
+Muhammad Shahid;2001;BOWL;26;50;LFM;L;u;PAK-DMJ
+Shahbaz Ali;2001;WK;54;0;-;L;u;PAK-DMJ
+Abu Huraira;1998;AR;45;42;RFM;R;u;PAK-DMJ
+Saleem Mal;2005;BOWL;21;48;RM;R;u;PAK-DMJ
+Farhan Ullah;2005;AR;54;51;OB;L;u;PAK-DMJ
+Abu Bakar;2004;AR;45;42;RM;L;u;PAK-DMJ
+Allah Bakhsh;1999;BOWL;26;54;RM;R;u;PAK-DMJ
+Shahid Khan;1998;BOWL;23;45;RFM;R;u;PAK-DMJ
+Sajjad Ahmed;2003;BOWL;22;44;RFM;R;u;PAK-DMJ
+Atal Khan;2004;BAT;48;25;-;R;u;PAK-DMJ
+Mir Hazar;2004;WK;63;0;-;R;u;PAK-DMJ
+Sajjad Ali;2005;BAT;40;25;-;R;u;PAK-DMJ
+Saad Khan;2000;AR;45;42;LFM;R;u;PAK-HYD
+Zain-ul-Abdin;2003;AR;48;45;LFM;L;u;PAK-HYD
+Muhammad Saddam;1995;AR;56;53;RFM;R;u;PAK-HYD
+Haris Khan;1995;AR;53;50;RFM;R;u;PAK-HYD
+Ubaidullah Rahupoto;2000;BAT;58;0;-;R;u;PAK-HYD
+Muhammad Suleman;1997;BAT;49;0;-;R;u;PAK-HYD
+Daniyal Hussain Rajput;1999;BOWL;21;54;LB;L;u;PAK-HYD
+Rizwan Mehmood;2000;BAT;55;0;-;R;u;PAK-HYD
+Nabeel Ahmed;1999;WK;64;0;-;R;u;PAK-HYD
+Jawad Ali;1999;BOWL;28;40;RM;R;u;PAK-HYD
+Asad Malik;2004;BAT;52;0;-;L;u;PAK-HYD
+Mustafa Nasir;1999;BAT;43;25;-;L;u;PAK-HYD
+Ayaz Khan;2001;BOWL;28;60;LFM;R;u;PAK-HYD
+Muhammad Ahsan;2001;BAT;48;0;-;L;u;PAK-HYD
+Muhammad Sikandar;1999;BOWL;23;51;RFM;R;u;PAK-HYD
+Akbar Khan;1996;WK;54;0;-;R;u;PAK-HYD
+Kashif Bhatti;2003;BAT;45;0;-;R;u;PAK-HYD
+Muhammad Waleed;1995;BAT;64;0;-;R;u;PAK-HYD
+Jahanzaib Sultan;2002;AR;60;57;RFM;R;u;PAK-KHW
+Aibaad Khan;1997;BAT;42;0;-;R;u;PAK-KHW
+Usman Rahim;1999;BOWL;24;57;RFM;R;u;PAK-KHW
+Huzaifa Ahsan;2001;BOWL;24;53;RM;R;u;PAK-KHW
+Taha Mehmood;2000;BOWL;29;52;LFM;R;u;PAK-KHW
+Kashif Ali;1998;BAT;62;0;-;R;u;PAK-KHW
+Ghulam Ashraf;1998;WK;45;0;-;R;u;PAK-KHW
+Saifullah;1999;BAT;43;0;-;R;u;PAK-KHW
+Rehman Ghani;1999;AR;61;58;LB;R;u;PAK-KHW
+Maaz Khurram Amin;2002;BOWL;18;47;LFM;R;u;PAK-KHW
+Fahad Amin;1999;BOWL;19;51;SLA;R;u;PAK-KHW
+Abdul Rauf;2005;BOWL;28;63;RFM;R;u;PAK-KHW
+Asadullah Hamza;2003;BOWL;16;60;RM;R;u;PAK-KHW
+Imran Shah;2005;BOWL;29;51;SLA;R;u;PAK-KHW
+Muhammad Ali Butt;1998;AR;55;52;LB;R;u;PAK-KHW
+Sabeh Siddiqui;1996;BAT;54;0;-;L;u;PAK-KHW
+Fahad Ansari;1995;WK;46;0;-;R;u;PAK-KHW
+Shah Raza Naqvi;2000;BOWL;22;63;LB;R;u;PAK-KHW
+Imran Butt;2004;AR;54;51;RFM;R;u;PAK-LHB
+Umer Siddiq;1997;BOWL;27;45;RM;R;u;PAK-LHB
+Muhammad Saleem;1996;BOWL;27;52;RFM;R;u;PAK-LHB
+Hashim Ibrahim;2005;AR;50;47;SLA;L;u;PAK-LHB
+Qasim Akram;1995;BOWL;27;45;RFM;R;u;PAK-LHB
+Ali Razzaq;2005;BOWL;24;53;LFM;R;u;PAK-LHB
+Ali Hassan Baloch;2000;AR;46;43;RFM;R;u;PAK-LHB
+Obaid Shahid;2002;BAT;54;0;-;R;u;PAK-LHB
+Khawaja Abdullah;1995;WK;46;0;-;L;u;PAK-LHB
+Sajjad Khan;2001;BAT;52;25;RFM;R;u;PAK-LHB
+Usman Qadir;2003;BAT;59;0;-;R;u;PAK-LHB
+Muhammad Salman;2005;BOWL;21;59;LFM;R;u;PAK-LHB
+Muhammad Zahid;2003;BOWL;23;50;RFM;L;u;PAK-LHB
+Ahmed Bashir;1998;BOWL;16;62;LB;R;u;PAK-LHB
+Nisar Ahmed;2002;BOWL;28;44;LB;L;u;PAK-LHB
+Samama Riaz;1995;BOWL;28;41;LB;R;u;PAK-LHB
+Huzaifa Shujaat;1996;BOWL;23;48;LFM;R;u;PAK-LHB
+Mohsin Irshad;2001;AR;55;52;RFM;R;u;PAK-LHB
+Sagar Ali;2000;WK;60;0;-;R;u;PAK-LHB
+Zahid Mehmood;2002;AR;46;43;RFM;R;u;PAK-LRK
+Malhar Rasool;2003;BAT;46;0;-;R;u;PAK-LRK
+Muhammad Ibrahim;1995;BAT;48;0;-;R;u;PAK-LRK
+Aqeel Danish;1996;BAT;45;0;-;L;u;PAK-LRK
+Sabit Ali;2000;AR;45;42;LFM;R;u;PAK-LRK
+Ghulam Raza;1999;BAT;57;0;-;R;u;PAK-LRK
+Ishfaque Ahmed;2004;BAT;41;0;-;L;u;PAK-LRK
+Najaf Ali;1996;BAT;62;25;-;R;u;PAK-LRK
+Faraz Aziz;2003;AR;52;49;SLA;L;u;PAK-LRK
+Asif Ali Jnr;2000;AR;62;59;LFM;R;u;PAK-LRK
+Mushtaq Ahmed;1996;AR;63;60;SLA;R;u;PAK-LRK
+Saqlain Nawaz;2002;BAT;58;0;-;R;u;PAK-LRK
+Muhammad Mustafa;1998;BAT;44;0;-;L;u;PAK-LRK
+Mohsin Raza;1998;WK;54;0;-;R;u;PAK-LRK
+Shahzaib Aziz;1999;BAT;55;0;-;R;u;PAK-LRK
+Feroz Ali;1998;BAT;64;25;-;R;u;PAK-LRK
+Muhammad Umer;2004;BOWL;18;47;RFM;R;u;PAK-LRK
+Umer Khalid;2000;AR;61;58;SLA;R;u;PAK-LRK
+Muhammad Saboor;2004;BAT;48;25;-;R;u;PAK-LRK
+Mohsin Khan Jnr;2000;BAT;40;25;-;R;u;PAK-PEW
+Amir Barki;1999;BAT;45;25;-;R;u;PAK-PEW
+Abubakar Khan;1997;BAT;52;0;-;L;u;PAK-PEW
+Abbas Ali;2001;BAT;59;0;-;R;u;PAK-PEW
+Adil Amin;1999;AR;50;47;RFM;R;u;PAK-PEW
+Sajjad;2002;BAT;62;0;-;L;u;PAK-PEW
+Adil Khan;2003;BAT;54;25;-;R;u;PAK-PEW
+Mujtaba Khan;1995;BOWL;23;51;RFM;R;u;PAK-PEW
+Abuzar Tariq;1998;BOWL;16;58;RFM;R;u;PAK-PEW
+Muhammad Ilyas;1995;BAT;64;0;-;R;u;PAK-PEW
+Muhammad Imran Jnr;2001;BAT;40;25;RFM;R;u;PAK-PEW
+Muhammad Abuzar;1998;BOWL;17;53;RM;L;u;PAK-PEW
+Shoaib Afridi;2000;BAT;63;0;-;L;u;PAK-PEW
+Afqar Durrani;1995;BOWL;23;46;RM;L;u;PAK-PEW
+Salman Khan;2001;BAT;50;0;-;R;u;PAK-PEW
+Sarmad Khattak;1995;AR;43;40;LB;L;u;PAK-PEW
+Ahmad Hussain;1995;BOWL;23;62;SLA;R;u;PAK-PEW
+Abdul Wahid Bangalzai;1997;BAT;59;25;RM;R;u;PAK-QTA
+Bismillah Khan;2000;WK;42;0;-;R;u;PAK-QTA
+Salahuddin;2000;BOWL;29;47;LFM;R;u;PAK-QTA
+Shahzad;2005;BAT;57;0;-;R;u;PAK-QTA
+Hazrat Wali;1996;AR;45;42;OB;L;u;PAK-QTA
+Nadeem Ahmed;2001;BAT;53;0;-;R;u;PAK-QTA
+Abdul Ghafar;1996;BAT;55;0;-;R;u;PAK-QTA
+Muhammad Umar Quetta;2004;BOWL;17;44;SLA;R;u;PAK-QTA
+Syed Zain Ullah;2002;AR;48;45;RFM;R;u;PAK-QTA
+Ibrahim Snr;1997;BOWL;17;56;LFM;L;u;PAK-QTA
+Najeebullah Achakzai;2000;BAT;46;0;-;R;u;PAK-QTA
+Khalil Ahmed;1997;BAT;48;25;RFM;R;u;PAK-QTA
+Muhammad Ghous;2001;BAT;61;0;-;R;u;PAK-QTA
+Naqeebullah;2005;AR;48;45;LB;R;u;PAK-QTA
+Ghulam Nabi;2005;BAT;56;25;SLA;R;u;PAK-QTA
+Zulfiqar Ali;2000;BAT;57;0;-;R;u;PAK-QTA
+Eshan Ullah;2000;AR;40;53;LFM;R;u;PAK-QTA
+Bilal Ahmed;2005;AR;42;55;RM;R;u;PAK-QTA
+Abdul Hameed;2003;AR;49;46;LFM;R;u;PAK-QTA
+Yasir Khan;1997;AR;46;43;RFM;R;u;PAK-RWP
+Abdul Faseeh;2001;BOWL;22;64;LFM;R;u;PAK-RWP
+Affan Ishaq;1999;BOWL;22;55;RFM;R;u;PAK-RWP
+Nasir Nawaz;1997;BOWL;29;63;LFM;L;u;PAK-RWP
+Mehran Mumtaz;2003;AR;50;47;RFM;R;u;PAK-RWP
+Mubasir Khan;2003;BAT;49;0;-;L;u;PAK-RWP
+Aqib Shah;2002;BOWL;18;49;LB;R;u;PAK-RWP
+Shehbaz Tabraiz Kyani;1998;AR;58;55;SLA;R;u;PAK-RWP
+Muhammad Nabeel;1997;BOWL;26;48;LB;R;u;PAK-RWP
+Faizan Ghani;2005;BAT;49;25;RM;R;u;PAK-RWP
+Badruddin;2003;BAT;57;0;-;R;u;PAK-RWP
+Taimur Khan;2005;WK;54;0;-;R;u;PAK-RWP
+Abdul Qadir;1995;WK;47;0;-;R;u;PAK-RWP
+Saad Masood;1999;AR;54;51;LB;R;u;PAK-RWP
+Raza-ul-Mustafa;2001;WK;44;0;-;R;u;PAK-RWP
+Kashif Ali Rawalpindi;2005;BAT;64;0;-;R;u;PAK-RWP
+Muhammad Husnain Khan;2003;BAT;44;0;-;R;u;PAK-SKW
+Khawaja Arham;1997;BAT;48;0;-;R;u;PAK-SKW
+Aashir Mehmood;2002;BAT;50;0;-;R;u;PAK-SKW
+Mirza Tahir Baig;1997;AR;58;55;RM;R;u;PAK-SKW
+Muhammad Tayyab;2005;BOWL;22;52;RFM;R;u;PAK-SKW
+Qasim Sajjad;1997;BOWL;19;53;SLA;R;u;PAK-SKW
+Hammad Sarwar;1995;AR;52;49;LB;R;u;PAK-SKW
+Rizwan Ahmed;2005;BOWL;24;53;SLA;R;u;PAK-SKW
+Mubashir Aslam;1996;BAT;46;0;-;R;u;PAK-SKW
+Abdullah Nawaz;2005;BOWL;17;49;RFM;R;u;PAK-SKW
+Salman Aslam;2001;BAT;41;25;-;R;u;PAK-SKW
+Abdul Rehman Saad;1999;BOWL;27;48;SLA;L;u;PAK-SKW
+Sharjeel Ahmed;2001;BOWL;21;53;LFM;L;u;PAK-SKW
+Inzamam-ul-Haq;1999;BOWL;19;42;SLA;R;u;PAK-SKW
+Raza Shahzaib;1997;WK;63;0;-;L;u;PAK-SKW
+Musa Azeem;1995;BOWL;22;58;SLA;R;u;PAK-SKW
+Saleem;1996;AR;45;42;RM;L;u;PAK-SKW
+Ameer Hassan;2005;BAT;40;0;-;R;u;PAK-SKW
+Hussain Sajjad Bukhari;2000;BOWL;17;59;RFM;L;u;PAK-SKW
+Taha Tariq;2005;WK;51;0;-;R;u;PAK-SKW

@@ -16,7 +16,7 @@ for (const code of process.argv.slice(2)) {
     const f = line.split(';').map((x) => x.trim()); if (f.length !== 9) throw new Error(`${code}: bad line ${line}`);
     const [name, born, role, bat, bowl, type, hand, fms, teams] = f;
     const fm = {}; let gen = false;
-    if (fms && fms !== '-') { for (const part of fms.split(',')) { if (part === 'g') { gen = true; continue; } const [t20, odi, fc] = part.split('/').map(Number); if (t20) fm.t20 = t20; if (odi) fm.odi = odi; if (fc) fm.fc = fc; } }
+    if (fms && fms !== '-') { for (const part of fms.split(',')) { if (part === 'g') { gen = true; continue; } if (part === 'u') { fm.unv = 1; continue; } const [t20, odi, fc] = part.split('/').map(Number); if (t20) fm.t20 = t20; if (odi) fm.odi = odi; if (fc) fm.fc = fc; } }
     if (gen) fm.gen = 1;
     let id = `${code.toLowerCase()}-${slug(name)}`; let k = 2; while (seen.has(id)) id = `${code.toLowerCase()}-${slug(name)}-${k++}`; seen.add(id);
     const regs = [code, ...teams.split(/\s+/).filter((t) => t && t !== '-' && t !== code)];

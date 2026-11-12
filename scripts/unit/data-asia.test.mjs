@@ -11,7 +11,7 @@ for (const c of CODES) mods[c] = (await import(`../../src/data/world/nations/${c
 
 const ROLES = new Set(['BAT', 'BOWL', 'AR', 'WK']);
 const TYPES = new Set(['', 'RF', 'RFM', 'RM', 'LF', 'LFM', 'LM', 'OB', 'LB', 'SLA', 'LWS']);
-const FM_KEYS = new Set(['t20', 'odi', 'fc', 'gen']);
+const FM_KEYS = new Set(['t20', 'odi', 'fc', 'gen', 'unv']);
 
 test('Asian nations: module header, sources and domestic teams are well formed', () => {
   for (const c of CODES) {
@@ -42,7 +42,7 @@ test('Asian nations: every player record has the right shape and valid ranges', 
       if (role === 'BOWL') assert.ok(type !== '' && bowl >= 40, tag);
       if (role === 'BAT' || role === 'WK') assert.ok(bat >= 40, tag);
       assert.ok(fm && typeof fm === 'object', tag);
-      for (const [k, v] of Object.entries(fm)) { assert.ok(FM_KEYS.has(k), tag); if (k === 'gen') assert.equal(v, 1, tag); else assert.ok(Number.isInteger(v) && v >= -8 && v <= 8, tag); }
+      for (const [k, v] of Object.entries(fm)) { assert.ok(FM_KEYS.has(k), tag); if (k === 'gen' || k === 'unv') assert.equal(v, 1, tag); else assert.ok(Number.isInteger(v) && v >= -8 && v <= 8, tag); }
       assert.ok(Array.isArray(teams) && teams[0] === c, `national code first ${tag}`);
       assert.equal(new Set(teams).size, teams.length, tag);
       for (const t of teams.slice(1)) if (t.startsWith(`${c}-`)) assert.ok(tids.has(t), `unknown domestic team ${t} in ${tag}`);

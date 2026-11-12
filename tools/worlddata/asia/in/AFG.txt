@@ -20,47 +20,100 @@
 #team AFG-HKS|Hindukush Strikers|HKS|1
 #team AFG-PML|Pamir Legends|PML|1
 #comp AFG-ASA
+#comp AFG-GAK
+#comp AFG-SCL
+#comp AFG-WAKHAN
+#source ACB, "Squads Named for the Etisalat Cup - Ahmad Shah Abdali First Class Tournament 2024" (the squads of the four sides; the 2026 squads were not published); acb.af, "The 11th Edition of the Shpageeza Cricket League Begins July 1 in Khost Province"; acb.af, "Domestic Cricket Competitions and the Journey through the Year 2025"
+#note Ahmad Shah Abdali squads (W4) are the ACB's 2024 squads (Mah-e-Par Stars = AFG-MPS), the latest published; players absent from this file are new records whose birth year, role, hand, bowling type and ratings are placeholders, not verified. "Rahman Shah" in the Pamir Legends squad is taken to be Rahmat Shah, and "Baheer Shah" Bahir Shah.
 Ibrahim Zadran;2001;BAT;80;15;RFM;R;0/2/0;AFG-MA
-Rahmat Shah;1993;BAT;74;20;LB;R;-2/1/2;AFG-BST
-Hashmatullah Shahidi;1994;BAT;74;10;OB;L;-2/1/2;AFG-BEA
+Rahmat Shah;1993;BAT;74;20;LB;R;-2/1/2;AFG-BST AFG-PML
+Hashmatullah Shahidi;1994;BAT;74;10;OB;L;-2/1/2;AFG-BEA AFG-MPS
 Sediqullah Atal;2001;BAT;72;0;-;L;-;AFG-BEA
 Najibullah Zadran;1993;BAT;72;0;-;L;2/0/-3;AFG-BEA
 Hazratullah Zazai;1998;BAT;70;10;SLA;L;3/0/-3;AFG-BST
 Karim Janat;1998;BAT;68;0;-;R;-;AFG-BEA
-Bahir Shah;2000;BAT;66;10;OB;R;-3/0/3;AFG-SG
+Bahir Shah;2000;BAT;66;10;OB;R;-3/0/3;AFG-SG AFG-HKS
 Darwish Rasooli;1999;BAT;66;20;OB;R;-;-
-Riaz Hassan;2002;BAT;64;0;-;R;-;AFG-BEA
-Abdul Malik;1998;BAT;64;15;OB;R;-2/0/2;AFG-AMO
+Riaz Hassan;2002;BAT;64;0;-;R;-;AFG-BEA AFG-MPS
+Abdul Malik;1998;BAT;64;15;OB;R;-2/0/2;AFG-AMO AFG-HKS
 Ihsanullah Janat;1997;BAT;62;0;-;R;-;AFG-BST
 Azmatullah Omarzai;2000;AR;72;72;RFM;R;-;-
 Mohammad Nabi;1985;AR;66;66;OB;R;-;-
 Gulbadin Naib;1991;AR;62;62;RFM;R;-;AFG-AMO
 Ijaz Ahmad Ahmadzai;2003;AR;62;52;RM;R;-;AFG-AMO
-Shahidullah Kamal;1999;AR;60;50;SLA;L;-;AFG-AMO
-Ismat Alam;2002;AR;55;60;RFM;R;-2/0/2;AFG-SG
+Shahidullah Kamal;1999;AR;60;50;SLA;L;-;AFG-AMO AFG-MWC
+Ismat Alam;2002;AR;55;60;RFM;R;-2/0/2;AFG-SG AFG-PML
 Nangeyalia Kharote;2004;AR;50;66;SLA;L;-;AFG-BST
 Rahmanullah Gurbaz;2001;WK;80;0;-;R;2/0/-3;-
-Ikram Alikhil;2000;WK;66;0;-;L;-;AFG-BEA
-Afsar Zazai;1993;WK;62;0;-;R;-;AFG-MA
+Ikram Alikhil;2000;WK;66;0;-;L;-;AFG-BEA AFG-PML
+Afsar Zazai;1993;WK;62;0;-;R;-;AFG-MA AFG-MWC
 Mohammad Ishaq;2005;WK;60;0;-;R;-;AFG-AMO
-Rashid Khan;1998;BOWL;55;92;LB;R;2/0/-2;-
+Rashid Khan;1998;BOWL;20;92;LB;R;2/0/-2;-
 Noor Ahmad;2005;BOWL;20;80;LWS;R;1/0/-1;-
 Allah Mohammad Ghazanfar;2006;BOWL;15;78;OB;R;-;AFG-MA
 Mujeeb Ur Rahman;2001;BOWL;26;75;OB;R;-;-
 Qais Ahmad;2000;BOWL;34;70;LB;R;-;AFG-SG
-Zahir Khan;1998;BOWL;20;66;LWS;L;-2/0/2;-
-Zia-ur-Rehman Akbar;1997;BOWL;40;66;SLA;R;-3/0/3;AFG-MA
+Zahir Khan;1998;BOWL;20;66;LWS;L;-2/0/2;AFG-MPS
+Zia-ur-Rehman Akbar;1997;BOWL;40;66;SLA;R;-3/0/3;AFG-MA AFG-PML
 Sharafuddin Ashraf;1995;BOWL;30;62;SLA;R;-;-
-Khalil Gurbaz;2001;BOWL;20;60;LB;R;-;AFG-MA
+Khalil Gurbaz;2001;BOWL;20;60;LB;R;-;AFG-MA AFG-HKS
 Fazalhaq Farooqi;2000;BOWL;30;78;LF;L;1/0/-2;-
 Naveen-ul-Haq;1999;BOWL;35;74;RFM;R;2/0/-4;-
 Fareed Ahmad;1994;BOWL;20;70;LFM;L;-;AFG-SG
-Yamin Ahmadzai;1992;BOWL;20;68;RFM;R;-2/0/2;AFG-SG
+Yamin Ahmadzai;1992;BOWL;20;68;RFM;R;-2/0/2;AFG-SG AFG-MWC
 Bilal Sami;2003;BOWL;15;66;RM;R;-;AFG-BEA
 Ziaur Rahman Sharifi;1998;BOWL;15;66;RFM;R;-;-
 Mohammad Saleem Safi;2002;BOWL;10;64;RF;R;-;-
-Abdullah Ahmadzai;2003;BOWL;15;64;RFM;R;-;-
-Nijat Masood;1998;BOWL;15;64;RM;R;-;AFG-MA
+Abdullah Ahmadzai;2003;BOWL;15;64;RFM;R;-;AFG-PML
+Nijat Masood;1998;BOWL;15;64;RM;R;-;AFG-MA AFG-PML
 Naveed Zadran;2005;BOWL;15;64;RM;R;-;AFG-MA
 Wafadar Momand;1999;BOWL;15;62;RM;R;-;AFG-BEA
 Sayed Shirzad;1994;BOWL;20;62;LM;R;-;-
+
+Ijaz Ahmad Azad;1995;BAT;41;0;-;R;u;AFG-MPS
+Yousuf Shah;1999;WK;45;0;-;L;u;AFG-MPS
+Ali Shmad Nasir;2000;WK;63;0;-;R;u;AFG-MPS
+Imran Mir;2004;BAT;55;0;-;R;u;AFG-MPS
+Allah Noor Nasiri;1996;BAT;50;0;-;L;u;AFG-MPS
+Shams Ur Rahman;2004;BAT;51;0;-;L;u;AFG-MPS
+Farmanullah Safi;2004;BOWL;18;46;RFM;L;u;AFG-MPS
+Mohammad Ibrahim;2000;BOWL;23;63;OB;L;u;AFG-MPS
+Ikramullah Momand;2002;BAT;52;0;-;L;u;AFG-MPS
+Mohammad Gul;2000;BAT;47;0;-;R;u;AFG-MPS
+Amir Hamza;2005;BOWL;21;55;RM;L;u;AFG-MPS
+Kamil Kakar;2003;BAT;51;0;-;R;u;AFG-MPS
+Zahir Shehzad;2001;BAT;60;25;LB;L;u;AFG-MPS
+Masoud Gurbaz;1996;WK;50;0;-;R;u;AFG-PML
+Shabir Noori;2000;BOWL;22;47;SLA;L;u;AFG-PML
+Usman Noori;2002;BOWL;18;54;RFM;R;u;AFG-PML
+Sohail Khan Zurmati;1997;BAT;53;25;-;R;u;AFG-PML
+Islam Zazai;1995;BAT;45;0;-;L;u;AFG-PML
+Asif Musazai;1999;BOWL;26;45;RFM;R;u;AFG-PML
+Juma Gul;1997;BAT;64;0;-;R;u;AFG-PML
+Fitratullah Khawri;2002;BOWL;19;52;OB;R;u;AFG-PML
+Bashir Ahmad;2001;BAT;46;0;-;L;u;AFG-PML
+Khair Mohammad;2002;AR;62;59;LB;R;u;AFG-PML
+Tahir Adil;1999;AR;51;48;OB;R;u;AFG-HKS
+Mohammad Shahzad;1999;WK;64;0;-;L;u;AFG-HKS
+Abdul Hadi;1995;WK;48;0;-;L;u;AFG-HKS
+Arshaduddin Safi;2003;BOWL;28;44;LFM;R;u;AFG-HKS
+Rahmanullah Zadran;1998;BOWL;27;52;RFM;R;u;AFG-HKS
+Eamal Shaheen;1995;BOWL;28;55;LB;R;u;AFG-HKS
+Lal Baz;1998;AR;45;42;RFM;L;u;AFG-HKS
+Muhibullah Zurmati;2000;BAT;43;0;-;R;u;AFG-HKS
+Naseer Khan Maroofkhil;2000;BOWL;28;64;RFM;R;u;AFG-HKS
+Aftab Alam;1995;BAT;52;0;-;R;u;AFG-HKS
+Abdul Baqi;2001;BOWL;22;51;LB;R;u;AFG-HKS
+Jalat Khan Musazai;1997;WK;52;0;-;R;u;AFG-MWC
+Javed Ahmadzai;2004;BOWL;26;54;RFM;R;u;AFG-MWC
+Jamshid Zadran;2002;BAT;46;25;RFM;R;u;AFG-MWC
+Shawkat Zaman;2005;AR;53;50;SLA;L;u;AFG-MWC
+Rahimullah Zurmati;2004;BOWL;26;64;OB;L;u;AFG-MWC
+Nasir Jamal;1995;BAT;46;0;-;R;u;AFG-MWC
+Younis Zadran;1995;BAT;46;0;-;R;u;AFG-MWC
+Abdullah Tarakhail;2003;BAT;59;0;-;L;u;AFG-MWC
+Mohammadullah Logari;2002;AR;63;60;LFM;R;u;AFG-MWC
+Naseem Mangal;2004;AR;53;50;RM;R;u;AFG-MWC
+Samiullah Sarmast;2000;BAT;60;0;-;R;u;AFG-MWC
+Arab Gul Momand;2005;BOWL;19;46;LFM;L;u;AFG-MWC
+Khalil Ahmad;1995;BAT;52;0;-;R;u;AFG-MWC

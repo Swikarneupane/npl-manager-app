@@ -44,7 +44,7 @@ for code,m in N.items():
         fmo={'t20':t,'odi':o,'fc':c}
         if gen: fmo['gen']=1
         pid=f'{code.lower()}-{slug(name)}'; assert pid not in seen,pid; seen.add(pid)
-        teams=[code]+([f'{code}-{dom}'] if dom else [])
+        teams=[code]+[(d if '-' in d else f'{code}-{d}') for d in dom.split(',') if d]  # 'ENG-SUR' (a team id with a dash) registers a player at another nation's team, e.g. a county
         rows.append([pid,name,code,int(born),role,int(bat),int(bowl),typ,hand,fmo,teams])
     def js(v):
         if isinstance(v,dict): return '{ '+', '.join(f'{k}: {v[k]}' for k in v)+' }'

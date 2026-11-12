@@ -30,6 +30,8 @@
 #team SL-ACE|Ace Capital Cricket Club|ACE|1
 #team SL-KYCC|Kurunegala Youth Cricket Club|KYCC|1
 #comp SL-MCT
+#comp SL-T20
+#comp SL-50
 Pathum Nissanka;1998;BAT;81;0;-;R;1/1/0;SL-NCC
 Avishka Fernando;1998;BAT;70;10;RM;R;-;SL-SSC LPL-JAF
 Nuwanidu Fernando;1999;BAT;66;15;OB;R;-;SL-SSC LPL-JAF

@@ -22,7 +22,7 @@ export default {
     ['ned-scott-edwards', 'Scott Edwards', 'NED', 1996, 'WK', 68, 0, '', 'R', { t20: 0, odi: 1, fc: 0 }, ['NED']],
     ['ned-wesley-barresi', 'Wesley Barresi', 'NED', 1984, 'WK', 60, 0, '', 'R', { t20: 0, odi: 0, fc: 0 }, ['NED']],
     ['ned-paul-van-meekeren', 'Paul van Meekeren', 'NED', 1993, 'BOWL', 27, 68, 'RFM', 'R', { t20: 0, odi: 0, fc: 0 }, ['NED']],
-    ['ned-logan-van-beek', 'Logan van Beek', 'NED', 1990, 'AR', 59, 65, 'RFM', 'R', { t20: 0, odi: 0, fc: 0 }, ['NED']],
+    ['ned-logan-van-beek', 'Logan van Beek', 'NED', 1990, 'AR', 59, 65, 'RFM', 'R', { t20: 0, odi: 0, fc: 0 }, ['NED', 'ENG-YOR']],
     ['ned-vivian-kingma', 'Vivian Kingma', 'NED', 1994, 'BOWL', 20, 64, 'RFM', 'R', { t20: 0, odi: 0, fc: 0 }, ['NED']],
     ['ned-fred-klaassen', 'Fred Klaassen', 'NED', 1992, 'BOWL', 20, 66, 'LFM', 'R', { t20: 0, odi: 0, fc: 0 }, ['NED']],
     ['ned-kyle-klein', 'Kyle Klein', 'NED', 2001, 'BOWL', 25, 60, 'RFM', 'R', { t20: 0, odi: 0, fc: 0 }, ['NED']],

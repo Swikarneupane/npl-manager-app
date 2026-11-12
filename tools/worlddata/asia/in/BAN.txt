@@ -16,9 +16,34 @@
 #team BAN-MYM|Mymensingh Division|MYM|1
 #source Wikipedia, "2025–26 National Cricket League" (eight divisions, single round robin, four-day); The Financial Express, "NCL to kick off on October 3" (2026-27)
 #note Domestic team level: 1 = National Cricket League 2026-27 (Dhaka Metropolis gave way to Mymensingh Division in 2025-26).
+#team BAN-ABA|Abahani Limited|ABA|1
+#team BAN-AGR|Agrani Bank Cricket Club|AGR|1
+#team BAN-BSH|Bashundhara Strikers|BSH|1
+#team BAN-BRU|Brothers Union|BRU|1
+#team BAN-CIT|City Club|CIT|1
+#team BAN-LEO|Dhaka Leopards|LEO|1
+#team BAN-GAZ|Gazi Group Cricketers|GAZ|1
+#team BAN-GUL|Gulshan Cricket Club|GUL|1
+#team BAN-LEG|Legends of Rupganj|LEG|1
+#team BAN-MOH|Mohammedan Sporting Club|MOH|1
+#team BAN-PBC|Prime Bank Cricket Club|PBC|1
+#team BAN-RUP|Rupganj Tigers Cricket Club|RUP|1
+#team BAN-WAL|Walton Group|WAL|1
+#team BAN-FOR|Fortune Group|FOR|1
+#team BAN-ACM|ACME Group|ACM|1
+#team BAN-SRC|Seven Rings Cement|SRC|1
+#team BAN-HBS|H Bluestar|HBS|1
+#team BAN-CTZ|Citizens Bank|CTZ|1
+#source Wikipedia, "2026 Dhaka Premier Division Cricket League" (12 clubs, 4 May to 13 June 2026, Mohammedan champions)
+#source sportsdunia.com, "BCB D3 Trophy 2026: teams, format, schedule and icon players"; crictracker.com, "BCB launches franchise-based all-format domestic competition D3 for 2026-27"
+#note The six D3 franchises (BAN-WAL, FOR, ACM, SRC, HBS, CTZ) carry their reported icon players; the October 2026 draft squads and the Dhaka Premier clubs' squads were not verified, so the rest are generated.
+Mosaddek Hossain;1995;AR;66;60;OB;R;-;BAN-ACM
+#comp BAN-DPL
+#comp BAN-D3T
+#comp BAN-D3L
 #comp BAN-NCL
 Najmul Hossain Shanto;1998;BAT;76;20;OB;L;-;BAN-RAJ
-Towhid Hridoy;2000;BAT;74;0;-;R;1/1/-1;BAN-RAJ
+Towhid Hridoy;2000;BAT;74;0;-;R;1/1/-1;BAN-RAJ BAN-FOR
 Mahmudul Hasan Joy;2000;BAT;68;10;OB;R;-2/0/2;BAN-CTG
 Tanzid Hasan;2000;BAT;70;0;-;L;2/0/-2;BAN-RAJ
 Mominul Haque;1991;BAT;72;25;SLA;L;-4/-2/4;BAN-CTG
@@ -26,19 +51,19 @@ Shadman Islam;1995;BAT;68;10;SLA;L;-3/0/3;BAN-DM
 Saif Hassan;1998;BAT;68;20;OB;R;-;BAN-DHK
 Parvez Hossain Emon;2002;BAT;66;0;-;L;2/0/-2;-
 Zakir Hasan;1998;BAT;66;0;-;L;-2/0/2;BAN-SYL
-Mohammad Naim;1999;BAT;64;0;-;L;-;-
+Mohammad Naim;1999;BAT;64;0;-;L;-;BAN-CTZ
 Shahadat Hossain Dipu;2002;BAT;64;25;OB;R;-;-
 Ariful Islam;2002;BAT;62;0;-;R;-;-
 Soumya Sarkar;1993;AR;64;58;RFM;L;-;BAN-KHU
-Mehidy Hasan Miraz;1997;AR;68;76;OB;R;-;BAN-KHU
+Mehidy Hasan Miraz;1997;AR;68;76;OB;R;-;BAN-KHU BAN-WAL
 Mahedi Hasan;1994;AR;58;70;OB;R;1/0/-2;BAN-KHU
 Shamim Hossain;2000;AR;64;40;OB;L;2/0/-2;BAN-CTG
 Mohammad Saifuddin;1996;AR;58;64;RFM;L;-;-
 Afif Hossain;1999;AR;64;45;OB;L;-;BAN-KHU
 Shakib Al Hasan;1987;AR;72;77;SLA;L;-;-
-Mushfiqur Rahim;1987;WK;76;0;-;R;-3/1/2;BAN-RAJ
+Mushfiqur Rahim;1987;WK;76;0;-;R;-3/1/2;BAN-RAJ BAN-SRC
 Litton Das;1994;WK;70;0;-;R;-;BAN-RAN
-Nurul Hasan;1993;WK;64;0;-;R;-;BAN-KHU
+Nurul Hasan;1993;WK;64;0;-;R;-;BAN-KHU BAN-HBS
 Jaker Ali;1998;WK;68;0;-;R;-;BAN-SYL
 Anamul Haque;1992;WK;66;0;-;R;-;-
 Mahidul Islam Ankon;1999;WK;64;0;-;R;-2/0/2;-

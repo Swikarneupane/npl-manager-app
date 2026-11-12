@@ -42,7 +42,7 @@ export function hydrate(rec, year, delta) {
     id, name, nat, age: year - born, born, role, bat: d.bat ?? bat, bowl: d.bowl ?? bowl, type: type || '', hand: hand || 'R', fm: fm || {},
     form: d.form ?? 0, fit: d.fit ?? 100, _rd: d.rd, morale: d.morale ?? 70, inj: d.inj ?? 0, temper: 45 + (h % 45), vsSpin: (h >> 5) % 13 - 6,
     field: 45 + ((h >> 9) % 40), pot: Math.max(bat, bowl), traits: { big: 40 + ((h >> 3) % 40), pro: 50, amb: 50, loyal: 50, lead: 30 + ((h >> 7) % 50), flair: 50 },
-    regs: d.regs || regs || [], stats: {}, real: true, world: true, team: null,
+    regs: d.regs || regs || [], stats: {}, real: true, world: true, team: null, unv: !!(fm && fm.unv),
   };
 }
 

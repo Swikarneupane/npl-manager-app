@@ -89,5 +89,5 @@ export default {
     {id: "SL-ACE", name: "Ace Capital Cricket Club", short: "ACE", kind: "domestic", level: 1},
     {id: "SL-KYCC", name: "Kurunegala Youth Cricket Club", short: "KYCC", kind: "domestic", level: 1},
   ],
-  comps: ["SL-MCT"],
+  comps: ["SL-MCT", "SL-T20", "SL-50"],
 };

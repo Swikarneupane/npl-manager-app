@@ -23,7 +23,7 @@ test('Europe and Americas data: nation modules have their header fields and dome
 
 test('Europe and Americas data: every record has the right shape and valid ranges', () => {
   for (const m of mods) {
-    const teamIds = new Set(m.teams.map((t) => t.id));
+    const teamIds = new Set(mods.flatMap((x) => x.teams.map((t) => t.id))); // a player may be registered at another nation's team (an overseas county)
     for (const p of m.players) {
       const [id, name, nat, born, role, bat, bowl, type, hand, fm, teams] = p;
       const at = `${m.code} ${id}`;
