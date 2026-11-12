@@ -14,6 +14,7 @@ import { autosave } from '../lib/save.js';
 import { T } from '../lib/i18n.js';
 import { gradeOfL } from '../game/office.js';
 import { traitRows, traitChips, relationships, timeline, mentorOptions, projection, TALK, talk, lastTen } from '../game/living.js';
+import { recordOf, rowOf, BUCKETS } from '../world/record.js';
 import '../styles/living.css';
 
 // Form: the last 10 innings, oldest to newest, gold for 50+.
@@ -41,6 +42,15 @@ function Personality({ G, p }) {
         {rel.length ? <ul className="mlist">{rel.map((r, i) => <li key={i} style={{ padding: '8px 0' }}><span className="grow t-small">{r.pid ? <Link to={`/player/${r.pid}`}>{r.who}</Link> : r.who}</span><span className={`t-small ${r.c || ''}`}>{r.t}</span></li>)}</ul> : <p className="t-small faint">Not at a club.</p>}</div>
     </div>
   );
+}
+// Permanent career record across the NPL, national sides and leagues. Counted from zero in this game.
+function CareerRecord({ G, p }) {
+  const rec = recordOf(G, p); if (!rec) return null;
+  const rows = BUCKETS.filter(([k]) => rec[k] && rec[k][0] > 0).map(([k, l]) => [l, rowOf(rec[k])]); if (!rows.length) return null;
+  return (<section><h2 className="t-h3" style={{ marginBottom: 6 }}>{T(G, 'Career record · in this game', 'करियर रेकर्ड · यो खेलमा')}</h2>
+    <div className="tblwrap"><table className="tbl compact"><thead><tr><th>Format</th><th className="r">M</th><th className="r">Inns</th><th className="r">Runs</th><th className="r">HS</th><th className="r">Avg</th><th className="r">SR</th><th className="r">50/100</th><th className="r">Wkts</th><th className="r">Best</th><th className="r">Econ</th></tr></thead>
+      <tbody>{rows.map(([l, r]) => <tr key={l}><td>{l}</td><td className="r">{r.m}</td><td className="r">{r.inn}</td><td className="r">{r.runs}</td><td className="r">{r.hs}</td><td className="r">{r.avg}</td><td className="r">{r.sr}</td><td className="r">{r.h}/{r.c}</td><td className="r">{r.w}</td><td className="r">{r.best}</td><td className="r">{r.econ}</td></tr>)}</tbody></table></div>
+    <p className="faint t-micro" style={{ marginTop: 6 }}>Counted from the start of this game, across the NPL, national sides and leagues. Real career figures are not included.</p></section>);
 }
 function Timeline({ G, p }) {
   const ev = timeline(G, p); if (!ev.length) return null;
@@ -167,6 +177,7 @@ export default function Player() {
               <ul className="attrs">{attr.map(([k, v]) => <li key={k}><span className="t-small">{k}</span><Meter pct={v} blue /><span className="t-small b6 num">{v || '–'}</span></li>)}</ul>
               <p className="t-micro faint">Potential {potRange(p)}{p.scouted ? ' · scouted' : ''}. Ratings are out of 100.</p></section>
             <Personality G={G} p={p} />
+            <CareerRecord G={G} p={p} />
             <Timeline G={G} p={p} />
           </div>
           <div className="stack" style={{ gap: 16, minWidth: 0 }}>

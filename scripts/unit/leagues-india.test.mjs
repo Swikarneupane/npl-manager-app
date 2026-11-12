@@ -104,7 +104,7 @@ test('leagues-india: state sides hold real players', () => {
   for (const t of ['IND-MUM', 'IND-VID', 'IND-HYD', 'IND-MAN']) assert.ok(P.rosterOf(G, t).length >= 18, `${t} roster`);
 });
 
-test('leagues-india: a full world year stays quick and adds under 150 KB after compaction', async () => {
+test('leagues-india: a full world year stays quick and adds under 200 KB after compaction', async () => {
   P.setDB(mods, lg); IN.setIntlEnabled(false); const out = {};
   try {
     for (const live of [false, true]) { LI.setIndiaEnabled(live);
@@ -116,7 +116,7 @@ test('leagues-india: a full world year stays quick and adds under 150 KB after c
   } finally { LI.setIndiaEnabled(false); }
   if (process.env.VERBOSE) console.log(`leagues-india: year ${out.true.ms} ms (${out.false.ms} without); save +${Math.round(out.true.kb - out.false.kb)} KB; seasons kept ${Math.round(out.season)} KB (${out.n})`);
   assert.ok(out.true.ms - out.false.ms < 6000, `India adds ${out.true.ms - out.false.ms} ms`);
-  assert.ok(out.true.kb - out.false.kb < 150, `India adds ${Math.round(out.true.kb - out.false.kb)} KB`);
+  assert.ok(out.true.kb - out.false.kb < 200, `India adds ${Math.round(out.true.kb - out.false.kb)} KB`);
 });
 
 test('leagues-india: clean up', () => { P.setDB([]); FOUR = null; });

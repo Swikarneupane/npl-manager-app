@@ -320,7 +320,24 @@ export function nextEvent(G) {
   const wd = ensure(G); if (!wd) return null; const y = yearOf(wd.day); ST.ensureYear(G, y); ST.ensureYear(G, y + 1);
   const wf = ST.nextUserFixture(G); const ne = hasClub(G) ? nplEvent(G) : null;
   const w = wf ? { kind: 'world', S: wf[0], f: wf[1], day: wf[1].d } : null;
-  const ce = Club.clubEvent(G); let best = ne; if (w && (!best || w.day <= best.day)) best = w; if (ce && (!best || ce.day <= best.day)) best = ce; return best;
+  const ce = Club.clubEvent(G); let best = ne; if (w && (!best || w.day <= best.day)) best = w; if (ce && (!best || ce.day <= best.day)) best = ce;
+  return withClash(G, best, ne);
+}
+// Two of the user's matches on one day (country and club, or two clubs): only one can be played live. The event
+// carries the others as `clash`; the user picks one and the assistant plays the rest (settleClash).
+function withClash(G, ev, ne) {
+  if (!ev || (ev.kind !== 'world' && !(ev.kind === 'npl' && ev.what === 'match'))) return ev;
+  const peers = ST.userFixturesOn(G, ev.day).filter(([, f]) => f !== ev.f).map(([S, f]) => ({ kind: 'world', S, f, day: f.d }));
+  if (ev.kind === 'world' && ne && ne.what === 'match' && ne.day === ev.day) peers.push(ne);
+  return peers.length ? { ...ev, clash: peers } : ev;
+}
+export const clashOptions = (ev) => (ev && ev.clash ? [{ ...ev, clash: undefined }, ...ev.clash] : ev ? [ev] : []);
+// The user plays `keep` live; the assistant plays every other match of that day.
+export async function settleClash(G, ev, keep, rnd = Math.random) {
+  for (const o of clashOptions(ev)) {
+    if (o.kind === keep.kind && o.f === keep.f) continue;
+    if (o.kind === 'world') assistantPlays(G, o.S, o.f, rnd); else { applyCallUps(G, o.f); await simFixture(G, o.f); }
+  }
 }
 export function eventLabel(G, ev) {
   if (!ev) return 'Nothing scheduled';

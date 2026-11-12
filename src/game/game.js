@@ -10,6 +10,7 @@ import * as Living from './living.js';
 import * as World from './world.js';
 import * as Occasions from './occasions.js';
 import * as WorldLink from './worldlink.js';
+import * as Rec from '../world/record.js';
 // Phase 2 modules; each may export migrate, afterMatch, seasonStart, seasonEnd, offseason, auctionSetup,
 // and todayTasks (items for the Home "today" list).
 const MODULES=[Depth,Matchday,Occasions,Club,Office,Living,World,WorldLink];
@@ -487,6 +488,7 @@ class Game{
     for(const side of [m.home,m.away]) for(const id of m.lineups[side].xi){ const p=this.P(id); played.add(id); this.st(p,y).m++; p.fit=clamp(p.fit-ri(2,6)-(this.teams[side].training==='Intense'?2:0),40,100); p.played=(p.played||0)+1; p.lastPlayed=f.n; }
     if(m.catches) for(const id in m.catches) this.st(this.P(id),y).ct+=m.catches[id];
     if(res.mom){ this.st(this.P(res.mom),y).mom++; }
+    try{ Rec.addNPL(this,m); }catch(e){ console.error('career record',e); }
     // non-playing squad members recover + injuries tick
     for(const side of [m.home,m.away]){
       const t=this.teams[side];

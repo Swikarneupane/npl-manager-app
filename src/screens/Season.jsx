@@ -6,6 +6,9 @@ import { playoffOdds, raceText } from '../game/odds.js';
 import { fmtNRR, seasonNo, tname, tshort, useNarrow, stageName } from '../lib/util.js';
 import MScreen, { useTab } from '../components/MScreen.jsx';
 import { tn } from '../lib/i18n.js';
+import * as CR from '../world/career.js';
+import * as ST from '../world/state.js';
+import { short } from '../world/dates.js';
 
 const nrr2 = (x) => (x >= 0 ? '+' : '−') + Math.abs(x).toFixed(2);
 const TABS = [['table', 'Table'], ['fixtures', 'Fixtures'], ['results', 'Results'], ['playoffs', 'Playoffs']];
@@ -153,10 +156,34 @@ function SeasonMobile() {
   );
 }
 
+// The user's other teams: the national side and a club abroad, each with its live competitions.
+function WorldTeams({ job }) {
+  const { G } = useGame(); const wd = G.s.wd; const t = job.team; const name = ST.teamName(G, t);
+  const live = ST.seasons(G).filter((S) => S.teams.includes(t) && !S.done).sort((a, b) => (a.start ?? 0) - (b.start ?? 0));
+  const last = ST.seasons(G).filter((S) => S.teams.includes(t) && S.done).slice(-3).reverse();
+  const nextOf = (S) => S.fx.filter((f) => !f.res && (f.a === t || f.b === t)).sort((a, b) => a.d - b.d)[0];
+  return (
+    <section className="stack" style={{ gap: 10, marginTop: 8 }} aria-label={name}>
+      <p className="t-h3">{name} · {job.kind === 'nation' ? 'national team' : 'club job'}</p>
+      {!live.length && <p className="mut t-small">No competition is running for {name} right now{wd ? ` (today is ${short(wd.day)})` : ''}.</p>}
+      {live.map((S) => { const f = nextOf(S); return (
+        <Link key={S.id} to={`/comp/${S.id}`} className="card stack" style={{ gap: 2, padding: 12, textDecoration: 'none', color: 'inherit' }}>
+          <b>{CR.seasonName(S)}</b>
+          <span className="t-small mut">{f ? `Next: ${ST.teamName(G, f.a)} v ${ST.teamName(G, f.b)} · ${short(f.d)}` : 'No fixtures left for you'}</span>
+        </Link>); })}
+      {last.length > 0 && <p className="t-small faint">Recently finished: {last.map((S) => CR.seasonName(S)).join(' · ')}</p>}
+    </section>
+  );
+}
+// League tab: your NPL club's league, plus the country and any club abroad you manage.
 export default function Season() {
-  const narrow = useNarrow();
-  if (narrow) return <SeasonMobile />;
-  return <SeasonDesktop />;
+  const { G } = useGame(); const narrow = useNarrow(); const [q, setQ] = useSearchParams();
+  const jobs = G.s.wd ? CR.jobs(G) : []; const nation = jobs.find((j) => j.kind === 'nation'); const abroad = CR.abroadJob(G);
+  const scopes = [...(CR.hasClub(G) || !G.s.wd ? [['npl', 'NPL']] : []), ...(nation ? [['nation', ST.teamName(G, nation.team)]] : []), ...(abroad ? [['abroad', ST.teamName(G, abroad.team)]] : [])];
+  const scope = scopes.some(([k]) => k === q.get('scope')) ? q.get('scope') : (scopes[0] ? scopes[0][0] : 'npl');
+  const bar = scopes.length > 1 && <div style={{ margin: narrow ? '8px 16px 0' : '0 0 10px' }}><Seg value={scope} onChange={(k) => setQ(k === scopes[0][0] ? {} : { scope: k }, { replace: true })} options={scopes} label="League scope" /></div>;
+  if (scope === 'nation' || scope === 'abroad') return <div className={narrow ? 'stack' : 'season'} style={narrow ? { padding: '12px 0' } : {}}><h1 className="t-h2" style={narrow ? { margin: '0 16px' } : { marginBottom: 10 }}>{tn(G, 'League')}</h1>{bar}<div style={narrow ? { padding: '0 16px' } : {}}><WorldTeams job={scope === 'nation' ? nation : abroad} /></div></div>;
+  return <>{bar}{narrow ? <SeasonMobile /> : <SeasonDesktop />}</>;
 }
 function SeasonDesktop() {
   const { G } = useGame(); const [q, setQ] = useSearchParams();

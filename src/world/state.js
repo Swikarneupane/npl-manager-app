@@ -11,6 +11,7 @@ import { autoSquad, autoXI } from './squads.js';
 import { dayOfDate, yearOf } from './dates.js';
 import * as Career from './career.js';
 import * as Club from './club.js';
+import * as Rec from './record.js';
 import './domestic.js'; // every domestic competition registers itself
 
 export const W = (G) => G.s.wd;
@@ -21,6 +22,7 @@ export function migrate(G) {
   const y = s.year || 2026; const start = { offseason: dayOfDate(y, 0, 5), retention: dayOfDate(y, 5, 20), auction: dayOfDate(y, 6, 20), preseason: dayOfDate(y, 8, 15) }[s.phase] ?? dayOfDate(y, 9, 1);
   s.wd ??= { v: 1, day: start, seasons: {}, years: {}, pd: {}, st: {}, jobs: null, squads: {}, news: [] };
   // every career starts with the NPL club job; national jobs come by choice or by offer
+  s.wd.pcr ??= {}; // permanent career records (world/record.js); old saves start them now
   s.wd.jobs ??= [{ kind: 'club', comp: 'NPL', team: s.user, since: s.year }];
 }
 
@@ -73,10 +75,12 @@ export function resultOf(G, f, card) {
 }
 const topOf = (card) => card.inns.map((i) => { const b = i.bat.slice().sort((x, y) => y[1] - x[1])[0]; const w = i.bowl.slice().sort((x, y) => y[3] - x[3] || x[2] - y[2])[0]; return [b ? [b[0], b[1], b[2]] : null, w ? [w[0], w[3], w[2]] : null]; });
 
+export const played = { n: 0 }; // matches simulated this session, for the "moved on" summary
 export function playFast(G, S, f, rnd = Math.random) {
+  played.n++;
   const a = sideFor(G, f.a, f.fmt, S), b = sideFor(G, f.b, f.fmt, S);
   const card = isMultiDay(f.fmt) ? fastFC(a, b, f.fmt, rnd) : fastMatch(a, b, f.fmt, rnd, f.balls ? { balls: f.balls } : {}); f.card = compactCard(card);
-  addStats(G, S, card, a.xi, b.xi); recordFx(S, defOf(S), f, resultOf(G, f, card), rnd);
+  addStats(G, S, card, a.xi, b.xi); Rec.addWorld(G, f.fmt, card, a.xi, b.xi); recordFx(S, defOf(S), f, resultOf(G, f, card), rnd);
   for (const p of [...a.xi, ...b.xi]) p.fit = Math.max(40, (p.fit ?? 100) - 3);
   return card;
 }
@@ -89,6 +93,12 @@ export function nextUserFixture(G) {
   const mine = new Set(userTeams(G).filter((t) => isUserTeam(G, t))); let best = null;
   for (const S of seasons(G)) if (!S.done) for (const f of S.fx) if (!f.res && (mine.has(f.a) || mine.has(f.b)) && (!best || f.d < best[1].d)) best = [S, f];
   return best;
+}
+// Every unplayed fixture of the user's teams on one day (a clash when there is more than one).
+export function userFixturesOn(G, day) {
+  const mine = new Set(userTeams(G).filter((t) => isUserTeam(G, t))); const out = [];
+  for (const S of seasons(G)) if (!S.done) for (const f of S.fx) if (!f.res && f.d === day && (mine.has(f.a) || mine.has(f.b))) out.push([S, f]);
+  return out;
 }
 // Move the world to `day`: every other match is fast-simmed. Returns the user fixture that stopped
 // the clock, or null. With auto, the assistant plays the user's fixtures too.

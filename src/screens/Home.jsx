@@ -14,8 +14,10 @@ import { lastMeeting } from '../game/depth.js';
 import { autosave } from '../lib/save.js';
 import { simUntilUser, simFixture, simToSeasonEnd, completeSquad, startSeason, savedMatchFor, quickSimUserMatch, startOffseason, matchPath, afterMatchRoute } from '../lib/flow.js';
 import * as CR from '../world/career.js';
+import * as ST from '../world/state.js';
 import { ClubEventCard, ClubPortal } from './ClubAbroadCard.jsx';
 import { savedWorld } from '../world/match.js';
+import ClashPicker from '../components/ClashPicker.jsx';
 import { NDot } from '../components/NationBits.jsx';
 import { short, label as dayLabel } from '../world/dates.js';
 import '../styles/career.css';
@@ -25,7 +27,7 @@ import '../styles/career.css';
 export function ClockBar({ m }) {
   const { G, update, toast } = useGame(); const [busy, setBusy] = useState(false); if (!G.s.wd) return null;
   const ev = CR.nextEvent(G); const now = G.s.wd.day; const due = ev && ev.day <= now;
-  const go = async () => { setBusy(true); toast('The world moves on…'); try { await CR.continueWorld(G); autosave(G); } finally { setBusy(false); update(); } };
+  const go = async () => { setBusy(true); toast('The world moves on…'); const d0 = G.s.wd.day, n0 = ST.played.n; try { await CR.continueWorld(G); autosave(G); const n = ST.played.n - n0; toast(`Now ${dayLabel(G.s.wd.day)} · ${G.s.wd.day - d0} days on${n ? `, ${n} matches played` : ''}.`); } finally { setBusy(false); update(); } };
   return (
     <section className={`cr-clock${m ? ' m' : ''}`} aria-label="Calendar">
       <div className="stack cr-today"><span className="t-micro faint">Today</span><span className="b6 num">{dayLabel(now)}</span></div>
@@ -369,7 +371,8 @@ function MToday() {
   return (
     <>
       <ClockBar m />
-      {ev && ev.kind === 'world' && <WorldCard ev={ev} m />}{ev && ev.kind === 'club' && <ClubEventCard ev={ev} />}
+      {ev && ev.clash && ev.day <= G.s.wd.day && <ClashPicker ev={ev} />}
+      {ev && ev.kind === 'world' && !(ev.clash && ev.day <= G.s.wd.day) && <WorldCard ev={ev} m />}{ev && ev.kind === 'club' && <ClubEventCard ev={ev} />}
       {club ? (f ? <MNext f={f} pos={pos} form={form} /> : <div style={{ paddingTop: 12 }}><Hero /></div>) : !CR.nationJob(G) && !CR.abroadJob(G) && <div style={{ paddingTop: 12 }}><Hero /></div>}
       {G.s.wd && G.s.wd.offers.length > 0 && <div style={{ paddingTop: 10 }}><OffersPin /></div>}
       {pending.length > 0 && <><p className="mhead">Needs your decision · {pending.length}</p>
@@ -478,7 +481,7 @@ function HomeMobile() {
 export default function Home() {
   const { G } = useGame(); const narrow = useNarrow();
   if (narrow) return <HomeMobile />;
-  const club = !G.s.wd || CR.hasClub(G); const ev = G.s.wd ? CR.nextEvent(G) : null; const wcard = ev && ev.kind === 'world' ? <WorldCard ev={ev} /> : ev && ev.kind === 'club' ? <ClubEventCard ev={ev} /> : null;
+  const club = !G.s.wd || CR.hasClub(G); const ev = G.s.wd ? CR.nextEvent(G) : null; const wcard = ev && ev.clash && ev.day <= G.s.wd.day ? <ClashPicker ev={ev} /> : ev && ev.kind === 'world' ? <WorldCard ev={ev} /> : ev && ev.kind === 'club' ? <ClubEventCard ev={ev} /> : null;
   if (!club) return (
     <div className="wrap portals">
       <div className="pcol"><ClockBar /><OffersPin />{wcard}<Hero /><NationResults /><NewsPortal /></div>

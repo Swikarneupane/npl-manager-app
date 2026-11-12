@@ -5,6 +5,7 @@
 // Everything not overridden (settings, difficulty, team strength) comes from the real game.
 // recordWorld turns the engine's card into the compact world card (with dismissals, extras and the fall of
 // wickets kept for the scorecard) and records it with addStats and record, exactly as the fast sim does.
+import * as Rec from './record.js';
 import { Match } from '../game/engine.js';
 import * as ST from './state.js';
 import { record as recordFx } from './comp.js';
@@ -68,7 +69,7 @@ export function recordWorld(G, S, f, m, inj0) {
   const mm = /won by (.+)$/.exec(r.text || ''); const card = { inns, winner, loser, tie: !!r.tie, nr: !!r.nr, draw: !!r.draw, margin: r.margin != null && r.margin !== '' ? r.margin : mm ? mm[1] : '' };
   const res = ST.resultOf(G, f, card); res.text = r.text || res.text; if (r.mom) res.pom = r.mom; res.live = 1;
   const xi = (t) => m.lineups[t].xi.map((id) => PG.P(id)).filter(Boolean);
-  f.card = inns; ST.addStats(G, S, card, xi(f.a), xi(f.b)); recordFx(S, ST.defOf(S), f, res);
+  f.card = inns; ST.addStats(G, S, card, xi(f.a), xi(f.b)); Rec.addWorld(G, f.fmt, card, xi(f.a), xi(f.b)); recordFx(S, ST.defOf(S), f, res);
   for (const p of [...xi(f.a), ...xi(f.b)]) p.fit = Math.max(40, (p.fit ?? 100) - 3);
   // form follows the innings and the spell, as in the NPL; injuries in a national match do not carry over
   for (const inn of m.inns) {

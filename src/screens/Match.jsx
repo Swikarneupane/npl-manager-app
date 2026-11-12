@@ -16,6 +16,7 @@ import { autosave } from '../lib/save.js';
 import { xiStatus } from './Home.jsx';
 import { Actions, BatPlan, BowlPlan, nextOver, spellText, Declare } from '../components/MatchPlan.jsx';
 import { openDecisions } from '../components/DecisionSheet.jsx';
+import ClashPicker from '../components/ClashPicker.jsx';
 import { nextEvent, hasClub, applyCallUps, seasonName, nationName, continueWorld } from '../world/career.js';
 import { worldGame, savedWorld } from '../world/match.js';
 import { short } from '../world/dates.js';
@@ -442,6 +443,7 @@ export default function Match() {
   let lm = ui.live;
   const ev = G.s.wd ? nextEvent(G) : null;
   const f = hasClub(G) ? userNextFixture(G) : null;
+  if ((!lm || (lm.done && ui.liveSeen)) && ev && ev.clash && ev.day <= G.s.wd.day && !savedWorld(G)) return <><h1 className="t-h1">Choose your match</h1><div style={{ marginTop: 12 }}><ClashPicker ev={ev} /></div></>;
   if (!lm || (lm.done && ui.liveSeen)) { const w = G.s.wd ? worldLive(G, ui, update) : null; if (w) { lm = ui.live = w; ui.liveSeen = false; } }
   if ((!lm || (lm.done && ui.liveSeen)) && f && f === nextUnplayed(G) && !(ev && ev.kind === 'world')) { const saved = savedMatchFor(G, f); if (!saved) applyCallUps(G, f); lm = ui.live = new LiveMatch(G, f, update, saved); ui.liveSeen = false; }
   if (lm) lm.onChange = update;
