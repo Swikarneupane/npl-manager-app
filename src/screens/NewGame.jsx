@@ -14,8 +14,8 @@ import { setLevel } from '../world/state.js';
 import { available, teamsAndLevels } from '../world/club.js';
 
 // Which jobs the career starts with. Associates are open from the start; Test nations come by reputation.
-const JOBS = [['club', 'NPL club'], ['nation', 'National team'], ['both', 'Both'], ['abroad', 'Club abroad']];
-const JOB_TEXT = { abroad: 'Manage a club in another league, under its own auction, draft or contract rules. The NPL runs without you.', club: 'Run one of the eight NPL franchises.', nation: 'Manage Nepal or another associate nation. The NPL runs without you; clubs may call later.', both: 'An NPL franchise and a national side at once. Players you call up miss NPL matches that clash.' };
+const JOBS = [['club', 'NPL club'], ['nation', 'National team'], ['both', 'Both'], ['abroad', 'Club abroad'], ['none', 'Unemployed']];
+const JOB_TEXT = { none: 'Start between jobs. Offers and board vacancies come as your reputation grows, and you can apply from the Jobs screen. The world runs on without you.', abroad: 'Manage a club in another league, under its own auction, draft or contract rules. The NPL runs without you.', club: 'Run one of the eight NPL franchises.', nation: 'Manage Nepal or another associate nation. The NPL runs without you; clubs may call later.', both: 'An NPL franchise and a national side at once. Players you call up miss NPL matches that clash.' };
 
 const MODES = [['ball', 'Every ball', 'You call each delivery.'], ['over', 'Every over', 'Pause at the end of each over.'], ['key', 'Key moments', 'Plays on, pauses for wickets, DRS and the death overs.'], ['quick', 'Quick sim', 'Straight to the result.']];
 
@@ -69,7 +69,7 @@ export default function NewGame() {
     // pre-season fairness: the AI teams sign their overseas players when you start the season, not before
     const G = Game.create(team, { lang, manager: name || 'Manager', mode, difficulty });
     if (challenge && club) applyChallenge(G, challenge);
-    startCareer(G, { club, nation: job === 'club' || job === 'abroad' ? null : nation, abroad: job === 'abroad' ? abroad || (clubs[0] && clubs[0].id) : null });
+    startCareer(G, { club, nation: job === 'club' || job === 'abroad' || job === 'none' ? null : nation, abroad: job === 'abroad' ? abroad || (clubs[0] && clubs[0].id) : null });
     Object.entries(levels).forEach(([g, v]) => setLevel(G, g, v));
     ui.live = null; saveLocal(G); setG(G); nav('/');
   };

@@ -65,7 +65,7 @@ function Desk({ code, fmt, setFmt }) {
     </div>
   );
 }
-function Row({ s, p, mode }) {
+function Row({ s, p, mode, fmt }) {
   const { G, sel } = s; const k = CR.keyOf(p); const sq = s.keys.includes(k); const x = s.xi.includes(k); const st = CR.recentStats(G, p); const ro = sel.asst || !ST.managesSide(G, 'intl', fmt);
   const cap = sel.cap && CR.keyOf(sel.cap) === k, wk = sel.wk && CR.keyOf(sel.wk) === k;
   return (
@@ -86,9 +86,9 @@ function Phone({ code, fmt, setFmt }) {
       tabs={[['xi', 'XI', sel.xiPicked.length === 11 ? null : sel.xiPicked.length], ['squad', 'Squad', s.keys.length === 15 ? null : s.keys.length], ['pool', 'All players']]} tab={tab} onTab={setTab} label="National squad"
       actions={!sel.asst && sel.picked ? <button type="button" className="btn" style={{ flex: '1 1 auto' }} onClick={s.auto}>Let the assistant pick</button> : null}>
       {sel.asst && <p className="t-small mut" style={{ paddingTop: 10 }}>The assistant picks while “Let the assistant decide” is on in <Link to="/settings">Settings</Link>.</p>}
-      {tab === 'xi' && sel.squad.map((p) => <Row key={CR.keyOf(p)} s={s} p={p} mode="xi" />)}
-      {tab === 'squad' && sel.squad.map((p) => <Row key={CR.keyOf(p)} s={s} p={p} mode="squad" />)}
-      {tab === 'pool' && pool.slice(0, 60).map((p) => <Row key={CR.keyOf(p)} s={s} p={p} mode="squad" />)}
+      {tab === 'xi' && sel.squad.map((p) => <Row key={CR.keyOf(p)} fmt={fmt} s={s} p={p} mode="xi" />)}
+      {tab === 'squad' && sel.squad.map((p) => <Row key={CR.keyOf(p)} fmt={fmt} s={s} p={p} mode="squad" />)}
+      {tab === 'pool' && pool.slice(0, 60).map((p) => <Row key={CR.keyOf(p)} fmt={fmt} s={s} p={p} mode="squad" />)}
       {tab === 'pool' && !pool.length && <p className="t-small faint">No eligible players yet.</p>}
     </MScreen>
   );
