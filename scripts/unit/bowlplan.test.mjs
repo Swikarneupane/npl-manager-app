@@ -4,8 +4,8 @@ import { test } from './lib.mjs';
 import { Game } from '../../src/game/game.js';
 import { Match, batProfile } from '../../src/game/engine.js';
 
-async function run(plan, agg) {
-  const G = Game.create('LL', { lang: 'en', manager: 'T' }); G.aiPreseason(); G.startSeason(); const ids = Object.keys(G.teams).filter((t) => t !== G.user);
+async function run(G, plan, agg) {
+  const ids = Object.keys(G.teams).filter((t) => t !== G.user);
   let w = 0, r = 0, b = 0;
   for (let k = 0; k < 100; k++) {
     const m = new Match(G, ids[k % ids.length], G.user, { lang: 'en', overs: 20, noRain: true });
@@ -16,6 +16,7 @@ async function run(plan, agg) {
 }
 test('batter lean is stable and in range', () => { const p = { id: 'x-1' }; const a = batProfile(p), c = batProfile({ id: 'x-1' }); assert.deepEqual(a, c); assert.ok(Math.abs(a.side) <= 1 && Math.abs(a.foot) <= 1); });
 test('attacking bowlers take more wickets and go for more than defensive ones', async () => {
-  const at = await run(null, 'attack'), de = await run(null, 'defend');
+  const G = Game.create('LL', { lang: 'en', manager: 'T' }); G.aiPreseason(); G.startSeason(); // one league for both runs, so only the plan differs
+  const at = await run(G, null, 'attack'), de = await run(G, null, 'defend');
   assert.ok(at.w > de.w, `wickets per over ${at.w} v ${de.w}`);
 });
