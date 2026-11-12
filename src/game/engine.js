@@ -105,9 +105,12 @@ function cm(lang,key,vars){
 }
 // DLS resources (dlsG, dlsRes) live in winprob.js, shared with the win-probability model.
 // ===== Match engine =====
-function phaseOf(ballIdx){ const o=Math.floor(ballIdx/6); return o<6?'pp':o>=15?'death':'mid'; }
+// Powerplay, middle and death by match length: T20 is overs 1-6, 7-15, 16-20; a 50-over match is 1-10, 11-40, 41-50.
+function phaseOf(ballIdx,maxBalls=120){ const o=Math.floor(ballIdx/6), ov=maxBalls/6;
+  if(ov>25) return o<ov*0.2?'pp':o>=ov*0.8?'death':'mid';
+  return o<6?'pp':o>=15?'death':'mid'; }
 function autoAggr(inn,maxBalls){
-  const bl=maxBalls-inn.balls, o=Math.floor(inn.balls/6), wk=inn.wkts;
+  const bl=maxBalls-inn.balls, o=Math.floor(inn.balls/6)*(120/maxBalls), wk=inn.wkts; // o: the over as a 20-over equivalent
   if(inn.target){
     const need=inn.target-inn.runs; if(need<=0) return 0;
     const rrr=need/(Math.max(1,bl)/6), inHand=10-wk;
@@ -137,6 +140,8 @@ function ballProbs(b,w,aggr,ctx){
   P.four*=ctx.pitch; P.six*=ctx.pitch; P.wkt/=Math.sqrt(ctx.pitch);
   // composure: a rattled batter plays more false shots
   if(ctx.comp!=null){ const k=falseShot(ctx.comp); P.wkt*=k; if(k>1) P.dot*=1+(k-1)/4; else if(ctx.comp>75) P.four*=1.05; }
+  // 50-over cricket: boundaries are rarer, wickets fall more slowly, singles and dots dominate; a Test is the red-ball engine
+  if(ctx.odi){ P.dot*=1.3; P.one*=1.05; P.two*=0.95; P.four*=0.5; P.six*=0.3; P.wkt*=0.56; }
   if(ctx.freeHit){P.wkt=0; P.six*=1.4;}
   const s=Object.values(P).reduce((x,y)=>x+y,0); for(const k in P)P[k]/=s;
   return P;
@@ -184,7 +189,7 @@ class Match{
     return lu.xi.filter(id=>{const s=inn.bw[id]; return (!s||s.balls+need<=cap) && id!==inn.last && !(s&&s.injured);});
   }
   aiBowler(inn,need=6){
-    const opts=this.bowlerOptions(inn,need); const o=Math.floor(inn.balls/6); const ph=o<6?'pp':o>=15?'death':'mid';
+    const opts=this.bowlerOptions(inn,need); const o=Math.floor(inn.balls/6); const ph=phaseOf(inn.balls,this.maxBalls);
     const oversLeft=this.overs-o;
     const team=this.G.teams[inn.bowl]; const plan=inn.bowl===this.G.user&&team&&team.bowlPlan&&Object.keys(team.bowlPlan).length?team.bowlPlan:null;
     let best=null,bs=-1e9;
@@ -235,12 +240,12 @@ class Match{
   preview(inn,o={}){
     const bat=this.P(inn.striker), bowl=this.P(o.bowler||inn.cur); if(!bat||!bowl||!inn.bs[inn.striker]) return null;
     const ph=this.phaseAt(inn); const {b,w}=this.strengths(inn,bat,bowl,ph);
-    return this.probs(b,w,o.aggr!=null?o.aggr:this.aggrFor(inn),{phase:ph,set:inn.bs[inn.striker].b,field:o.field||this.fieldFor(inn,ph),pitch:this.pitch,freeHit:inn.freeHit,comp:o.comp!=null?o.comp:batComp(this,inn,inn.striker)});
+    return this.probs(b,w,o.aggr!=null?o.aggr:this.aggrFor(inn),{phase:ph,odi:this.maxBalls>150,set:inn.bs[inn.striker].b,field:o.field||this.fieldFor(inn,ph),pitch:this.pitch,freeHit:inn.freeHit,comp:o.comp!=null?o.comp:batComp(this,inn,inn.striker)});
   }
   // ---- save / resume ----
   serialize(){ const o={}; for(const k of Match.FIELDS) if(this[k]!==undefined) o[k]=this[k]; return JSON.parse(JSON.stringify(o)); }
   // the ball's phase and outcome model: limited-overs phases here, the red ball in MultiDay
-  phaseAt(inn){ return phaseOf(inn.balls); }
+  phaseAt(inn){ return phaseOf(inn.balls,this.maxBalls); }
   probs(b,w,aggr,ctx){ return ballProbs(b,w,aggr,ctx); }
   overNeed(inn){ return inn.target?`Need ${inn.target-inn.runs} from ${this.maxBalls-inn.balls}`:`Run rate ${(inn.runs/(inn.balls/6)).toFixed(2)}`; }
   static restore(G,data){ const m=Object.create((data.md?MultiDay:Match).prototype); Object.assign(m,JSON.parse(JSON.stringify(data))); m.G=G; m.hooks={}; m._ne=null; m._cur=null; return m; }
@@ -286,10 +291,10 @@ class Match{
         if(this.hooks.chooseBowler && inn.bowl===this.G.user) bid=await this.hooks.chooseBowler(inn,this);
         if(!bid || !this.bowlerOptions(inn).includes(bid)) bid=this.aiBowler(inn);
         inn.cur=bid; if(!inn.bw[bid]) inn.bw[bid]={balls:0,r:0,w:0,dots:0,wd:0,nb:0};
-        { const b=inn.bw[bid]; (b.ph||(b.ph={pp:0,mid:0,death:0}))[phaseOf(inn.balls)]++; }
+        { const b=inn.bw[bid]; (b.ph||(b.ph={pp:0,mid:0,death:0}))[phaseOf(inn.balls,this.maxBalls)]++; }
         if(this.hooks.beforeOver) await this.hooks.beforeOver(inn,this);
       }
-      { const r0=inn.runs,w0=inn.wkts,ph=phaseOf(inn.balls); await this.ball(inn); const X=(inn.ph||(inn.ph={}))[ph]||(inn.ph[ph]={r:0,w:0}); X.r+=inn.runs-r0; X.w+=inn.wkts-w0; }
+      { const r0=inn.runs,w0=inn.wkts,ph=phaseOf(inn.balls,this.maxBalls); await this.ball(inn); const X=(inn.ph||(inn.ph={}))[ph]||(inn.ph[ph]={r:0,w:0}); X.r+=inn.runs-r0; X.w+=inn.wkts-w0; }
       await this.endOverIfNeeded(inn);
     }
   }
@@ -299,7 +304,7 @@ class Match{
     if((isSecond&&inn.runs>=inn.target) || inn.wkts>=10) return;
     inn.lastOverEnd=inn.balls;
     // runs and overs per phase, for the scout report's weakest phase
-    { const px=inn.phx||(inn.phx={pp:[0,0],mid:[0,0],death:[0,0]}); const ph0=phaseOf(inn.balls-1); px[ph0][0]+=inn.overRuns||0; px[ph0][1]++; }
+    { const px=inn.phx||(inn.phx={pp:[0,0],mid:[0,0],death:[0,0]}); const ph0=phaseOf(inn.balls-1,this.maxBalls); px[ph0][0]+=inn.overRuns||0; px[ph0][1]++; }
     czOver(this,inn);
     const s=inn.bw[inn.cur]; const fig=`${Math.floor(s.balls/6)}-${s.r}-${s.w}`;
     const bats=[inn.striker,inn.non].filter(id=>inn.bs[id]&&!inn.bs[id].out).map(id=>`${this.P(id).name.split(' ').slice(-1)[0]} ${inn.bs[id].r} (${inn.bs[id].b})`);
@@ -324,7 +329,7 @@ class Match{
     let noBall=false; if(ex<wideP+nbP){ noBall=true; }
     const {b,w,mu}=this.strengths(inn,bat,bowl,ph);
     if(mu>=0){ const e=this.opt.mu[mu]; if(!e.on){ e.on=1; this.say(`Plan: ${e.title}. The matchup edge is on.`,'comp plan'); } }
-    const P=this.probs(b,w,aggr,{phase:ph,set:bs.b,field,pitch:this.pitch,freeHit:inn.freeHit,comp:batComp(this,inn,inn.striker)});
+    const P=this.probs(b,w,aggr,{phase:ph,odi:this.maxBalls>150,set:bs.b,field,pitch:this.pitch,freeHit:inn.freeHit,comp:batComp(this,inn,inn.striker)});
     let out=choose(P);
     const wasFree=inn.freeHit; inn.freeHit=false;
     if(noBall){ inn.runs++; inn.extras++; bw.r++; bw.nb++; inn.overRuns++; this.say(this.md?`No-ball from ${bowl.name}, an extra run.`:this.tr('nb',vars),'extra',{ball:true,o:this.ballLbl(inn,false),ev:'nb'}); inn.overSeq.push('nb'); inn.freeHit=!this.md; if(out==='wkt') out='dot'; }
