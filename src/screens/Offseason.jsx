@@ -1,3 +1,4 @@
+import DateGate from '../components/DateGate.jsx';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { gradeOfL } from '../game/office.js';
@@ -121,7 +122,7 @@ export default function Offseason() {
       <Steps steps={steps} cur={cur} />
       {body}
       <div className="stepbar"><button type="button" className="btn" disabled={cur === 0} onClick={() => setStep(cur - 1)}>Back</button>
-        {last ? <button type="button" className="btn btn-primary b6" disabled={!open} onClick={toRetention}>Go to {s.mega ? 'retention' : 'releases'}</button>
+        {last ? <DateGate what="retention" className="btn btn-primary b6" disabled={!open} onClick={toRetention}>Go to {s.mega ? 'retention' : 'releases'}</DateGate>
           : <button type="button" className="btn btn-primary b6" onClick={() => setStep(cur + 1)}>Next: {steps[cur + 1][1]}</button>}</div>
       {!open && <p className="t-micro faint">The off-season is over. <Link to="/">Home</Link></p>}
     </div>

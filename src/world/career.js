@@ -312,6 +312,12 @@ export function nplEvent(G) {
   if (ph === 'preseason') return { kind: 'npl', what: 'season', day: seasonStart(G) };
   return null;
 }
+// The off-season steps have dates. Before that day the clock has to move there first: no skipping ahead.
+export function dueDay(G, what) {
+  if (!G.s.wd || !hasClub(G)) return null; const ev = nplEvent(G); const now = G.s.wd.day;
+  const day = ev && ev.what === what ? ev.day : what === 'auction' ? dayOfDate(G.year, ...NPL_DATES.auction) : null;
+  return day != null && day > now ? day : null;
+}
 export const NPL_WHAT = { match: 'NPL match', sim: 'NPL matches', offseason: 'NPL off-season', retention: 'NPL retention deadline', auction: 'NPL auction', season: 'NPL season starts' };
 
 // The next thing that needs the user across both jobs (the earliest): a national fixture or an NPL step.

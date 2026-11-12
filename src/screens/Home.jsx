@@ -17,6 +17,7 @@ import * as CR from '../world/career.js';
 import * as ST from '../world/state.js';
 import { ClubEventCard, ClubPortal } from './ClubAbroadCard.jsx';
 import { savedWorld } from '../world/match.js';
+import DateGate from '../components/DateGate.jsx';
 import ClashPicker from '../components/ClashPicker.jsx';
 import { NDot } from '../components/NationBits.jsx';
 import { short, label as dayLabel } from '../world/dates.js';
@@ -167,7 +168,7 @@ function Hero() {
         <div className="acts">
           <button className={`btn ${ok ? '' : 'btn-primary'}`} onClick={() => nav('/signings')}>Overseas signing window</button>
           <button className="btn" onClick={() => nav('/squad')}>Review squad</button>
-          <button className={`btn ${ok ? 'btn-primary' : ''}`} disabled={!ok} onClick={() => update(() => { const n = startSeason(G); autosave(G); if (n) toast(`${n} free agent${n > 1 ? 's' : ''} signed at base price to complete your squad.`); })}>Start Season {seasonNo(G.year)}</button>
+          <DateGate what="season" className={`btn ${ok ? 'btn-primary' : ''}`} disabled={!ok} onClick={() => update(() => { const n = startSeason(G); autosave(G); if (n) toast(`${n} free agent${n > 1 ? 's' : ''} signed at base price to complete your squad.`); })}>Start Season {seasonNo(G.year)}</DateGate>
         </div>
         {(t.squad.length < 18 || os < 6) && <div className="row" style={{ gap: 10, alignItems: 'center' }}><button className="btn btn-ghost" onClick={() => update(() => { const n = completeSquad(G); autosave(G); toast(n ? `Signed ${n} free agent${n > 1 ? 's' : ''} at base price.` : 'No affordable free agents left.'); })}>Auto-complete squad</button><span className="faint t-small">Signs the best affordable free agents up to 18 players and 6 overseas.</span></div>}
         {!ok && <p className="crim t-small">Sign overseas players until you have at least 6, or auto-complete the squad.</p>}
@@ -221,7 +222,7 @@ function Hero() {
         <table className="tbl plain compact"><tbody>
           <KV k="Platinum Cap"><td className="wrapcell">{h.runs[0][0]} · {h.runs[0][2]} runs</td></KV><KV k="Golden Cap"><td className="wrapcell">{h.wkts[0][0]} · {h.wkts[0][2]} wickets</td></KV>
           {h.emerging && <KV k="Emerging player"><td className="wrapcell">{h.emerging}</td></KV>}</tbody></table>
-        <div className="acts"><button className="btn btn-primary btn-lg" onClick={async () => { toast('Nepal play their winter internationals…'); await startOffseason(G); autosave(G); update(); nav('/offseason'); }}>Start the off-season</button>{s.offers && s.offers.length > 0 && <button className="btn btn-lg" onClick={() => nav('/club')}>Job offers</button>}</div><OccasionButtons /></Card>);
+        <div className="acts"><DateGate what="offseason" className="btn btn-primary btn-lg" onClick={async () => { toast('Nepal play their winter internationals…'); await startOffseason(G); autosave(G); update(); nav('/offseason'); }}>Start the off-season</DateGate>{s.offers && s.offers.length > 0 && <button className="btn btn-lg" onClick={() => nav('/club')}>Job offers</button>}</div><OccasionButtons /></Card>);
   }
   const simple = (title, text, label, to) => <Card><H1>{title}</H1><p className="mut">{text}</p><div className="acts"><button className="btn btn-primary btn-lg" onClick={() => nav(to)}>{label}</button></div></Card>;
   if (s.phase === 'offseason') return simple('Off-season', `Players have aged a year. Review the changes, make trades, then move on to ${s.mega ? 'retention for the mega auction' : 'releases for the mini auction'}.`, 'Off-season summary', '/offseason');

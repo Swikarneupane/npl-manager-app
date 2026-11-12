@@ -1,3 +1,4 @@
+import DateGate from '../components/DateGate.jsx';
 import { Link, useNavigate } from 'react-router-dom';
 import { useGame } from '../lib/store.jsx';
 import { PageHead, Role } from '../components/bits.jsx';
@@ -31,7 +32,7 @@ export default function Signings() {
           <span className="phase">Overseas in squad <b style={{ color: 'var(--ink)' }}>{os}</b> / 6–8</span>
           {os < 6 && <span className="crim t-small">Sign at least {6 - os} more</span>}
           {open && (t.squad.length < 18 || os < 6) && <button className="btn" onClick={() => update(() => { const n = completeSquad(G); autosave(G); toast(n ? `Signed ${n} free agent${n > 1 ? 's' : ''} at base price.` : 'No affordable free agents left.'); })}>Auto-complete squad</button>}
-          {open && <button className="btn btn-primary" disabled={!canStart} onClick={() => { update(() => { const n = startSeason(G); autosave(G); if (n) toast(`${n} free agent${n > 1 ? 's' : ''} signed at base price to complete your squad.`); }); nav('/'); }}>Start Season {seasonNo(G.year)}</button>}
+          {open && <DateGate what="season" disabled={!canStart} onClick={() => { update(() => { const n = startSeason(G); autosave(G); if (n) toast(`${n} free agent${n > 1 ? 's' : ''} signed at base price to complete your squad.`); }); nav('/'); }}>Start Season {seasonNo(G.year)}</DateGate>}
         </div>
       </PageHead>
       {!open && <p className="crim" style={{ marginBottom: 12 }}>The signing window is closed until the next pre-season.</p>}

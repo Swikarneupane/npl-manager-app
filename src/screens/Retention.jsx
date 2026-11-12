@@ -1,3 +1,4 @@
+import DateGate from '../components/DateGate.jsx';
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useGame } from '../lib/store.jsx';
@@ -37,14 +38,14 @@ export default function Retention() {
               <button type="button" className="btn btn-sm" disabled={full || osBlock} title={full ? 'All slots are used' : osBlock ? 'Only one overseas retention' : ''} onClick={() => keep(p.id)}>Keep · {fmtL(slab(p, i))}{p.nat !== 'NEP' ? ' OS' : ''}</button></li>); })}</ul>
           <p className="t-micro faint" style={{ marginTop: 6 }}>Slabs: {SLABS.NEP.map((x) => fmtL(x)).join(' / ')} Nepali, {SLABS.OS.map((x) => fmtL(x)).join(' / ')} overseas, by slot.</p></section>
         <div className="stepbar ret-bar"><div className="three"><div><p className="t-micro faint">Domestic purse</p><p className="t-small b6">{fmtL(domAfter)}</p></div><div><p className="t-micro faint">Overseas purse</p><p className="t-small b6">{fmtL(osAfter)}</p></div><div><p className="t-micro faint">RTM cards</p><p className="t-small b6">{max - sel.length}</p></div></div>
-          <button type="button" className="btn btn-primary b6" onClick={confirm}>Confirm and scout the auction</button></div>
+          <DateGate what="auction" className="btn btn-primary b6" onClick={confirm}>Confirm and scout the auction</DateGate></div>
       </div>);
   }
   const rel = t.releaseSel; const freed = rel.reduce((a, id) => a + G.P(id).salary, 0);
   const toggle = (id, on) => update(() => { t.releaseSel = on ? [...t.releaseSel.filter((x) => x !== id), id] : t.releaseSel.filter((x) => x !== id); });
   return (
     <div style={{ maxWidth: 1220 }}>
-      <PageHead title="Releases" sub={`Before the ${G.year} mini auction. Everyone not released stays on their contract. Released salaries go back into the purse.`}><div className="row" style={{ gap: 8, alignItems: 'center' }}><span className="ptag c">Step {steps} of {steps}</span><button className="btn btn-primary btn-lg" onClick={confirm}>Confirm and scout the auction</button></div></PageHead>
+      <PageHead title="Releases" sub={`Before the ${G.year} mini auction. Everyone not released stays on their contract. Released salaries go back into the purse.`}><div className="row" style={{ gap: 8, alignItems: 'center' }}><span className="ptag c">Step {steps} of {steps}</span><DateGate what="auction" className="btn btn-primary btn-lg" onClick={confirm}>Confirm and scout the auction</DateGate></div></PageHead>
       <div className="tblwrap"><table className="tbl compact"><thead><tr><th>Release</th><th>Player</th><th>Nat</th><th className="r">Age</th><th>Role</th><th className="r">Rating</th><th className="r">Salary</th><th className="r">Value</th></tr></thead>
         <tbody>{sq.map((p) => <tr key={p.id} className={rel.includes(p.id) ? 'dim' : ''}><td><input type="checkbox" checked={rel.includes(p.id)} onChange={(e) => toggle(p.id, e.target.checked)} aria-label={`Release ${p.name}`} /></td><td className="name">{p.name}</td><td>{p.nat}</td><td className="r">{p.age}</td><td><Role r={p.role} /></td><td className="r">{ovr(p)}</td><td className="r">{fmtL(p.salary)}</td><td className="r">{fmtL(p.value)}</td></tr>)}</tbody></table></div>
       <p className="mut t-small" style={{ marginTop: 10 }}>Releasing {rel.length} frees {fmtL(freed)}. Purses now: domestic {fmtL(t.purse)}, overseas {fmtL(t.osPurse)}.</p>
