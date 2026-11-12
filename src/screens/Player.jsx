@@ -15,6 +15,7 @@ import { T } from '../lib/i18n.js';
 import { gradeOfL } from '../game/office.js';
 import { traitRows, traitChips, relationships, timeline, mentorOptions, projection, TALK, talk, lastTen } from '../game/living.js';
 import { recordOf, rowOf, BUCKETS } from '../world/record.js';
+import { lean } from '../components/MatchPlan.jsx';
 import '../styles/living.css';
 
 // Form: the last 10 innings, oldest to newest, gold for 50+.
@@ -177,6 +178,7 @@ export default function Player() {
               <ul className="attrs">{attr.map(([k, v]) => <li key={k}><span className="t-small">{k}</span><Meter pct={v} blue /><span className="t-small b6 num">{v || '–'}</span></li>)}</ul>
               <p className="t-micro faint">Potential {potRange(p)}{p.scouted ? ' · scouted' : ''}. Ratings are out of 100.</p></section>
             <Personality G={G} p={p} />
+            {p.role !== 'BOWL' && <p className="t-small mut" style={{ marginTop: 8 }}>Batting lean (game estimate, not real data): {lean(p)}.</p>}
             <CareerRecord G={G} p={p} />
             <Timeline G={G} p={p} />
           </div>

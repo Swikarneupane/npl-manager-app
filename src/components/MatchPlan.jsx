@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useGame } from '../lib/store.jsx';
 import { Meter, Seg } from './bits.jsx';
-import { isPace, phaseOf, spellLim } from '../game/engine.js';
+import { isPace, phaseOf, spellLim, batProfile } from '../game/engine.js';
 import '../styles/multiday.css';
 import { formDisp } from '../lib/util.js';
 
@@ -129,6 +129,7 @@ export function BowlPlan({ lm, children }) {
             <button key={k} type="button" role="radio" aria-checked={on} className={`ftile${on ? ' on' : ''}${auto && fcur === k ? ' auto' : ''}`} onClick={() => { i.field = k; lm.refresh(); }}>
               <FieldSvg dots={dots} on={on} /><span><span className={`t-small b6${on ? ' crim' : ''}`} style={{ display: 'block' }}>{l}</span><span className="t-micro faint">{sub}</span></span></button>); })}
         </div></div>
+      <LineLength lm={lm} id={pick || i.cur} st={st} />
       <Switch on={auto} onChange={(v) => { i.field = v ? 'auto' : fcur; lm.refresh(); }} label="Auto field" sub={md ? 'The captain attacks a new batter and the new ball, and saves runs in a chase' : 'The captain sets it for the phase'} />
       {md && <SpellPlan lm={lm} id={pick || i.cur} />}
       {md && <NewBall lm={lm} />}
@@ -140,6 +141,23 @@ export function BowlPlan({ lm, children }) {
       {st && <p className="t-micro faint">On strike: {st.name} {i.bs[st.id].r} ({i.bs[st.id].b}), {st.hand === 'L' ? 'left' : 'right'}-handed.{ns ? ` ${ns.name} ${i.bs[ns.id].r} (${i.bs[ns.id].b}) at the other end.` : ''}</p>}
       {children}
     </section>
+  );
+}
+
+// Line, length and the bowler's aggression. The batter's lean is a game estimate, shown so the plan has something to aim at.
+const LINES = [['off', 'Outside off'], ['stumps', 'Stumps'], ['leg', 'Leg side']], LENS = [['short', 'Short'], ['good', 'Good'], ['full', 'Full']], BAGG = [['attack', 'Attack'], ['standard', 'Standard'], ['defend', 'Defend']];
+export function lean(p) { const { side, foot } = batProfile(p); const a = side > 0.35 ? 'strong on the off side, weaker on the leg' : side < -0.35 ? 'strong on the leg side, weaker outside off' : 'no clear side'; const b = foot > 0.35 ? 'a front-foot player: short balls test him' : foot < -0.35 ? 'a back-foot player: full balls test him' : 'comfortable on either foot'; return `${a}; ${b}`; }
+function LineLength({ lm, id, st }) {
+  const i = lm.inn; const bp = i.bplan || {}; const ag = (i.bagg && id && i.bagg[id]) || 'standard';
+  const setP = (k, v) => { i.bplan = { ...bp, [k]: bp[k] === v ? null : v }; lm.refresh(); };
+  const setA = (v) => { if (!id) return; i.bagg = { ...(i.bagg || {}), [id]: v }; lm.refresh(); };
+  return (
+    <div className="stack" style={{ gap: 6 }}>
+      <p className="t-micro faint">Line</p><Seg options={LINES} value={bp.line || ''} onChange={(v) => setP('line', v)} label="Line" />
+      <p className="t-micro faint">Length</p><Seg options={LENS} value={bp.len || ''} onChange={(v) => setP('len', v)} label="Length" />
+      <p className="t-micro faint">Bowler aggression</p><Seg options={BAGG} value={ag} onChange={setA} label="Bowler aggression" />
+      <p className="t-micro faint">Tap a line or length again to go back to auto. Match the field to the length: slips suit a full ball, not a short one.{st ? ` ${st.name} (estimate): ${lean(st)}.` : ''}</p>
+    </div>
   );
 }
 

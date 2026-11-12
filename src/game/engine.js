@@ -146,6 +146,26 @@ function ballProbs(b,w,aggr,ctx){
   const s=Object.values(P).reduce((x,y)=>x+y,0); for(const k in P)P[k]/=s;
   return P;
 }
+// ----- The bowling plan: line, length and each bowler's aggression (the user's bowling only) -----
+// A batter's lean is a game estimate (a stable hash of the player, not real data): side > 0 is strong on the off side,
+// foot > 0 is a front-foot player. A line and length aimed at the weaker side and foot makes wickets likelier and
+// boundaries rarer; aimed at the strength it gives runs away. Auto (no line or length) changes nothing.
+function hashN(s){ let h=2166136261; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0)/4294967296; }
+function batProfile(p){ const id=String(p.wid||p.id); return {side:hashN(id+'s')*2-1, foot:hashN(id+'f')*2-1}; }
+function applyBowlPlan(P,inn,bat,field){
+  const ag=inn.bagg&&inn.bagg[inn.cur], bp=inn.bplan;
+  if(ag==='attack'){ P.wkt*=1.12; P.four*=1.1; P.six*=1.1; P.dot*=0.97; }
+  else if(ag==='defend'){ P.wkt*=0.88; P.four*=0.85; P.six*=0.8; P.dot*=1.06; P.one*=1.04; }
+  if(bp&&(bp.line||bp.len)){
+    const pr=batProfile(bat), lv={off:1,stumps:0,leg:-1}[bp.line]||0, ln={short:1,good:0,full:-1}[bp.len]||0;
+    const E=(-pr.side*lv+pr.foot*ln)/2;
+    P.wkt*=1+0.2*E; P.four*=1-0.15*E; P.six*=1-0.12*E; P.dot*=1+0.08*E;
+    if(bp.len==='short') P.six*=1.1; if(bp.len==='full') P.four*=1.05;
+    // the field does not follow the length by itself: slips for a short ball and deep men for a full one waste the plan
+    if(bp.len==='short'&&field==='attack') P.wkt*=0.92; if(bp.len==='full'&&field==='defend') P.four*=1.1;
+  }
+  const s=Object.values(P).reduce((x,y)=>x+y,0); for(const k in P)P[k]/=s;
+}
 function choose(P){ let r=R(),acc=0; for(const k in P){acc+=P[k]; if(r<acc) return k;} return 'dot'; }
 
 class Match{
@@ -330,6 +350,7 @@ class Match{
     const {b,w,mu}=this.strengths(inn,bat,bowl,ph);
     if(mu>=0){ const e=this.opt.mu[mu]; if(!e.on){ e.on=1; this.say(`Plan: ${e.title}. The matchup edge is on.`,'comp plan'); } }
     const P=this.probs(b,w,aggr,{phase:ph,odi:this.maxBalls>150,set:bs.b,field,pitch:this.pitch,freeHit:inn.freeHit,comp:batComp(this,inn,inn.striker)});
+    if(inn.bowl===user) applyBowlPlan(P,inn,bat,field);
     let out=choose(P);
     const wasFree=inn.freeHit; inn.freeHit=false;
     if(noBall){ inn.runs++; inn.extras++; bw.r++; bw.nb++; inn.overRuns++; this.say(this.md?`No-ball from ${bowl.name}, an extra run.`:this.tr('nb',vars),'extra',{ball:true,o:this.ballLbl(inn,false),ev:'nb'}); inn.overSeq.push('nb'); inn.freeHit=!this.md; if(out==='wkt') out='dot'; }
@@ -833,4 +854,4 @@ function mdFuture(m,T,rng){
   return null;
 }
 
-export {R,ri,rf,pick,clamp,shuffle,isSpin,isPace,TYPE_LABEL,fmtL,ovr,calcValue,mkPlayer,Match,MultiDay,dlsRes,cm,setPID,getPID,ballProbs,autoAggr,phaseOf,redProbs,spellLim,fatigueLabel};
+export {batProfile,R,ri,rf,pick,clamp,shuffle,isSpin,isPace,TYPE_LABEL,fmtL,ovr,calcValue,mkPlayer,Match,MultiDay,dlsRes,cm,setPID,getPID,ballProbs,autoAggr,phaseOf,redProbs,spellLim,fatigueLabel};
