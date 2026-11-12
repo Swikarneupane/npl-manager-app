@@ -151,6 +151,8 @@ function Hero() {
   const { G, ui, update, toast, setG } = useGame(); const nav = useNavigate();
   const s = G.s, t = G.teams[G.user];
   if (G.s.wd && !CR.hasClub(G)) return CR.nationJob(G) || CR.abroadJob(G) ? null : <OutOfWork />;
+  // The off-season steps show only on their dates, and only once the national matches that are due are played.
+  if (G.s.wd && ['seasonEnd', 'offseason', 'retention', 'auction'].includes(s.phase)) { const ev = CR.nextEvent(G); if (!(ev && ev.kind === 'npl' && ev.day <= G.s.wd.day)) return null; }
   const busy = (fn) => async () => { toast('Simulating…'); await fn(); autosave(G); update(); };
   if (s.sacked) return (
     <Card><H1>You have been dismissed.</H1><p className="mut">The {t.name} board has ended your contract. Board confidence fell to {t.board}.</p>

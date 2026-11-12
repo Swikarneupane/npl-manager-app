@@ -125,6 +125,8 @@ export class LiveMatch {
         const key = info.ev === 'wkt' || m.log.slice(-3).some((e) => e.c === 'mile' || e.c === 'drs');
         if (self.pauseReq) { self.pauseReq = false; await self.waitUser('Continue'); return; }
         if (self.mode === 'ball') { await self.waitUser('Next ball'); return; }
+        // whatever the mode, a wicket always stops the play (the key-moments mode stops on it below)
+        if (info.ev === 'wkt' && self.mode !== 'key') { await sleep(self.speed() * 0.5); await self.waitUser('Continue'); return; }
         if (self.mode === 'key' && key) { await sleep(self.speed()); await self.waitUser('Continue'); return; }
         // a multi-day match plays its quiet balls at a third of the speed setting's pause, so a session watches in minutes
         await sleep(self.md && !key ? self.speed() * 0.3 : self.mode === 'key' && Math.floor(inn.balls / 6) < 15 && !key ? self.speed() * 0.45 : self.speed());

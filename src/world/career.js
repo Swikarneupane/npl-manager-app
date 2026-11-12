@@ -327,6 +327,8 @@ export function nextEvent(G) {
   const wf = ST.nextUserFixture(G); const ne = hasClub(G) ? nplEvent(G) : null;
   const w = wf ? { kind: 'world', S: wf[0], f: wf[1], day: wf[1].d } : null;
   const ce = Club.clubEvent(G); let best = ne; if (w && (!best || w.day <= best.day)) best = w; if (ce && (!best || ce.day <= best.day)) best = ce;
+  // a national match that is due comes before any NPL step, even one whose date has passed
+  if (w && w.day <= wd.day && !(best && best.kind === 'world')) best = w;
   return withClash(G, best, ne);
 }
 // Two of the user's matches on one day (country and club, or two clubs): only one can be played live. The event

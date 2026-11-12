@@ -46,7 +46,7 @@ export function BatPlan({ lm, children }) {
   const auto = i.aggr === 'auto'; const cur = auto ? nearestIntent(m.aggrFor(i)) : +i.aggr;
   const P = m.preview(i); const rem = i.order.filter((id) => !i.bs[id].out && !i.bs[id].in && !i.bs[id].batted);
   const nb = lm.nextBat && rem.includes(lm.nextBat) ? lm.nextBat : rem[0];
-  const set = (v) => { i.aggr = v; lm.refresh(); };
+  const set = (v) => { i.aggr = v; i.aggrManual = v !== 'auto'; lm.refresh(); }; // a manual choice stays until the user changes it
   const md = !!m.md; const ev = P ? expOver(P) : null; const wl = P ? (md ? wktLevelMD : wktLevel)(P.wkt) : null;
   return (
     <section className="panel plan" aria-label="Batting plan">
@@ -111,8 +111,9 @@ export function BowlPlan({ lm, children }) {
       <div><p className="t-micro faint" style={{ marginBottom: 6 }}>Bowler{pend ? '' : ` for over ${n}`}</p>
         <div className="bowlers" role="radiogroup" aria-label="Bowler">
           {list.map((p) => {
-            const s = i.bw[p.id] || { balls: 0, r: 0, w: 0 }; const left = Math.floor((24 - s.balls) / 6);
-            const done = !md && s.balls + 6 > 24, last = p.id === lastId, inj = s.injured, now = !pend && p.id === i.cur && (i.balls % 6 !== 0 || i.overStart === i.balls);
+            const quota = m.overs > 20 ? Math.ceil(m.overs / 5) * 6 : 24; // a fifth of the innings: 4 overs in T20, 10 in an ODI
+            const s = i.bw[p.id] || { balls: 0, r: 0, w: 0 }; const left = Math.floor((quota - s.balls) / 6);
+            const done = !md && s.balls + 6 > quota, last = p.id === lastId, inj = s.injured, now = !pend && p.id === i.cur && (i.balls % 6 !== 0 || i.overStart === i.balls);
             const dis = done || last || inj; const on = !dis && pick === p.id;
             return (
               <button key={p.id} type="button" role="radio" aria-checked={on} disabled={dis} className={`bcard${on ? ' on' : ''}`} onClick={() => choose(p.id)}>

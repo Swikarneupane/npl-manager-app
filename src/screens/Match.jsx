@@ -150,7 +150,7 @@ function Players({ lm, bowlerOnly }) {
   const { G } = useGame(); const i = lm.inn; if (!i) return null;
   const bat = (lbl, id) => { if (!id || !i.bs[id] || i.bs[id].out) return null; const p = G.P(id), s = i.bs[id];
     return <div className="panel" style={{ padding: '14px 16px' }}><p className="faint t-micro">{lbl}</p><p style={{ fontWeight: 600, marginTop: 2 }}>{p.name}{G.teams[i.bat].captainId === id ? ' (c)' : ''}</p><p style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 4 }}><span className="board-f" style={{ fontSize: 30, fontWeight: 600 }}>{s.r}</span><span className="mut board-f" style={{ fontSize: 18 }}>({s.b})</span></p><p className="faint t-micro num">4s {s.f} · 6s {s.s} · SR {s.b ? (100 * s.r / s.b).toFixed(1) : '–'}</p></div>; };
-  const s = i.cur ? (i.bw[i.cur] || { balls: 0, r: 0, w: 0 }) : null; const left = s ? Math.max(0, 24 - s.balls) : 0;
+  const s = i.cur ? (i.bw[i.cur] || { balls: 0, r: 0, w: 0 }) : null; const left = s ? Math.max(0, (lm.m.overs > 20 && !lm.m.md ? Math.ceil(lm.m.overs / 5) * 6 : 24) - s.balls) : 0;
   return (
     <>
       {!bowlerOnly && <>{bat('On strike', i.striker)}{bat('Non-striker', i.non)}</>}
@@ -376,7 +376,7 @@ function MTactics({ lm }) {
   return (
     <div className="stack" style={{ gap: 18, paddingTop: 14 }}>
       {batting && <div className="field"><span className="lbl" id="agg">Batting aggression</span>
-        <div className="seg" role="group" aria-labelledby="agg" style={{ display: 'grid', gridTemplateColumns: 'repeat(5,minmax(0,1fr))' }}>{AGGR.map(([v, l]) => <button key={v} type="button" className={cur === v ? 'on' : ''} style={{ padding: '0 2px', minHeight: 40, fontSize: 13 }} onClick={() => { i.aggr = v; lm.refresh(); }}>{l}</button>)}</div>
+        <div className="seg" role="group" aria-labelledby="agg" style={{ display: 'grid', gridTemplateColumns: 'repeat(5,minmax(0,1fr))' }}>{AGGR.map(([v, l]) => <button key={v} type="button" className={cur === v ? 'on' : ''} style={{ padding: '0 2px', minHeight: 40, fontSize: 13 }} onClick={() => { i.aggr = v; i.aggrManual = v !== 'auto'; lm.refresh(); }}>{l}</button>)}</div>
         <p className="faint t-small">{md ? MD_NOTES[cur] : NOTES[cur]}{(cur === '1' || md) && need ? ` Needed: ${need.toFixed(2)} an over.` : ''}</p></div>}
       {batting && md && <Declare lm={lm} />}
       {batting && rem.length > 0 && <div className="field"><label htmlFor="nb">Next batter in</label>

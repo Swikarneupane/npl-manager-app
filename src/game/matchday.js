@@ -338,7 +338,7 @@ export function applyPlan(G, m, inn) {
   const ph = phaseOf(inn.balls); const ps = (inn.ps ??= { ph: null, aggr: null, field: null });
   if (inn.kmUntil != null) { if (inn.balls < inn.kmUntil) return; delete inn.kmUntil; ps.ph = null; ps.aggr = inn.aggr; ps.field = inn.field; }
   const fresh = ps.ph !== ph;
-  if (inn.bat === G.user) { const want = aggrFromPlan(plan.bat[ph], inn, m.maxBalls); if (fresh || inn.aggr === ps.aggr) { inn.aggr = want; ps.aggr = want; } }
+  if (inn.bat === G.user && !inn.aggrManual) { const want = aggrFromPlan(plan.bat[ph], inn, m.maxBalls); if (fresh || inn.aggr === ps.aggr) { inn.aggr = want; ps.aggr = want; } }
   if (inn.bowl === G.user) { const want = plan.bowl[ph] || 'auto'; if (fresh || inn.field === ps.field) { inn.field = want; ps.field = want; } }
   ps.ph = ph;
 }
@@ -433,7 +433,7 @@ export function keyMoment(G, m, inn, at) {
 export function resolveKey(G, m, inn, km, idx, auto) {
   const K = kmState(m); const o = km.opts[idx] || km.opts[km.rec]; const fx = o.fx || {};
   K.n++; K.done[`${km.kind}${km.inn}`] = 1;
-  if (fx.aggr != null) { inn.aggr = String(fx.aggr); inn.kmUntil = inn.balls + (fx.balls || 6); }
+  if (fx.aggr != null) { inn.aggr = String(fx.aggr); if (!auto) inn.aggrManual = true; inn.kmUntil = inn.balls + (fx.balls || 6); }
   if (fx.field) { inn.field = fx.field; inn.kmUntil = inn.balls + (fx.balls || 6); }
   if (fx.word) captainWord(m, G.user, fx.word);
   K.hist.push({ kind: km.kind, ov: km.ov, inn: km.inn, title: km.title, pick: o.label, wp0: km.wp0, wp1: o.wp1, auto: !!auto });
