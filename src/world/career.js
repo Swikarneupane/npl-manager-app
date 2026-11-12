@@ -423,7 +423,9 @@ export async function continueWorld(G, { max = 30, rnd = Math.random } = {}) {
   const wd = ensure(G); tick(G, rnd); const ev = nextEvent(G);
   const target = ev ? Math.max(wd.day, ev.day) : wd.day + max;
   await nplRun(G, target);
-  const stop = ST.advance(G, ev && ev.kind === 'npl' && ev.what === 'match' ? target - 1 : target, { rnd });
+  // the clock moves in short steps with a breath between them, so the screen stays alive while a long stretch is simulated
+  const end = ev && ev.kind === 'npl' && ev.what === 'match' ? target - 1 : target; let stop = null;
+  do { stop = ST.advance(G, Math.min(end, wd.day + 10), { rnd }); if (!stop && wd.day < end) await new Promise((r) => setTimeout(r, 0)); } while (!stop && wd.day < end);
   if (!stop && ev && ev.kind === 'npl') wd.day = Math.max(wd.day, target);
   tick(G, rnd);
   return nextEvent(G);

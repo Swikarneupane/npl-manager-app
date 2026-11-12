@@ -6,12 +6,22 @@ import { isCapacitor, isElectron } from './platform.js';
 export function loadLocal() {
   try { const raw = readSave(); return raw ? new Game(JSON.parse(raw)) : null; } catch { return null; }
 }
-export function saveLocal(G, urgent = false) {
-  if (!G) return false;
+function writeNow(G, urgent) {
   try { G.hook('beforeSave'); G.s.pid = getPID(); G.s.savedAt = Date.now(); return writeSave(JSON.stringify(G.s), urgent); } catch { return false; }
 }
+// A save is the whole career (about 2 MB), so writing it after every action made the app stutter. Normal saves now
+// wait for a quiet moment and merge into one; closing or hiding the app (urgent) writes at once, and flushSave()
+// writes any waiting save. Outside a browser (tests, scripts) every save is immediate.
+let waiting = null, timer = null; const QUIET = 1500;
+export function saveLocal(G, urgent = false) {
+  if (!G) return false;
+  if (urgent || typeof window === 'undefined') { if (timer) { clearTimeout(timer); timer = null; } waiting = null; return writeNow(G, urgent); }
+  waiting = G; if (!timer) timer = setTimeout(flushSave, QUIET);
+  return true;
+}
+export function flushSave() { if (timer) { clearTimeout(timer); timer = null; } const G = waiting; waiting = null; return G ? writeNow(G, false) : false; }
 export function autosave(G) { if (G && G.s.settings.autosave) saveLocal(G); }
-export function clearLocal() { clearSave(); }
+export function clearLocal() { if (timer) { clearTimeout(timer); timer = null; } waiting = null; clearSave(); }
 export async function exportFile(G) {
   G.s.pid = getPID();
   const text = JSON.stringify(G.s); const name = `npl-manager-${G.user}-${G.year}.json`;
