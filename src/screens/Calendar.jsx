@@ -6,6 +6,7 @@ import MScreen, { useTab } from '../components/MScreen.jsx';
 import { Seg } from '../components/bits.jsx';
 import { NDot } from '../components/NationBits.jsx';
 import { useNarrow, tshort } from '../lib/util.js';
+import { levelsLine } from '../components/LevelPicker.jsx';
 import * as CR from '../world/career.js';
 import { seasons } from '../world/state.js';
 import { dateOf, dayOfDate, short, monthLabel, MONTHS } from '../world/dates.js';
@@ -98,7 +99,7 @@ export default function Calendar() {
     </MScreen>);
   return (
     <div className="wrap" style={{ maxWidth: 1180 }}>
-      <div className="cr-head"><div><h1 className="t-h1">Calendar</h1><p className="mut t-small">{me ? <><NDot id={me} />{CR.nationName(G, me)}</> : null}{me && CR.hasClub(G) ? ' and ' : ''}{CR.hasClub(G) ? G.teams[G.user].name : ''}</p></div>
+      <div className="cr-head"><div><h1 className="t-h1">Calendar</h1><p className="mut t-small">{me ? <><NDot id={me} />{CR.nationName(G, me)}</> : null}{me && CR.hasClub(G) ? ' and ' : ''}{CR.hasClub(G) ? G.teams[G.user].name : ''}</p><p className="faint t-small">{levelsLine(G.s.wd.levels)}</p></div>
         <Seg options={[['month', 'Month'], ['list', 'Competitions']]} value={view} onChange={setView} label="View" /></div>
       {view === 'month' ? <Month /> : <List />}
     </div>

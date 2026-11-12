@@ -9,6 +9,8 @@ import { downloadSave } from '../lib/cloud.js';
 import { CHALLENGES, applyChallenge } from '../game/living.js';
 import { ASSOCIATES, NATION_NAME, startCareer, strength } from '../world/career.js';
 import { poolOf, registry } from '../world/players.js';
+import LevelPicker from '../components/LevelPicker.jsx';
+import { setLevel } from '../world/state.js';
 import { available, teamsAndLevels } from '../world/club.js';
 
 // Which jobs the career starts with. Associates are open from the start; Test nations come by reputation.
@@ -47,6 +49,7 @@ export default function NewGame() {
   const [mode, setMode] = useState('key');
   const [code, setCode] = useState('');
   const [challenge, setChallenge] = useState('');
+  const [levels, setLevels] = useState({ Test: 'both', ODI: 'both', T20: 'both' });
   const [job, setJob] = useState('club'); const [nation, setNation] = useState('NEP');
   const preview = useMemo(() => Game.create('LL', {}), []);
   const club = job === 'club' || job === 'both'; const [abroad, setAbroad] = useState('');
@@ -67,6 +70,7 @@ export default function NewGame() {
     const G = Game.create(team, { lang, manager: name || 'Manager', mode, difficulty });
     if (challenge && club) applyChallenge(G, challenge);
     startCareer(G, { club, nation: job === 'club' || job === 'abroad' ? null : nation, abroad: job === 'abroad' ? abroad || (clubs[0] && clubs[0].id) : null });
+    Object.entries(levels).forEach(([g, v]) => setLevel(G, g, v));
     ui.live = null; saveLocal(G); setG(G); nav('/');
   };
   const loadCode = async () => {
@@ -104,6 +108,7 @@ export default function NewGame() {
           <section style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
             <div className="field"><span className="lbl">Your job</span><Seg options={JOBS} value={job} onChange={setJob} label="Your job" /><p className="faint t-small">{JOB_TEXT[job]} Test nations open from a reputation of about 75.</p></div>
             <div className="field"><label htmlFor="mgr">Manager name</label><input id="mgr" className="input" value={name} placeholder="Your name" onChange={(e) => setName(e.target.value)} /></div>
+            <LevelPicker levels={levels} onChange={(g, v) => setLevels((x) => ({ ...x, [g]: v }))} />
             <div className="field"><span className="lbl">Language</span><Seg options={[['en', 'English'], ['np', 'नेपाली'], ['both', 'Both']]} value={lang} onChange={setLang} label="Language" /><p className="faint t-small">Commentary, news and menus.</p></div>
             <div className="field"><span className="lbl">Difficulty</span><Seg options={[['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']]} value={difficulty} onChange={setDifficulty} label="Difficulty" /><p className="faint t-small">{DIFF_TEXT[difficulty]} You can change it later in Settings.</p></div>
             <div className="field"><span className="lbl">Default match control</span>

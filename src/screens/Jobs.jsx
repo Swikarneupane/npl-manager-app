@@ -9,6 +9,8 @@ import { NDot } from '../components/NationBits.jsx';
 import { useNarrow, boardMood } from '../lib/util.js';
 import { autosave } from '../lib/save.js';
 import * as CR from '../world/career.js';
+import * as ST from '../world/state.js';
+import LevelPicker from '../components/LevelPicker.jsx';
 import { short, yearOf } from '../world/dates.js';
 import '../styles/career.css';
 
@@ -42,6 +44,10 @@ function Current() {
         : <section className="panel cr-job"><p className="t-micro faint">National team</p><p className="t-h3">No national team</p><p className="t-small mut">Apply below, or wait for a board to call.</p></section>}
     </div>
   );
+}
+function Levels() {
+  const { G, update } = useGame();
+  return <section className="panel" style={{ padding: 14, marginTop: 12 }}><LevelPicker levels={G.s.wd.levels} onChange={(g, v) => update(() => { ST.setLevel(G, g, v); autosave(G); })} /></section>;
 }
 function Offers() {
   const { G, update, toast } = useGame(); const list = G.s.wd.offers;
@@ -84,12 +90,13 @@ export default function Jobs() {
   CR.ensure(G); const n = G.s.wd.offers.length; const r = Math.round(G.s.manager.rep);
   if (narrow) return (
     <MScreen top={{ title: 'Jobs', sub: `Reputation ${r}` }} tabs={[['now', 'Your jobs'], ['offers', 'Offers', n], ['apply', 'Apply'], ['past', 'History']]} tab={tab} onTab={setTab} label="Jobs">
-      <div style={{ paddingTop: 12 }}>{tab === 'now' && <Current />}{tab === 'offers' && <Offers />}{tab === 'apply' && <Apply />}{tab === 'past' && <JobHistory />}</div>
+      <div style={{ paddingTop: 12 }}>{tab === 'now' && <><Current /><Levels /></>}{tab === 'offers' && <Offers />}{tab === 'apply' && <Apply />}{tab === 'past' && <JobHistory />}</div>
     </MScreen>);
   return (
     <div className="wrap" style={{ maxWidth: 1180 }}>
       <div className="cr-head"><div><h1 className="t-h1">Jobs</h1><p className="mut t-small">One club and one national team at most. Reputation {r}: associates look for about {CR.REP.associate}, Test nations about {CR.REP.full}.</p></div><Link to="/career" className="t-small">Career</Link></div>
       <Current />
+      <Levels />
       <div className="cr-split" style={{ marginTop: 28 }}>
         <section><h2 className="t-h3" style={{ marginBottom: 8 }}>Offers{n ? ` · ${n}` : ''}</h2><Offers /><h2 className="t-h3" style={{ margin: '24px 0 8px' }}>Apply to a national board</h2><Apply /></section>
         <aside><h2 className="t-h3" style={{ marginBottom: 8 }}>Your jobs so far</h2><JobHistory /></aside>

@@ -11,6 +11,7 @@ import { useNarrow, formDisp } from '../lib/util.js';
 import { autosave } from '../lib/save.js';
 import { poolOf } from '../world/players.js';
 import { value } from '../world/squads.js';
+import * as ST from '../world/state.js';
 import * as CR from '../world/career.js';
 import '../styles/career.css';
 
@@ -36,13 +37,14 @@ function Status({ s, fmt }) {
 function Desk({ code, fmt, setFmt }) {
   const s = useSquad(code, fmt); const { G, sel } = s; const [all, setAll] = useState(false);
   const pool = poolOf(G, code).slice().sort((a, b) => value(b, fmt) - value(a, fmt)); const inSq = new Set(s.keys);
-  const list = all ? pool : pool.filter((p, i) => inSq.has(CR.keyOf(p)) || i < 30); const ro = sel.asst;
+  const list = all ? pool : pool.filter((p, i) => inSq.has(CR.keyOf(p)) || i < 30); const ro = sel.asst || !ST.managesSide(G, 'intl', fmt);
   return (
     <div className="wrap" style={{ maxWidth: 1240 }}>
       <div className="cr-head"><div><h1 className="t-h1"><NDot id={code} big />{CR.nationName(G, code)} squad</h1><p className="mut t-small">{pool.length} eligible players · ratings are the game's estimates</p></div>
         <Seg options={CR.fmtsFor(code)} value={fmt} onChange={setFmt} label="Format" /></div>
       <div className="cr-tool"><Status s={s} fmt={fmt} /><span className="spacer" style={{ flex: '1 1 auto' }} />{!ro && sel.picked && <button type="button" className="btn btn-sm" onClick={s.auto}>Let the assistant pick</button>}</div>
-      {ro && <p className="t-small mut" style={{ marginBottom: 10 }}>The assistant picks the squad and XI while “Let the assistant decide” is on in <Link to="/settings">Settings</Link>.</p>}
+      {!ST.managesSide(G, 'intl', fmt) && <p className="t-small mut" style={{ marginBottom: 10 }}>You manage {FMT_L[fmt]} at domestic level only, so the assistant picks this national squad. Change it under <Link to="/jobs">Jobs</Link>.</p>}
+      {ro && ST.managesSide(G, 'intl', fmt) && <p className="t-small mut" style={{ marginBottom: 10 }}>The assistant picks the squad and XI while “Let the assistant decide” is on in <Link to="/settings">Settings</Link>.</p>}
       {!ro && !sel.picked && <p className="t-small mut" style={{ marginBottom: 10 }}>This is the assistant's squad. Tick players in or out to pick your own.</p>}
       <div className="tblwrap"><table className="tbl compact cr-sq">
         <thead><tr><th className="pick">Squad</th><th className="pick">XI</th><th>Player</th><th>Club</th><th className="r">Age</th><th className="r">Bat</th><th className="r">Bowl</th><th className="r">Form</th><th className="r">Fit</th><th>Last two years</th><th className="r">C</th><th className="r">WK</th></tr></thead>
@@ -64,7 +66,7 @@ function Desk({ code, fmt, setFmt }) {
   );
 }
 function Row({ s, p, mode }) {
-  const { G, sel } = s; const k = CR.keyOf(p); const sq = s.keys.includes(k); const x = s.xi.includes(k); const st = CR.recentStats(G, p); const ro = sel.asst;
+  const { G, sel } = s; const k = CR.keyOf(p); const sq = s.keys.includes(k); const x = s.xi.includes(k); const st = CR.recentStats(G, p); const ro = sel.asst || !ST.managesSide(G, 'intl', fmt);
   const cap = sel.cap && CR.keyOf(sel.cap) === k, wk = sel.wk && CR.keyOf(sel.wk) === k;
   return (
     <div className="cr-prow">

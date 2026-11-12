@@ -24,6 +24,19 @@ export function migrate(G) {
   // every career starts with the NPL club job; national jobs come by choice or by offer
   s.wd.pcr ??= {}; // permanent career records (world/record.js); old saves start them now
   s.wd.jobs ??= [{ kind: 'club', comp: 'NPL', team: s.user, since: s.year }];
+  s.wd.levels ??= { Test: 'both', ODI: 'both', T20: 'both' }; // career level per format: 'intl' | 'dom' | 'both'
+}
+// ----- career level per format -----
+export const LEVELS = ['both', 'intl', 'dom'];
+export const fmtGroup = (fmt) => (fmt === 'T20' ? 'T20' : fmt === 'ODI' ? 'ODI' : 'Test');
+export const levelOfFmt = (G, fmt) => { const l = G.s.wd && G.s.wd.levels && G.s.wd.levels[fmtGroup(fmt)]; return LEVELS.includes(l) ? l : 'both'; };
+export function setLevel(G, group, level) { const wd = W(G); wd.levels = { Test: 'both', ODI: 'both', T20: 'both', ...(wd.levels || {}) }; if (LEVELS.includes(level) && group in wd.levels) wd.levels[group] = level; }
+// does the user manage `fmt` on this side of the game? (national jobs = 'intl'; club jobs = 'dom')
+export const managesSide = (G, side, fmt) => { const l = levelOfFmt(G, fmt); return l === 'both' || l === side; };
+export const managesNpl = (G) => managesSide(G, 'dom', 'T20');
+// a fixture the user plays / stops the clock for: a user team in it, in a format that side of the job is managed
+export function userPlays(G, f) {
+  return (W(G).jobs || []).some((j) => (j.team === f.a || j.team === f.b) && (j.kind === 'nation' || Club.isAbroad(j)) && managesSide(G, j.kind === 'nation' ? 'intl' : 'dom', f.fmt));
 }
 
 // ----- teams in the world -----
@@ -90,14 +103,14 @@ const compactCard = (c) => c.inns.map((i) => ({ t: i.t, r: i.r, w: i.w, b: i.b, 
 // Fixtures due on or before `day`, in date order. User fixtures stop the clock unless `auto`.
 export function due(G, day) { const out = []; for (const S of seasons(G)) if (!S.done) for (const f of S.fx) if (!f.res && f.d <= day) out.push([S, f]); return out.sort((x, y) => x[1].d - y[1].d); }
 export function nextUserFixture(G) {
-  const mine = new Set(userTeams(G).filter((t) => isUserTeam(G, t))); let best = null;
-  for (const S of seasons(G)) if (!S.done) for (const f of S.fx) if (!f.res && (mine.has(f.a) || mine.has(f.b)) && (!best || f.d < best[1].d)) best = [S, f];
+  let best = null;
+  for (const S of seasons(G)) if (!S.done) for (const f of S.fx) if (!f.res && userPlays(G, f) && (!best || f.d < best[1].d)) best = [S, f];
   return best;
 }
 // Every unplayed fixture of the user's teams on one day (a clash when there is more than one).
 export function userFixturesOn(G, day) {
-  const mine = new Set(userTeams(G).filter((t) => isUserTeam(G, t))); const out = [];
-  for (const S of seasons(G)) if (!S.done) for (const f of S.fx) if (!f.res && f.d === day && (mine.has(f.a) || mine.has(f.b))) out.push([S, f]);
+  const out = [];
+  for (const S of seasons(G)) if (!S.done) for (const f of S.fx) if (!f.res && f.d === day && userPlays(G, f)) out.push([S, f]);
   return out;
 }
 // Move the world to `day`: every other match is fast-simmed. Returns the user fixture that stopped
@@ -110,7 +123,7 @@ export function advance(G, day, { auto = false, rnd = Math.random } = {}) {
   let list = due(G, day);
   for (let guard = 0; guard < 20000 && list.length; guard++) {
     const [S, f] = list[0];
-    if (!auto && (isUserTeam(G, f.a) || isUserTeam(G, f.b))) { wd.day = Math.max(wd.day, f.d); return [S, f]; }
+    if (!auto && userPlays(G, f)) { wd.day = Math.max(wd.day, f.d); return [S, f]; }
     wd.day = Math.max(wd.day, f.d); recover(G); const n0 = S.fx.length; playFast(G, S, f, rnd);
     if (isUserTeam(G, f.a) || isUserTeam(G, f.b)) note(G, `The assistant took charge: ${f.res ? f.res.text : ''}.`);
     if (S.done) { runTicks(G); list = due(G, day); } else if (S.fx.length !== n0) list = due(G, day); else list.shift();

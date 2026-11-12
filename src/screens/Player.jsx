@@ -16,6 +16,7 @@ import { gradeOfL } from '../game/office.js';
 import { traitRows, traitChips, relationships, timeline, mentorOptions, projection, TALK, talk, lastTen } from '../game/living.js';
 import { recordOf, rowOf, BUCKETS } from '../world/record.js';
 import { lean } from '../components/MatchPlan.jsx';
+import { PROGRAMMES, PROG_SLOTS, optionsFor, progOf, setProgramme, slotsUsed } from '../game/training.js';
 import '../styles/living.css';
 
 // Form: the last 10 innings, oldest to newest, gold for 50+.
@@ -70,6 +71,23 @@ function DevPlan({ G, p, update, coach }) {
       <p className="t-micro faint">{coach}{p.age >= 26 ? ' He is 26 or older, so the coach helps his form, not his development.' : ''}{p.mentor && p.age <= 25 ? ' A mentor adds about a point a season.' : ''}</p>
     </section>
   );
+}
+function Programme({ G, p, update, toast }) {
+  const cur = progOf(G, p.id); const opts = optionsFor(p); const used = slotsUsed(G);
+  const pick = (v) => update(() => { const err = setProgramme(G, p.id, v || null); if (err) toast(err); else autosave(G); });
+  return (
+    <section className="panel stack" style={{ gap: 8 }}>
+      <h2 className="t-h3">{T(G, 'Training programme', 'प्रशिक्षण कार्यक्रम')}</h2>
+      <div className="field"><label htmlFor="prog">{T(G, 'This week', 'यो हप्ता')}</label>
+        <select id="prog" className="input lv-sel" value={cur || ''} onChange={(e) => pick(e.target.value)}>
+          <option value="">{T(G, 'Team plan only', 'टोलीको योजना मात्र')}</option>
+          {opts.map((n) => <option key={n} value={n} disabled={!cur && used >= PROG_SLOTS}>{n}</option>)}</select></div>
+      <p className="t-small">{T(G, 'Slots used', 'प्रयोग भएका स्लट')} <b className="num">{used}/{PROG_SLOTS}</b></p>
+      <p className="t-micro faint">{cur ? T(G, PROGRAMMES[cur].en, PROGRAMMES[cur].ne) : T(G, 'Pick a programme to give him extra work on top of the team sessions.', 'टोलीको अभ्यासमाथि थप कार्यक्रम रोज्नुहोस्।')}</p>
+      <details><summary className="t-micro faint">{T(G, 'What each programme does', 'कार्यक्रमहरूको विवरण')}</summary>
+        <ul className="t-micro faint" style={{ margin: '6px 0 0', paddingLeft: 16 }}>{opts.map((n) => <li key={n}><b>{n}</b>: {T(G, PROGRAMMES[n].en, PROGRAMMES[n].ne)}</li>)}</ul></details>
+      <p className="t-micro faint">{T(G, 'Effects are modest. Unhappy players get less out of training.', 'असर सानो हुन्छ। असन्तुष्ट खेलाडीले कम फाइदा पाउँछन्।')}</p>
+    </section>);
 }
 function Talk({ G, p, update }) {
   const [said, setSaid] = useState(null);
@@ -184,6 +202,7 @@ export default function Player() {
           </div>
           <div className="stack" style={{ gap: 16, minWidth: 0 }}>
             {mine && <DevPlan G={G} p={p} update={update} coach={coach || coachLine(G, p)} />}
+            {mine && <Programme G={G} p={p} update={update} toast={toast} />}
             {mine && <Talk key={p.id} G={G} p={p} update={update} />}
             <section className="panel pcontract">
               <div><p className="t-micro faint">Salary</p><p className="t-small">{p.team ? `${fmtL(p.salary)} / season` : '—'}</p></div>

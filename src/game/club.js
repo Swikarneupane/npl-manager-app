@@ -5,6 +5,7 @@
 // potential range) and p.academy (the club whose academy holds him; he keeps team: null).
 import { R, ri, pick, clamp, ovr, isPace, TYPE_LABEL, getPID } from './engine.js';
 import { PROVINCES, NEP_NAMES } from './data.js';
+import { applyProgramme, autoAssign } from './training.js';
 import { workload, injuryRisk, riskLabel, adjustHappy, addPromise, closePromise, nudgePillar, logDecision, genTraits } from './depth.js';
 
 const DAY = 86400000;
@@ -121,14 +122,14 @@ export function growFromTraining(G, p, offseason) {
   return gained;
 }
 function bump(p) {
-  const bat = p.role === 'BAT' || p.role === 'WK' || (p.role === 'AR' && (p.focus === 'Batting' || (p.focus !== 'Bowling' && p.bat <= p.bowl)));
+  const bat = p.role === 'BAT' || p.role === 'WK' || (p.role === 'AR' && (p.pbias ? p.pbias === 'bat' : (p.focus === 'Batting' || (p.focus !== 'Bowling' && p.bat <= p.bowl))));
   if (bat) p.bat = clamp(p.bat + 1, 10, 96); else p.bowl = clamp(p.bowl + 1, 10, 96);
 }
 
 // Apply the training days before the user's match: fitness, form, development, load and knocks.
 function applyTraining(G, f) {
   const C = G.s.club; const t = G.teams[G.user];
-  if (G.s.settings.assistant) { C.plan.days = {}; C.plan.by = 'coaches'; }
+  if (G.s.settings.assistant) { C.plan.days = {}; C.plan.by = 'coaches'; autoAssign(G); }
   const days = daysBefore(G, f); if (!days.length) { C.applied = G.dayOf(f); return null; }
   const pairs = days.map((d) => sessionsFor(G, d));
   t.training = intensityOf(pairs); // game.js applies the team intensity in the match and the off-season
@@ -141,7 +142,8 @@ function applyTraining(G, f) {
     p.fit = clamp(Math.round(p.fit + e.fit), 40, 100);
     if (!p.inj) p.form = clamp(p.form + (sharpOf(e.sharp) - 55) / 30, -10, 10);
     const mood = 0.7 + (p.happy ?? 70) / 250; // unhappy players get less out of training
-    p.tdev = Math.round(((p.tdev || 0) + e.dev * youth(p) * (1 + 0.1 * coachL) * mood) * 10) / 10;
+    const pd = applyProgramme(G, p, mood); // individual programme: form, fitness, injury and a few dev points
+    p.tdev = Math.round(((p.tdev || 0) + e.dev * youth(p) * (1 + 0.1 * coachL) * mood + pd) * 10) / 10;
     if (growFromTraining(G, p, false)) grew.push(p);
     p.load = e.load; // training load over the days before the match (at most 7); feeds injuryRisk
     if (!p.inj && G.available(p)) {
@@ -532,7 +534,7 @@ export function migrate(G) {
   // Game.create runs migrate before the squads exist; wait for them (new players would reuse ids)
   if (!s.teams || !s.user || !s.teams[s.user] || !s.teams[s.user].squad.length || !s.pid) return;
   const C = (s.club ??= {});
-  C.startYear ??= s.year; C.plan ??= { days: {}, by: 'coaches', ok: null }; C.plan.days ??= {}; C.applied ??= null; C.spare ??= {};
+  C.startYear ??= s.year; C.plan ??= { days: {}, by: 'coaches', ok: null }; C.plan.days ??= {}; C.applied ??= null; C.spare ??= {}; C.prog ??= {};
   C.talked ??= {}; C.talks ??= []; C.talkWin ??= 0;
   C.scouts ??= [genScout(G, 'A', 1), genScout(G, 'B', 2), genScout(G, 'C', 3)];
   C.reports ??= []; C.watch ??= []; C.seen ??= {}; C.gen ??= {}; C.spent ??= {}; C.grads ??= [];

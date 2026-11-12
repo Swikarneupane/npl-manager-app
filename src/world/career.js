@@ -300,7 +300,7 @@ export function nplEvent(G) {
   const ph = G.s.phase; const now = G.s.wd.day; const Y = G.year;
   if (ph === 'league' || ph === 'playoffs') {
     const nu = G.s.fixtures.find((f) => !f.res);
-    if (!hasClub(G)) return nu ? { kind: 'npl', what: 'sim', f: nu, day: nplDay(G, nu) } : null;
+    if (!hasClub(G) || !ST.managesNpl(G)) return nu ? { kind: 'npl', what: 'sim', f: nu, day: nplDay(G, nu) } : null;
     const f = G.s.fixtures.find((x) => !x.res && (x.home === G.user || x.away === G.user));
     if (f) return { kind: 'npl', what: 'match', f, day: nplDay(G, f) };
     return nu ? { kind: 'npl', what: 'sim', f: nu, day: nplDay(G, nu) } : null;
@@ -403,8 +403,8 @@ export async function nplRun(G, day, { yieldEvery = 2 } = {}) {
     if (ph === 'league' || ph === 'playoffs') {
       const f = G.nextFixture();
       if (!f) { afterFixture(G); if (G.s.phase === ph && !G.nextFixture()) break; continue; }
-      if (nplDay(G, f) > day) break; if (club && (f.home === G.user || f.away === G.user)) break;
-      applyCallUps(G, f); if (club) await simFixture(G, f); else await quiet(G, () => simFixture(G, f)); await pause(); continue;
+      const mineF = club && (f.home === G.user || f.away === G.user); if (nplDay(G, f) > day) break; if (mineF && ST.managesNpl(G)) break;
+      applyCallUps(G, f); if (mineF && !ST.managesNpl(G)) { const a = G.s.settings.assistant; G.s.settings.assistant = true; try { await simFixture(G, f); } finally { G.s.settings.assistant = a; } } else if (club) await simFixture(G, f); else await quiet(G, () => simFixture(G, f)); await pause(); continue;
     }
     if (club) break;
     const ev = nplEvent(G); if (!ev || ev.day > day) break;
